@@ -25,6 +25,11 @@ request.interceptors.request.use(
             config.headers.Authorization = `Bearer ${userStore.token}`
         }
 
+        // 确保 API 路径以 / 结尾（防止 FastAPI 301 重定向丢端口）
+        if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
+            config.url += '/'
+        }
+
         return config
     },
     (error) => {
