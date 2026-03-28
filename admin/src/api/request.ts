@@ -26,8 +26,13 @@ request.interceptors.request.use(
         }
 
         // 确保 API 路径以 / 结尾（防止 FastAPI 301 重定向丢端口）
-        if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
-            config.url += '/'
+        // 只对纯资源路径补斜杠，跳过带子路径/路径参数的 URL
+        if (config.url) {
+            const path = config.url.split('?')[0]!
+            // 匹配 /resource 形式（如 /configs, /users），不匹配 /resource/xxx
+            if (/^\/[a-z-]+$/.test(path)) {
+                config.url = path + '/' + (config.url.includes('?') ? '?' + config.url.split('?')[1] : '')
+            }
         }
 
         return config
