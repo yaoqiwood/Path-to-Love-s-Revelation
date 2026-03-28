@@ -123,7 +123,7 @@ services:
     container_name: ingrace-admin
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "3011:3011"
     depends_on:
       - backend
 
