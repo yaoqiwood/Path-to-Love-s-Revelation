@@ -20,17 +20,32 @@ function buildStoredProfile(record = {}) {
   }
 }
 
+function resolveWechatId(record = {}) {
+  if (record.wechat_id) {
+    return record.wechat_id
+  }
+  if (record.person_id) {
+    return `mock-wechat-${record.person_id}`
+  }
+  return record.wx_openid || ''
+}
+
 function buildSession(record = {}) {
+  const wechatId = resolveWechatId(record)
+  const avatar = record.personal_photo || record.wx_avatar || ''
+  const userId = record.user_id || `mock-user-${record.person_id || 'guest'}`
+
   return {
-    uid: record.user_id || `mock-user-${record.person_id || 'guest'}`,
+    uid: userId,
     token: `mock-token-${record.person_id || 'guest'}`,
     tokenExpired: Date.now() + 7 * 24 * 60 * 60 * 1000,
     userInfo: {
-      _id: record.user_id || `mock-user-${record.person_id || 'guest'}`,
+      _id: userId,
       nickname: record.nickname || record.name || 'Mock 用户',
-      avatar: record.personal_photo || record.wx_avatar || '',
-      avatar_file: record.personal_photo || record.wx_avatar || '',
-      wx_openid: record.wx_openid || '',
+      avatar,
+      avatar_file: avatar,
+      wechat_id: wechatId,
+      wx_openid: wechatId,
       wx_unionid: record.wx_unionid || ''
     }
   }
@@ -83,6 +98,28 @@ export function applyMockPreset(preset = 'guest') {
   writeJson(LEGACY_USER_KEY, buildSession(record).userInfo)
 
   return record
+}
+
+export function applyMockPersonnelLogin(record = {}) {
+  ensureMockBootstrap()
+
+  if (!record || !record._id) {
+    clearMockPreset()
+    return null
+  }
+
+  const normalizedRecord = {
+    ...record,
+    user_id: record.user_id || `mock-user-${record.person_id || 'guest'}`,
+    wechat_id: resolveWechatId(record) || `mock-wechat-${record.person_id || 'guest'}`
+  }
+
+  const session = buildSession(normalizedRecord)
+  writeJson(PROFILE_KEY, buildStoredProfile(normalizedRecord))
+  writeJson(SESSION_KEY, session)
+  writeJson(LEGACY_USER_KEY, session.userInfo)
+
+  return normalizedRecord
 }
 
 export function getMockOverview() {

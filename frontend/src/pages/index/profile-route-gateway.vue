@@ -6,7 +6,7 @@
 			<view class="hero-copy">
 				<text class="eyebrow">LOVE MBTI LAB</text>
 				<text class="headline">Opening your home</text>
-				<text class="subhead">We are checking your login profile in the cloud.</text>
+				<text class="subhead">We are checking your saved login profile.</text>
 			</view>
 
 			<view class="loading-card">
@@ -18,8 +18,10 @@
 </template>
 
 <script>
+import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+import { getCurrentUserInfo } from '@/platform/app-runtime'
+
 const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
-const personnelUser = uniCloud.importObject('personnel-user')
 
 export default {
 	data() {
@@ -119,7 +121,7 @@ export default {
 		},
 		getMergedCurrentUser() {
 			try {
-				const currentUserInfo = uniCloud.getCurrentUserInfo() || {}
+				const currentUserInfo = getCurrentUserInfo() || {}
 				const currentUserInfoUser = currentUserInfo.userInfo || {}
 				const cachedUser = uni.getStorageSync('uni-id-pages-userInfo') || {}
 				return {
@@ -183,7 +185,7 @@ export default {
 		async getProfileFromDatabase() {
 			let openIds = []
 			const currentUser = this.getMergedCurrentUser()
-			const currentUserInfo = uniCloud.getCurrentUserInfo() || {}
+			const currentUserInfo = getCurrentUserInfo() || {}
 			openIds = this.getCandidateOpenIds(currentUser)
 			if (!openIds.length) {
 				this.loadingText = 'Loading login profile...'
@@ -212,24 +214,43 @@ export default {
 			}
 		},
 		resolveTargetUrl(profile) {
-			const targetUrl =
-				profile && this.isUserRole(profile.user_role)
-					? '/pkg/guide/hub'
-					: profile &&
-						  Number(profile.user_role) === 0 &&
-						  this.hasMbtiResult(profile) &&
-						  this.enableHeartChatPage
-						? '/pkg/guide/detail'
-						: '/pages/index/service'
-			return targetUrl
+			if (profile && this.isUserRole(profile.user_role)) {
+				return '/pkg/guide/hub'
+			}
+			if (
+				profile &&
+				Number(profile.user_role) === 0 &&
+				this.hasMbtiResult(profile) &&
+				this.enableHeartChatPage
+			) {
+				return '/pkg/guide/detail'
+			}
+			if (profile && profile._id) {
+				const query = []
+				if (profile.name) {
+					query.push(`name=${encodeURIComponent(profile.name)}`)
+				}
+				if (profile._id) {
+					query.push(`personnelId=${encodeURIComponent(profile._id)}`)
+				}
+				if (profile.wechat_id || profile.wx_openid) {
+					query.push(
+						`wxOpenid=${encodeURIComponent(profile.wechat_id || profile.wx_openid || '')}`
+					)
+				}
+				return query.length ? `/pages/feed/entry?${query.join('&')}` : '/pages/feed/entry'
+			}
+			return '/pages/index/login-home'
 		},
 		updateLoadingText(targetUrl) {
 			if (targetUrl === '/pkg/guide/hub') {
 				this.loadingText = 'User detected, opening dashboard...'
 			} else if (targetUrl === '/pkg/guide/detail') {
 				this.loadingText = 'User detected, opening contacts...'
+			} else if (targetUrl.startsWith('/pages/feed/entry')) {
+				this.loadingText = 'Profile matched, opening MBTI test...'
 			} else {
-				this.loadingText = 'Opening MBTI home...'
+				this.loadingText = 'Opening login home...'
 			}
 		},
 		async routeByLoginProfile() {

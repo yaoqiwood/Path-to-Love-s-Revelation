@@ -228,11 +228,8 @@
 
 <script>
 	import relationshipSource from '@/data/mbti_16x16_relationships_full.json'
+	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
 
-var db = null
-if (typeof uniCloud !== 'undefined' && uniCloud.database) {
-	db = uniCloud.database()
-}
 var PAIR_GROUP_CACHE_KEY = 'MBTI_PAIR_GROUP_CACHE_V1'
 var PAIR_GROUP_CACHE_VERSION = 1
 
@@ -1017,24 +1014,20 @@ var PAIR_GROUP_CACHE_VERSION = 1
 				}
 			},
 			async fetchAllPersonnel() {
-				// 这里会分批把人员数据从云端全部取回。
+				// 这里会分批把人员数据从本地服务全部取回。
 				// 单次最多取 500 条，循环直到取完为止。
 				// 之后的搜索、配对、排序都在前端本地进行。
 				var pageSize = 500
-				var page = 0
+				var page = 1
 				var allList = []
 
 				while (true) {
-					var res = await db
-						.collection('mbti-personnel')
-						.field(
-							'_id,person_id,nickname,name,gender,age,personal_photo,mobile,mbti,native_place,profession,address,family_overview,church,referrer,self_introduction,relationship_status,travel_mode,is_deleted'
-						)
-						.orderBy('person_id', 'asc')
-						.skip(page * pageSize)
-						.limit(pageSize)
-						.get()
-					var currentList = (res.result && res.result.data) || res.data || []
+					var res = await personnelUser.list({
+						page: page,
+						pageSize: pageSize,
+						includeDeleted: true
+					})
+					var currentList = (res && res.list) || []
 
 					if (!currentList.length) {
 						break
@@ -1051,13 +1044,6 @@ var PAIR_GROUP_CACHE_VERSION = 1
 				return allList
 			},
 			async loadPairGroups() {
-				if (!db) {
-					uni.showModal({
-						content: '当前环境不支持云数据库查询',
-						showCancel: false
-					})
-					return
-				}
 				this.loading = true
 				try {
 					var list = await this.fetchAllPersonnel()

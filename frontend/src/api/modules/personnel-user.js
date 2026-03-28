@@ -626,6 +626,40 @@ function updatePersonnelRecord(id, patch) {
   return getPersonnelById(id)
 }
 
+function resolveWechatId(record = {}) {
+  if (normalizeText(record.wechat_id)) {
+    return normalizeText(record.wechat_id)
+  }
+  if (toNumber(record.person_id)) {
+    return `mock-wechat-${toNumber(record.person_id)}`
+  }
+  return normalizeText(record.wx_openid)
+}
+
+function buildLoginProfileRecord(record = {}) {
+  return {
+    _id: record._id || '',
+    person_id: toNumber(record.person_id),
+    nickname: normalizeText(record.nickname),
+    name: normalizeText(record.name),
+    passcode: normalizeText(record.passcode),
+    review_status: normalizeText(record.review_status) || 'pending',
+    user_role: toNumber(record.user_role),
+    wechat_id: resolveWechatId(record),
+    submitted_at: record.submitted_at || '',
+    updated_at: record.updated_at || ''
+  }
+}
+
+function findPersonnelByPasscode(passcode = '') {
+  const normalizedPasscode = normalizeUpper(passcode)
+  if (!normalizedPasscode) {
+    return null
+  }
+
+  return getActivePersonnel().find((item) => normalizeUpper(item.passcode) === normalizedPasscode) || null
+}
+
 function filterPersonnel(list, keyword) {
   const normalizedKeyword = normalizeKeyword(keyword)
   if (!normalizedKeyword) {
@@ -639,6 +673,7 @@ function filterPersonnel(list, keyword) {
       item.name,
       item.mobile,
       item.mbti,
+      item.wechat_id,
       item.wx_openid,
       item.passcode
     ]
@@ -982,8 +1017,9 @@ export const personnelUserService = {
         ),
       async () => {
         const match = getPersonnelList().find((item) => item.user_id === normalizeText(uid))
+        const wechatId = resolveWechatId(match)
         return {
-          openIds: match?.wx_openid ? [match.wx_openid] : []
+          openIds: wechatId ? [wechatId] : []
         }
       }
     )
@@ -1001,9 +1037,75 @@ export const personnelUserService = {
         ),
       async () => ({
         record:
-          getPersonnelList().find((item) => normalizeText(item.wx_openid) === normalizeText(wxOpenid)) ||
-          null
+          getPersonnelList().find((item) => resolveWechatId(item) === normalizeText(wxOpenid)) || null
       })
+    )
+  },
+
+  async listLoginProfiles({ keyword = '', reviewStatus = 'all', limit = 20 } = {}) {
+    return withMockFallback(
+      async () =>
+        unwrapResponse(
+          await http.get('/api/personnel/login-profiles', {
+            params: {
+              keyword,
+              reviewStatus,
+              limit
+            }
+          })
+        ),
+      async () => {
+        const maxLimit = Math.max(1, toNumber(limit) || 20)
+        const list = filterPersonnel(getActivePersonnel(), keyword)
+          .filter((item) => (reviewStatus === 'all' ? true : item.review_status === reviewStatus))
+          .slice(0, maxLimit)
+          .map((item) => buildLoginProfileRecord(item))
+
+        return { list }
+      }
+    )
+  },
+
+  async getLoginProfileByPasscode({ passcode = '' } = {}) {
+    return withMockFallback(
+      async () =>
+        unwrapResponse(
+          await http.get('/api/personnel/login-profile', {
+            params: {
+              passcode
+            }
+          })
+        ),
+      async () => {
+        const record = findPersonnelByPasscode(passcode)
+        return {
+          matched: !!record,
+          record: record ? buildLoginProfileRecord(record) : null
+        }
+      }
+    )
+  },
+
+  async bindLoginWechatId({ id, wechatId = '' } = {}) {
+    return withMockFallback(
+      async () =>
+        unwrapResponse(
+          await http.patch(`/api/personnel/${id}/wechat-id`, {
+            wechatId
+          })
+        ),
+      async () => {
+        const normalizedWechatId = normalizeText(wechatId)
+        const nextRecord = updatePersonnelRecord(normalizeText(id), {
+          wechat_id: normalizedWechatId
+        })
+
+        return {
+          id: nextRecord?._id || normalizeText(id),
+          wechat_id: normalizedWechatId,
+          record: nextRecord ? buildLoginProfileRecord(nextRecord) : null
+        }
+      }
     )
   },
 
@@ -1087,6 +1189,7 @@ export const personnelUserService = {
           passcode: `LOVE${generatedPersonId}`,
           user_role: 0,
           personal_photo: '',
+          wechat_id: '',
           wx_openid: '',
           wx_unionid: '',
           wx_nickname: '',

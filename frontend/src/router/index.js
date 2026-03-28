@@ -14,8 +14,8 @@ const routes = [
     component: () => import('@/pages/index/profile-route-gateway.vue')
   },
   {
-    path: '/pages/index/service',
-    component: () => import('@/pages/index/mbti-showcase-home.vue')
+    path: '/pages/index/login-home',
+    component: () => import('@/pages/index/love-login-home.vue')
   },
   {
     path: '/pages/user/helper',
@@ -55,7 +55,7 @@ const routes = [
   },
   {
     path: '/pages/mbti-home/home',
-    redirect: '/pages/index/service'
+    redirect: '/pages/index/login-home'
   }
 ]
 

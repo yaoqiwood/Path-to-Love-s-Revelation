@@ -1,13 +1,21 @@
 <template>
   <section class="welcome-page">
     <section class="hero">
+      <div class="hero-glow hero-glow-top"></div>
+      <div class="hero-glow hero-glow-bottom"></div>
       <div class="hero-backdrop hero-backdrop-left"></div>
       <div class="hero-backdrop hero-backdrop-right"></div>
 
       <div class="hero-copy">
         <p class="eyebrow">PATH TO LOVE</p>
-        <h1 class="headline">欢迎来到“爱的启示路”</h1>
+        <h1 class="headline">
+          <span class="headline-line">欢迎来到</span>
+          <span class="headline-line">爱的启示“路”</span>
+        </h1>
         <p class="subhead">先看见自己，再靠近彼此。</p>
+        <p class="hero-intro">
+          在性格、吸引与表达之间，慢慢找到最贴近自己的那条关系路径。
+        </p>
       </div>
 
       <div class="hero-stage">
@@ -25,70 +33,18 @@
       </div>
 
       <div class="hero-actions">
-        <button class="hero-action-btn primary-btn" type="button" @click="enterAsGuest">
-          开始浏览
-        </button>
-        <button class="hero-action-btn ghost-btn" type="button" @click="enterAsParticipant">
-          进入测试
+        <button class="hero-action-btn primary-btn" type="button" @click="enterLovePath">
+          进入爱之路
         </button>
       </div>
-    </section>
-
-    <section class="summary-panel">
-      <article class="summary-card">
-        <span class="summary-label">模拟参与者</span>
-        <strong class="summary-value">{{ overview.participants }}</strong>
-      </article>
-      <article class="summary-card">
-        <span class="summary-label">后台账号</span>
-        <strong class="summary-value">{{ overview.users + overview.admins }}</strong>
-      </article>
-      <article class="summary-card">
-        <span class="summary-label">已审核资料</span>
-        <strong class="summary-value">{{ overview.approved }}</strong>
-      </article>
-    </section>
-
-    <section class="entry-grid">
-      <button class="entry-card" type="button" @click="enterAsGuest">
-        <span class="entry-tag">访客</span>
-        <strong class="entry-title">欢迎页</strong>
-        <span class="entry-desc">先逛一圈</span>
-      </button>
-
-      <button class="entry-card" type="button" @click="enterAsParticipant">
-        <span class="entry-tag">测试</span>
-        <strong class="entry-title">MBTI</strong>
-        <span class="entry-desc">直接开答</span>
-      </button>
-
-      <button class="entry-card accent-card" type="button" @click="enterAsAdmin">
-        <span class="entry-tag">后台</span>
-        <strong class="entry-title">Mock 管理</strong>
-        <span class="entry-desc">查看数据</span>
-      </button>
-    </section>
-
-    <section class="persona-grid">
-      <article v-for="item in showcaseList" :key="item.code" class="persona-card">
-        <div class="persona-top">
-          <div class="avatar-shell">
-            <img class="persona-avatar" :src="item.avatar" :alt="item.name" />
-          </div>
-          <span class="persona-code">{{ item.code }}</span>
-        </div>
-        <h3 class="persona-name">{{ item.name }}</h3>
-        <p class="persona-note">{{ item.note }}</p>
-      </article>
     </section>
   </section>
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { applyMockPreset, getMockOverview } from '@/platform/mock-presets'
+import { applyMockPreset } from '@/platform/mock-presets'
 
 const router = useRouter()
 
@@ -98,85 +54,86 @@ const orbitTypes = [
   { code: 'INFJ' },
   { code: 'ENFJ' },
   { code: 'INTJ' },
+  { code: 'INTP' },
+  { code: 'ENTJ' },
+  { code: 'ISTJ' },
   { code: 'ESFP' },
   { code: 'ISFP' },
-  { code: 'ENTP' }
+  { code: 'ENTP' },
+  { code: 'ISFJ' }
 ]
-
-const showcaseList = computed(() => [
-  {
-    code: 'INFP',
-    name: '月光理想家',
-    note: '细腻温柔',
-    avatar: '/static/mbti-personas/infp.svg'
-  },
-  {
-    code: 'ENFP',
-    name: '烟火冒险家',
-    note: '热烈灵动',
-    avatar: '/static/mbti-personas/enfp.svg'
-  },
-  {
-    code: 'INFJ',
-    name: '静谧预言家',
-    note: '深情克制',
-    avatar: '/static/mbti-personas/infj.svg'
-  },
-  {
-    code: 'ENFJ',
-    name: '暖场指挥家',
-    note: '温暖有力',
-    avatar: '/static/mbti-personas/enfj.svg'
-  }
-])
-
-const overview = getMockOverview()
 
 function orbitStyle(index) {
   const positions = [
-    { top: '18px', left: '118px' },
-    { top: '62px', right: '16px' },
-    { top: '152px', right: '-4px' },
-    { top: '256px', right: '42px' },
-    { top: '308px', left: '128px' },
-    { top: '258px', left: '18px' },
-    { top: '154px', left: '-6px' },
-    { top: '54px', left: '24px' }
+    { top: '14px', left: '138px' },
+    { top: '34px', right: '72px' },
+    { top: '92px', right: '8px' },
+    { top: '174px', right: '-8px' },
+    { top: '258px', right: '24px' },
+    { top: '316px', right: '92px' },
+    { top: '334px', left: '138px' },
+    { top: '316px', left: '92px' },
+    { top: '258px', left: '24px' },
+    { top: '174px', left: '-8px' },
+    { top: '92px', left: '8px' },
+    { top: '34px', left: '72px' }
   ]
 
   return positions[index] || {}
 }
 
-function enterAsGuest() {
+function enterLovePath() {
   applyMockPreset('guest')
-  router.push('/pages/index/service')
-}
-
-function enterAsParticipant() {
-  applyMockPreset('participant')
-  router.push('/pages/user/helper')
-}
-
-function enterAsAdmin() {
-  applyMockPreset('admin')
-  router.push('/pkg/guide/hub')
+  router.push('/pages/index/login-home')
 }
 </script>
 
 <style scoped lang="less">
 .welcome-page {
   min-height: 100vh;
-  padding: 24px 20px calc(var(--safe-bottom) + 24px);
+  padding: 0;
   background:
-    radial-gradient(circle at top left, rgba(255, 194, 159, 0.42), transparent 30%),
-    radial-gradient(circle at top right, rgba(135, 202, 255, 0.4), transparent 24%),
-    linear-gradient(180deg, #fffdf8 0%, #fff4ec 46%, #fffaf4 100%);
+    radial-gradient(circle at top left, rgba(255, 204, 177, 0.48), transparent 30%),
+    radial-gradient(circle at 85% 16%, rgba(170, 221, 255, 0.38), transparent 22%),
+    radial-gradient(circle at 50% 52%, rgba(255, 255, 255, 0.78), transparent 34%),
+    linear-gradient(180deg, #fffaf5 0%, #fff2e8 44%, #fff8f1 100%);
 }
 
 .hero {
   position: relative;
   overflow: hidden;
-  padding: 24px 4px 10px;
+  min-height: 100vh;
+  padding: calc(56px + var(--safe-top, 0px)) clamp(22px, 5vw, 52px) calc(40px + var(--safe-bottom, 0px));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 247, 240, 0.4)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+  backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.hero-glow-top {
+  width: 260px;
+  height: 260px;
+  top: -120px;
+  right: 12%;
+  background: radial-gradient(circle, rgba(255, 228, 210, 0.88), transparent 72%);
+}
+
+.hero-glow-bottom {
+  width: 280px;
+  height: 280px;
+  left: -90px;
+  bottom: -120px;
+  background: radial-gradient(circle, rgba(255, 203, 164, 0.42), transparent 72%);
 }
 
 .hero-backdrop {
@@ -204,10 +161,7 @@ function enterAsAdmin() {
 
 .hero-copy,
 .hero-stage,
-.hero-actions,
-.summary-panel,
-.entry-grid,
-.persona-grid {
+.hero-actions {
   position: relative;
   z-index: 2;
 }
@@ -222,27 +176,52 @@ function enterAsAdmin() {
 }
 
 .headline {
-  margin: 12px 0 0;
-  color: #2f211d;
+  max-width: 8em;
+  margin: 14px 0 0;
+  color: #2b1d19;
   font-family: var(--font-display);
-  font-size: clamp(36px, 8vw, 48px);
-  line-height: 1.08;
+  font-size: clamp(40px, 8vw, 64px);
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+}
+
+.headline-line {
+  display: block;
 }
 
 .subhead {
+  margin: 18px 0 0;
+  font-size: 17px;
+  line-height: 1.75;
+  color: #6d5b56;
+}
+
+.hero-intro {
+  max-width: 32em;
   margin: 14px 0 0;
   font-size: 15px;
-  line-height: 1.7;
-  color: #6d5b56;
+  line-height: 1.85;
+  color: #876b60;
 }
 
 .hero-stage {
   position: relative;
-  width: min(82vw, 340px);
-  height: min(82vw, 340px);
-  margin: 26px auto 18px;
+  width: min(92vw, 420px);
+  height: min(72vw, 320px);
+  margin: 18px auto 18px;
+}
+
+.hero-stage::before {
+  content: '';
+  position: absolute;
+  inset: 10px 0 22px;
   border-radius: 50%;
   border: 1px dashed rgba(111, 82, 66, 0.16);
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.34), transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(255, 228, 213, 0.18), transparent 72%);
+  transform: rotate(-18deg) scaleX(1.04) scaleY(0.82);
+  transform-origin: center;
 }
 
 .center-orb {
@@ -252,7 +231,7 @@ function enterAsAdmin() {
   width: 118px;
   height: 118px;
   margin-left: -59px;
-  margin-top: -59px;
+  margin-top: -39px;
   border-radius: 50%;
   background: linear-gradient(180deg, #2f2a47 0%, #4b4266 100%);
   box-shadow: 0 18px 40px rgba(69, 56, 95, 0.22);
@@ -270,189 +249,64 @@ function enterAsAdmin() {
 
 .orbit-chip {
   position: absolute;
-  min-width: 78px;
-  padding: 10px 12px;
+  min-width: 66px;
+  padding: 8px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.76);
+  background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(8px);
-  box-shadow: 0 12px 24px rgba(87, 58, 37, 0.08);
+  box-shadow:
+    0 12px 24px rgba(87, 58, 37, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56);
   text-align: center;
 }
 
 .orbit-chip-code {
   color: #614536;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .hero-actions {
   display: flex;
-  gap: 12px;
+  justify-content: center;
+  margin-top: 115px;
 }
 
 .hero-action-btn {
-  flex: 1;
-  height: 52px;
+  min-width: min(100%, 280px);
+  height: 56px;
+  padding: 0 28px;
   border-radius: 999px;
   border: none;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    filter 0.25s ease;
+  cursor: pointer;
 }
 
 .primary-btn {
-  background: linear-gradient(90deg, #2f2a47 0%, #594a83 100%);
+  background: linear-gradient(135deg, #2f2a47 0%, #5b4c88 55%, #7b5f83 100%);
   color: #fff9f0;
-  box-shadow: 0 18px 32px rgba(77, 62, 109, 0.22);
+  box-shadow: 0 20px 36px rgba(77, 62, 109, 0.26);
 }
 
-.ghost-btn {
-  background: rgba(255, 255, 255, 0.68);
-  color: #4e3d37;
-  border: 1px solid rgba(94, 68, 54, 0.12);
-}
-
-.summary-panel {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.summary-card,
-.entry-card,
-.persona-card {
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 18px 34px rgba(117, 88, 63, 0.1);
-  backdrop-filter: blur(10px);
-}
-
-.summary-card {
-  padding: 16px 14px;
-}
-
-.summary-label {
-  display: block;
-  color: #8f776d;
-  font-size: 12px;
-}
-
-.summary-value {
-  display: block;
-  margin-top: 8px;
-  color: #342925;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.entry-grid {
-  display: grid;
-  gap: 14px;
-  margin-top: 18px;
-}
-
-.entry-card {
-  padding: 20px;
-  text-align: left;
-  border: none;
-}
-
-.accent-card {
-  background: linear-gradient(135deg, rgba(255, 247, 239, 0.98) 0%, rgba(243, 239, 255, 0.98) 100%);
-}
-
-.entry-tag {
-  display: block;
-  color: #8d5d41;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.entry-title {
-  display: block;
-  margin-top: 10px;
-  color: #2f211d;
-  font-size: 24px;
-  line-height: 1.2;
-}
-
-.entry-desc {
-  display: block;
-  margin-top: 8px;
-  color: #6f615c;
-  font-size: 14px;
-}
-
-.persona-grid {
-  margin-top: 18px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.persona-card {
-  padding: 18px;
-}
-
-.persona-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.avatar-shell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 108px;
-  height: 120px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.56);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
-}
-
-.persona-avatar {
-  width: 90px;
-  height: 102px;
-  object-fit: contain;
-}
-
-.persona-code {
-  display: inline-flex;
-  align-items: center;
-  height: fit-content;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #fff1e8;
-  color: #8d5d41;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-}
-
-.persona-name {
-  margin: 14px 0 0;
-  color: #2c211e;
-  font-size: 20px;
-  line-height: 1.2;
-}
-
-.persona-note {
-  margin: 8px 0 0;
-  color: #634d43;
-  font-size: 14px;
+.hero-action-btn:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.06);
 }
 
 @media (max-width: 380px) {
-  .summary-panel,
-  .persona-grid {
-    grid-template-columns: 1fr;
+  .hero {
+    padding-left: 18px;
+    padding-right: 18px;
   }
 
-  .hero-actions {
-    flex-direction: column;
+  .hero-action-btn {
+    width: 100%;
   }
 }
 </style>

@@ -263,13 +263,7 @@
 </template>
 
 <script>
-let personnelUser = null
-
-try {
-	personnelUser = uniCloud.importObject('personnel-user')
-} catch (error) {
-	console.error('import personnel-user failed', error)
-}
+import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
 
 function createStats() {
 	return {

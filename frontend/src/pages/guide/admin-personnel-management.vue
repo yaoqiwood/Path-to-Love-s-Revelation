@@ -369,11 +369,10 @@
 </template>
 
 <script>
+	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import { uploadAppFile } from '@/platform/app-runtime'
+
 	const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
-	var personnelUser = null
-	if (typeof uniCloud !== 'undefined' && uniCloud.importObject) {
-		personnelUser = uniCloud.importObject('personnel-user')
-	}
 
 	function createDefaultStats() {
 		return {
@@ -602,7 +601,7 @@
 						mask: true
 					})
 					var ext = (fileName.split('.').pop() || 'xlsx').toLowerCase()
-					var uploadRes = await uniCloud.uploadFile({
+					var uploadRes = await uploadAppFile({
 						filePath: filePath,
 						cloudPath:
 							'mbti-import/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext
@@ -1081,7 +1080,7 @@
 						title: '上传中'
 					})
 					var ext = filePath.split('.').pop() || 'jpg'
-					var uploadRes = await uniCloud.uploadFile({
+					var uploadRes = await uploadAppFile({
 						filePath: filePath,
 						cloudPath:
 							'mbti-personnel/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext
@@ -1208,7 +1207,7 @@
 			},
 			showUnavailable: function () {
 				uni.showModal({
-					content: '当前环境未启用 uniCloud 云对象，请先绑定并部署云空间。',
+					content: '当前环境未启用人员服务，请稍后重试。',
 					showCancel: false
 				})
 			}

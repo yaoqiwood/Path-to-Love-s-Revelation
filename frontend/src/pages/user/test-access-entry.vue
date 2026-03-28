@@ -74,7 +74,8 @@
 </template>
 
 <script>
-	const personnelUser = uniCloud.importObject('personnel-user')
+	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import { getCurrentUserInfo, uploadAppFile } from '@/platform/app-runtime'
 	const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
 
 	export default {
@@ -300,7 +301,7 @@
 			},
 			async loadCurrentUser() {
 				try {
-					const currentUserInfo = uniCloud.getCurrentUserInfo()
+					const currentUserInfo = getCurrentUserInfo()
 					const cachedUser = uni.getStorageSync('uni-id-pages-userInfo') || {}
 					const currentUserInfoUser = currentUserInfo.userInfo || {}
 					const user = {
@@ -334,7 +335,7 @@
 			async fetchLoginOpenIdsFromServer() {
 				try {
 					const uid =
-						(this.currentUser && this.currentUser._id) || (uniCloud.getCurrentUserInfo() || {}).uid || ''
+						(this.currentUser && this.currentUser._id) || (getCurrentUserInfo() || {}).uid || ''
 					const result = await personnelUser.getCurrentLoginWxOpenid({
 						uid
 					})
@@ -638,7 +639,7 @@
 					return avatar
 				}
 				const ext = avatar.split('.').pop() || 'jpg'
-				const uploadRes = await uniCloud.uploadFile({
+				const uploadRes = await uploadAppFile({
 					filePath: avatar,
 					cloudPath:
 						'mbti-personnel/avatar-' +
@@ -774,7 +775,7 @@
 				})
 
 				try {
-					const uid = uniCloud.getCurrentUserInfo().uid
+					const uid = getCurrentUserInfo().uid
 					if (!uid) {
 						throw new Error('请先完成微信登录')
 					}
@@ -907,7 +908,7 @@
 			},
 			goHome() {
 				uni.navigateTo({
-					url: '/pages/index/service'
+					url: '/pages/index/login-home'
 				})
 			}
 		}

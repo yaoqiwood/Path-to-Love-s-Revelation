@@ -188,14 +188,8 @@
 </template>
 
 <script>
-let personnelUser = null
+import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
 const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
-
-try {
-	personnelUser = uniCloud.importObject('personnel-user')
-} catch (error) {
-	console.error('import personnel-user failed', error)
-}
 
 export default {
 	data() {

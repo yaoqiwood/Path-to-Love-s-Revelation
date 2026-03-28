@@ -131,7 +131,8 @@
 	import { computed, reactive, ref } from 'vue'
 	import { onLoad } from '@dcloudio/uni-app'
 	import questionsSource from '@/data/mbti-88-questions.json'
-	const personnelUser = uniCloud.importObject('personnel-user')
+	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import { getCurrentUserInfo } from '@/platform/app-runtime'
 
 	const questions = questionsSource.questions || []
 	const totalQuestions = questions.length
@@ -393,7 +394,7 @@
 
 	async function resolveWxOpenidFromLogin() {
 		try {
-			const currentUserInfo = uniCloud.getCurrentUserInfo() || {}
+			const currentUserInfo = getCurrentUserInfo() || {}
 			const currentUser = currentUserInfo.userInfo || {}
 			const localOpenid = getCandidateOpenIds({
 				wx_openid: currentUser.wx_openid || currentUserInfo.wx_openid || ''

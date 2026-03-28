@@ -253,15 +253,9 @@ const PANEL_OPTIONS = [
 		tip: '双方进入前 10 名按名次正序计分，未进入前 10 名的一侧按 1000 权重计算，总分越低越靠前。'
 	}
 ]
-let personnelUser = null
+import { personnelUserService } from '@/api/modules/personnel-user'
 
-try {
-	personnelUser = uniCloud.importObject('personnel-user', {
-		customUI: true
-	})
-} catch (error) {
-	console.error('import personnel-user failed', error)
-}
+let personnelUser = personnelUserService
 
 function normalizeText(value) {
 	return String(value || '').trim()
