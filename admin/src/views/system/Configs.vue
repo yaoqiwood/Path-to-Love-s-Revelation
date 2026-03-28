@@ -121,7 +121,7 @@
               </el-radio-group>
 
               <template v-if="arrayEditMode === 'visual'">
-                <div v-for="(item, index) in arrayItems" :key="index" class="array-item">
+                <div v-for="(_item, index) in arrayItems" :key="index" class="array-item">
                   <el-input v-model="arrayItems[index]" placeholder="请输入值" />
                   <el-button :icon="Delete" type="danger" text @click="removeArrayItem(index)" />
                 </div>
@@ -141,9 +141,9 @@
               </el-radio-group>
 
               <template v-if="jsonEditMode === 'visual'">
-                <div v-for="(item, index) in jsonPairs" :key="index" class="json-pair">
-                  <el-input v-model="jsonPairs[index].key" placeholder="键" style="width: 40%" />
-                  <el-input v-model="jsonPairs[index].value" placeholder="值" style="width: 50%" />
+                <div v-for="(_item, index) in jsonPairs" :key="index" class="json-pair">
+                  <el-input v-model="jsonPairs[index]!.key" placeholder="键" style="width: 40%" />
+                  <el-input v-model="jsonPairs[index]!.value" placeholder="值" style="width: 50%" />
                   <el-button :icon="Delete" type="danger" text @click="removeJsonPair(index)" />
                 </div>
                 <el-button :icon="Plus" type="primary" text @click="addJsonPair">添加键值对</el-button>
@@ -250,7 +250,7 @@ const formRules = computed<FormRules>(() => {
     valueJson: isJsonType ? [
       { required: true, message: '请输入配置值', trigger: 'blur' },
       {
-        validator: (rule: any, value: any, callback: any) => {
+        validator: (_rule: any, value: any, callback: any) => {
           try {
             JSON.parse(value)
             callback()
