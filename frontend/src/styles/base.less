@@ -1,0 +1,70 @@
+:root {
+  color-scheme: light;
+  --font-body:
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei',
+    'Segoe UI',
+    sans-serif;
+  --font-display:
+    'Iowan Old Style',
+    'Palatino Linotype',
+    'Songti SC',
+    'Noto Serif SC',
+    serif;
+  --text-strong: #2f211d;
+  --text-body: #5d4b43;
+  --surface-card: rgba(255, 255, 255, 0.82);
+  --line-soft: rgba(94, 68, 54, 0.12);
+  --brand-start: #2f2a47;
+  --brand-end: #594a83;
+  --safe-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-body);
+  background: #fffaf4;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.page {
+  min-height: 100vh;
+}

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="180" viewBox="0 0 160 180">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f1fef8"/>
+      <stop offset="100%" stop-color="#c8f1df"/>
+    </linearGradient>
+    <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#52b99a"/>
+      <stop offset="100%" stop-color="#22684b"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="144" height="164" rx="30" fill="url(#bg)"/>
+  <circle cx="80" cy="50" r="27" fill="#d8f7ec" opacity=".62"/>
+  <ellipse cx="80" cy="152" rx="34" ry="8" fill="#83d2b4" opacity=".28"/>
+  <path d="M54 138c8-23 45-23 52 0" fill="url(#jacket)"/>
+  <rect x="61" y="96" width="38" height="42" rx="18" fill="url(#jacket)"/>
+  <rect x="67" y="82" width="26" height="17" rx="8.5" fill="#f0cfbf"/>
+  <circle cx="80" cy="67" r="21" fill="#f0cfbf"/>
+  <path d="M59 64c4-17 15-27 27-27 13 0 22 10 21 25-9-4-16-5-23-5-10 0-16 2-25 7z" fill="#4f4745"/>
+  <rect x="65" y="64" width="11" height="7" rx="3.5" fill="none" stroke="#4c4d58" stroke-width="2"/>
+  <rect x="84" y="64" width="11" height="7" rx="3.5" fill="none" stroke="#4c4d58" stroke-width="2"/>
+  <path d="M76 67h8" stroke="#4c4d58" stroke-width="2"/>
+  <path d="M74 77c4 2 8 2 12 0" stroke="#9a6d61" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <rect x="104" y="48" width="16" height="20" rx="3" fill="#fff"/>
+  <path d="M104 53h16" stroke="#8cc9ad" stroke-width="2"/>
+  <text x="80" y="156" text-anchor="middle" font-size="14" font-family="Arial" fill="#1e6a4a" font-weight="700">INTP</text>
+</svg>

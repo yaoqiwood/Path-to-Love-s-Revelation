@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="180" viewBox="0 0 160 180">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#faf6f1"/>
+      <stop offset="100%" stop-color="#ead9c2"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b8956b"/>
+      <stop offset="100%" stop-color="#7b5629"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="144" height="164" rx="30" fill="url(#bg)"/>
+  <circle cx="80" cy="50" r="27" fill="#efe2d2" opacity=".62"/>
+  <ellipse cx="80" cy="152" rx="34" ry="8" fill="#b99267" opacity=".25"/>
+  <path d="M53 138c9-22 46-22 54 0" fill="url(#coat)"/>
+  <rect x="60" y="95" width="40" height="43" rx="18" fill="url(#coat)"/>
+  <rect x="67" y="82" width="26" height="17" rx="8.5" fill="#efcfbe"/>
+  <circle cx="80" cy="67" r="21" fill="#efcfbe"/>
+  <path d="M58 64c5-15 15-27 26-27 13 0 22 10 23 25-8-4-15-6-23-6-11 0-17 4-26 8z" fill="#4a3e3c"/>
+  <circle cx="72" cy="67" r="2.5" fill="#443637"/>
+  <circle cx="88" cy="67" r="2.5" fill="#443637"/>
+  <path d="M74 77c4 3 8 3 12 0" stroke="#9a6e61" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="112" cy="53" rx="10" ry="8" fill="#fff"/>
+  <circle cx="108" cy="50" r="2.5" fill="#f4a261"/>
+  <circle cx="116" cy="50" r="2.5" fill="#2a9d8f"/>
+  <circle cx="112" cy="56" r="2.5" fill="#e76f51"/>
+  <text x="80" y="156" text-anchor="middle" font-size="14" font-family="Arial" fill="#7a5528" font-weight="700">ISFP</text>
+</svg>

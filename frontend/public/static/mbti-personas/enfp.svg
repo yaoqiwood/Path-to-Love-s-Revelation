@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="180" viewBox="0 0 160 180">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff9ed"/>
+      <stop offset="100%" stop-color="#ffe09f"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffb64e"/>
+      <stop offset="100%" stop-color="#db7d14"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="144" height="164" rx="30" fill="url(#bg)"/>
+  <circle cx="80" cy="50" r="28" fill="#ffe7ac" opacity=".55"/>
+  <ellipse cx="80" cy="152" rx="34" ry="8" fill="#d79f44" opacity=".28"/>
+  <path d="M52 137c10-24 46-23 56 0" fill="url(#coat)"/>
+  <rect x="59" y="94" width="42" height="43" rx="18" fill="url(#coat)"/>
+  <rect x="68" y="80" width="24" height="18" rx="9" fill="#f5c7ae"/>
+  <circle cx="80" cy="66" r="21" fill="#f5c7ae"/>
+  <path d="M57 62c4-14 14-25 25-25 14 0 24 11 24 29-8-8-17-12-28-12-8 0-14 3-21 8z" fill="#7b564a"/>
+  <circle cx="73" cy="65" r="2.5" fill="#4a3833"/>
+  <circle cx="89" cy="65" r="2.5" fill="#4a3833"/>
+  <path d="M74 76c4 4 9 4 13 0" stroke="#9f6b57" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M110 44l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#fff2b2"/>
+  <text x="80" y="156" text-anchor="middle" font-size="14" font-family="Arial" fill="#8d5a00" font-weight="700">ENFP</text>
+</svg>

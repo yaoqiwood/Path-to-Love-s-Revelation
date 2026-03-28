@@ -1,0 +1,1324 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "EI",
+      "title": "在社交场合中，我通常更容易",
+      "selections": [
+        {
+          "text": "主动和很多人聊天",
+          "dimension": "E"
+        },
+        {
+          "text": "只和少数熟悉的人交流",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "SN",
+      "title": "一段关系中，我更在意",
+      "selections": [
+        {
+          "text": "现实生活是否稳定",
+          "dimension": "S"
+        },
+        {
+          "text": "未来是否有更多可能",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "TF",
+      "title": "当两个人出现分歧时，我更倾向",
+      "selections": [
+        {
+          "text": "根据事实和逻辑判断",
+          "dimension": "T"
+        },
+        {
+          "text": "优先考虑彼此的感受",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "JP",
+      "title": "在恋爱关系里，我通常更喜欢",
+      "selections": [
+        {
+          "text": "提前安排好计划",
+          "dimension": "J"
+        },
+        {
+          "text": "顺其自然发展",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "EI",
+      "title": "和人相处时，我更容易",
+      "selections": [
+        {
+          "text": "通过互动获得能量",
+          "dimension": "E"
+        },
+        {
+          "text": "独处时恢复能量",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "SN",
+      "title": "当我了解一个人时，我更关注",
+      "selections": [
+        {
+          "text": "他/她现实中的行为",
+          "dimension": "S"
+        },
+        {
+          "text": "他/她的想法和理念",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "TF",
+      "title": "如果要做一个重要决定，我更可能",
+      "selections": [
+        {
+          "text": "理性分析利弊",
+          "dimension": "T"
+        },
+        {
+          "text": "根据内心感觉决定",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "JP",
+      "title": "对我来说理想的约会是",
+      "selections": [
+        {
+          "text": "提前规划好的行程",
+          "dimension": "J"
+        },
+        {
+          "text": "临时决定去做什么",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "EI",
+      "title": "在聚会中我通常",
+      "selections": [
+        {
+          "text": "会认识很多新朋友",
+          "dimension": "E"
+        },
+        {
+          "text": "更喜欢待在熟悉的人旁边",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "SN",
+      "title": "我更容易被一个人的哪一点吸引",
+      "selections": [
+        {
+          "text": "现实可靠的生活能力",
+          "dimension": "S"
+        },
+        {
+          "text": "有趣独特的思想",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "TF",
+      "title": "在处理问题时，我更看重",
+      "selections": [
+        {
+          "text": "是否合乎逻辑",
+          "dimension": "T"
+        },
+        {
+          "text": "是否照顾到人的感受",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "JP",
+      "title": "当生活安排被打乱时，我通常",
+      "selections": [
+        {
+          "text": "会感到有点不舒服",
+          "dimension": "J"
+        },
+        {
+          "text": "觉得事情变得有趣",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "EI",
+      "title": "在朋友聚会中，我通常",
+      "selections": [
+        {
+          "text": "比较活跃和外向",
+          "dimension": "E"
+        },
+        {
+          "text": "更安静地观察大家",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "SN",
+      "title": "我更喜欢讨论",
+      "selections": [
+        {
+          "text": "现实生活中的事情",
+          "dimension": "S"
+        },
+        {
+          "text": "各种想象和未来可能",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "TF",
+      "title": "当朋友向我倾诉烦恼时，我更可能",
+      "selections": [
+        {
+          "text": "帮他分析问题怎么解决",
+          "dimension": "T"
+        },
+        {
+          "text": "先安慰他的情绪",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "type": "JP",
+      "title": "在计划旅行时，我更喜欢",
+      "selections": [
+        {
+          "text": "提前安排好路线",
+          "dimension": "J"
+        },
+        {
+          "text": "到了再决定去哪",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "EI",
+      "title": "和陌生人相处时，我通常",
+      "selections": [
+        {
+          "text": "比较容易打开话题",
+          "dimension": "E"
+        },
+        {
+          "text": "需要时间慢慢熟悉",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "SN",
+      "title": "当别人描述一个计划时，我更关注",
+      "selections": [
+        {
+          "text": "具体怎么实现",
+          "dimension": "S"
+        },
+        {
+          "text": "这个想法是否有创意",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "type": "TF",
+      "title": "做决定时，我更相信",
+      "selections": [
+        {
+          "text": "理性的判断",
+          "dimension": "T"
+        },
+        {
+          "text": "自己的直觉和感受",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "JP",
+      "title": "在一段关系里，我更喜欢",
+      "selections": [
+        {
+          "text": "明确的未来规划",
+          "dimension": "J"
+        },
+        {
+          "text": "保持开放可能",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "type": "EI",
+      "title": "在社交活动结束后，我通常",
+      "selections": [
+        {
+          "text": "感觉精力充沛",
+          "dimension": "E"
+        },
+        {
+          "text": "需要独处恢复",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "type": "SN",
+      "title": "我更相信",
+      "selections": [
+        {
+          "text": "经验和事实",
+          "dimension": "S"
+        },
+        {
+          "text": "灵感和想象",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "type": "TF",
+      "title": "当朋友做错事情时，我更可能",
+      "selections": [
+        {
+          "text": "直接指出问题",
+          "dimension": "T"
+        },
+        {
+          "text": "先考虑他的感受",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "type": "JP",
+      "title": "我更喜欢的生活节奏是",
+      "selections": [
+        {
+          "text": "稳定有计划",
+          "dimension": "J"
+        },
+        {
+          "text": "灵活有变化",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "type": "EI",
+      "title": "当我认识新朋友时，我通常",
+      "selections": [
+        {
+          "text": "主动聊天",
+          "dimension": "E"
+        },
+        {
+          "text": "等别人先开口",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "type": "SN",
+      "title": "当别人讲述一个想法时，我更关注",
+      "selections": [
+        {
+          "text": "现实是否可行",
+          "dimension": "S"
+        },
+        {
+          "text": "是否新颖有趣",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "type": "TF",
+      "title": "在冲突中，我更倾向",
+      "selections": [
+        {
+          "text": "坚持客观事实",
+          "dimension": "T"
+        },
+        {
+          "text": "尽量维持关系和谐",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "type": "JP",
+      "title": "对未来计划，我更喜欢",
+      "selections": [
+        {
+          "text": "尽早确定方向",
+          "dimension": "J"
+        },
+        {
+          "text": "慢慢探索可能",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "type": "EI",
+      "title": "在团队中，我通常",
+      "selections": [
+        {
+          "text": "比较外向活跃",
+          "dimension": "E"
+        },
+        {
+          "text": "安静观察",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "type": "SN",
+      "title": "我更喜欢关注",
+      "selections": [
+        {
+          "text": "实际发生的事情",
+          "dimension": "S"
+        },
+        {
+          "text": "事情背后的意义",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "type": "TF",
+      "title": "处理问题时，我更看重",
+      "selections": [
+        {
+          "text": "公平和逻辑",
+          "dimension": "T"
+        },
+        {
+          "text": "体贴和理解",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "type": "JP",
+      "title": "我更喜欢生活",
+      "selections": [
+        {
+          "text": "井井有条",
+          "dimension": "J"
+        },
+        {
+          "text": "自由变化",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "type": "EI",
+      "title": "在聊天时，我通常",
+      "selections": [
+        {
+          "text": "说得比较多",
+          "dimension": "E"
+        },
+        {
+          "text": "听得比较多",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "type": "SN",
+      "title": "我更喜欢谈论",
+      "selections": [
+        {
+          "text": "现实生活",
+          "dimension": "S"
+        },
+        {
+          "text": "未来理想",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "type": "TF",
+      "title": "在判断事情时，我更重视",
+      "selections": [
+        {
+          "text": "客观事实",
+          "dimension": "T"
+        },
+        {
+          "text": "人的情绪",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "type": "JP",
+      "title": "在安排时间时，我更喜欢",
+      "selections": [
+        {
+          "text": "提前计划",
+          "dimension": "J"
+        },
+        {
+          "text": "随时调整",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "type": "EI",
+      "title": "在社交环境中，我更可能",
+      "selections": [
+        {
+          "text": "主动参与",
+          "dimension": "E"
+        },
+        {
+          "text": "保持低调",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "type": "SN",
+      "title": "我更相信",
+      "selections": [
+        {
+          "text": "现实经验",
+          "dimension": "S"
+        },
+        {
+          "text": "未来可能",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "type": "TF",
+      "title": "当别人和我意见不同，我更可能",
+      "selections": [
+        {
+          "text": "用逻辑说明理由",
+          "dimension": "T"
+        },
+        {
+          "text": "尝试理解对方感受",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "type": "JP",
+      "title": "我更喜欢生活",
+      "selections": [
+        {
+          "text": "有明确安排",
+          "dimension": "J"
+        },
+        {
+          "text": "保留自由空间",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "type": "EI",
+      "title": "在陌生环境中，我通常",
+      "selections": [
+        {
+          "text": "很快融入",
+          "dimension": "E"
+        },
+        {
+          "text": "先观察再行动",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "type": "SN",
+      "title": "我更感兴趣",
+      "selections": [
+        {
+          "text": "具体细节",
+          "dimension": "S"
+        },
+        {
+          "text": "整体概念",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "type": "TF",
+      "title": "解决问题时，我更依赖",
+      "selections": [
+        {
+          "text": "分析",
+          "dimension": "T"
+        },
+        {
+          "text": "共情",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "type": "JP",
+      "title": "我更喜欢",
+      "selections": [
+        {
+          "text": "事情有明确结论",
+          "dimension": "J"
+        },
+        {
+          "text": "事情保持开放",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "type": "EI",
+      "title": "在人多场合，我通常",
+      "selections": [
+        {
+          "text": "主动社交",
+          "dimension": "E"
+        },
+        {
+          "text": "比较安静",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "type": "SN",
+      "title": "我更相信",
+      "selections": [
+        {
+          "text": "现实经验",
+          "dimension": "S"
+        },
+        {
+          "text": "直觉判断",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "type": "TF",
+      "title": "面对冲突时，我更可能",
+      "selections": [
+        {
+          "text": "讲道理",
+          "dimension": "T"
+        },
+        {
+          "text": "缓和气氛",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 48,
+      "type": "JP",
+      "title": "我的做事方式更接近",
+      "selections": [
+        {
+          "text": "有计划",
+          "dimension": "J"
+        },
+        {
+          "text": "随机应变",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "type": "EI",
+      "title": "我通常更喜欢",
+      "selections": [
+        {
+          "text": "与很多人交流",
+          "dimension": "E"
+        },
+        {
+          "text": "独处思考",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "type": "SN",
+      "title": "我更关注",
+      "selections": [
+        {
+          "text": "现实细节",
+          "dimension": "S"
+        },
+        {
+          "text": "抽象想法",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "type": "TF",
+      "title": "做决定时，我更依赖",
+      "selections": [
+        {
+          "text": "逻辑",
+          "dimension": "T"
+        },
+        {
+          "text": "感情",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "type": "JP",
+      "title": "我更喜欢",
+      "selections": [
+        {
+          "text": "提前安排",
+          "dimension": "J"
+        },
+        {
+          "text": "顺其自然",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "type": "EI",
+      "title": "在聊天中，我通常",
+      "selections": [
+        {
+          "text": "表达很多",
+          "dimension": "E"
+        },
+        {
+          "text": "倾听更多",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "type": "SN",
+      "title": "我更感兴趣",
+      "selections": [
+        {
+          "text": "实际事情",
+          "dimension": "S"
+        },
+        {
+          "text": "概念想法",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "type": "TF",
+      "title": "当别人难过时，我更可能",
+      "selections": [
+        {
+          "text": "给建议",
+          "dimension": "T"
+        },
+        {
+          "text": "给予安慰",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "type": "JP",
+      "title": "我更喜欢",
+      "selections": [
+        {
+          "text": "清晰安排",
+          "dimension": "J"
+        },
+        {
+          "text": "灵活变化",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 57,
+      "type": "EI",
+      "title": "在社交中，我通常",
+      "selections": [
+        {
+          "text": "主动交流",
+          "dimension": "E"
+        },
+        {
+          "text": "慢慢熟悉",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "type": "SN",
+      "title": "我更相信",
+      "selections": [
+        {
+          "text": "事实",
+          "dimension": "S"
+        },
+        {
+          "text": "直觉",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 59,
+      "type": "TF",
+      "title": "处理分歧时，我更倾向",
+      "selections": [
+        {
+          "text": "理性讨论",
+          "dimension": "T"
+        },
+        {
+          "text": "情感沟通",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "type": "JP",
+      "title": "我的生活方式更接近",
+      "selections": [
+        {
+          "text": "有秩序",
+          "dimension": "J"
+        },
+        {
+          "text": "自由变化",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 61,
+      "type": "EI",
+      "title": "在聚会中，我通常",
+      "selections": [
+        {
+          "text": "比较活跃",
+          "dimension": "E"
+        },
+        {
+          "text": "比较安静",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "type": "SN",
+      "title": "我更喜欢关注",
+      "selections": [
+        {
+          "text": "现实细节",
+          "dimension": "S"
+        },
+        {
+          "text": "整体想法",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "type": "TF",
+      "title": "在评价事情时，我更重视",
+      "selections": [
+        {
+          "text": "逻辑正确",
+          "dimension": "T"
+        },
+        {
+          "text": "情感合理",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "type": "JP",
+      "title": "我更喜欢",
+      "selections": [
+        {
+          "text": "确定的安排",
+          "dimension": "J"
+        },
+        {
+          "text": "开放的可能",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 65,
+      "type": "EI",
+      "title": "在新环境里，我通常",
+      "selections": [
+        {
+          "text": "主动交流",
+          "dimension": "E"
+        },
+        {
+          "text": "先观察",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 66,
+      "type": "SN",
+      "title": "我更相信",
+      "selections": [
+        {
+          "text": "现实经验",
+          "dimension": "S"
+        },
+        {
+          "text": "未来可能",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 67,
+      "type": "TF",
+      "title": "在冲突中，我更可能",
+      "selections": [
+        {
+          "text": "坚持逻辑",
+          "dimension": "T"
+        },
+        {
+          "text": "维护关系",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 68,
+      "type": "JP",
+      "title": "我更喜欢生活",
+      "selections": [
+        {
+          "text": "有明确计划",
+          "dimension": "J"
+        },
+        {
+          "text": "自由发展",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 69,
+      "type": "EI",
+      "title": "在聊天时，我更容易",
+      "selections": [
+        {
+          "text": "主动说话",
+          "dimension": "E"
+        },
+        {
+          "text": "倾听别人",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "type": "SN",
+      "title": "我更喜欢",
+      "selections": [
+        {
+          "text": "具体信息",
+          "dimension": "S"
+        },
+        {
+          "text": "抽象概念",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 71,
+      "type": "TF",
+      "title": "做决定时，我更看重",
+      "selections": [
+        {
+          "text": "逻辑",
+          "dimension": "T"
+        },
+        {
+          "text": "感受",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 72,
+      "type": "JP",
+      "title": "我更喜欢生活",
+      "selections": [
+        {
+          "text": "有计划",
+          "dimension": "J"
+        },
+        {
+          "text": "随性",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 73,
+      "type": "EI",
+      "title": "在社交中，我通常",
+      "selections": [
+        {
+          "text": "主动参与",
+          "dimension": "E"
+        },
+        {
+          "text": "安静观察",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 74,
+      "type": "SN",
+      "title": "我更感兴趣",
+      "selections": [
+        {
+          "text": "现实问题",
+          "dimension": "S"
+        },
+        {
+          "text": "未来想象",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 75,
+      "type": "TF",
+      "title": "面对矛盾时，我更可能",
+      "selections": [
+        {
+          "text": "讲道理",
+          "dimension": "T"
+        },
+        {
+          "text": "讲感受",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 76,
+      "type": "JP",
+      "title": "我的生活方式更像",
+      "selections": [
+        {
+          "text": "有规划",
+          "dimension": "J"
+        },
+        {
+          "text": "顺其自然",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 77,
+      "type": "EI",
+      "title": "在社交场合，我通常",
+      "selections": [
+        {
+          "text": "比较活跃",
+          "dimension": "E"
+        },
+        {
+          "text": "比较安静",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 78,
+      "type": "SN",
+      "title": "我更相信",
+      "selections": [
+        {
+          "text": "现实经验",
+          "dimension": "S"
+        },
+        {
+          "text": "直觉判断",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 79,
+      "type": "TF",
+      "title": "解决问题时，我更倾向",
+      "selections": [
+        {
+          "text": "逻辑分析",
+          "dimension": "T"
+        },
+        {
+          "text": "情感理解",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 80,
+      "type": "JP",
+      "title": "我更喜欢",
+      "selections": [
+        {
+          "text": "明确安排",
+          "dimension": "J"
+        },
+        {
+          "text": "自由变化",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 81,
+      "type": "EI",
+      "title": "在陌生人面前，我通常",
+      "selections": [
+        {
+          "text": "比较外向",
+          "dimension": "E"
+        },
+        {
+          "text": "比较内向",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 82,
+      "type": "SN",
+      "title": "我更关注",
+      "selections": [
+        {
+          "text": "现实细节",
+          "dimension": "S"
+        },
+        {
+          "text": "整体意义",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 83,
+      "type": "TF",
+      "title": "判断事情时，我更依赖",
+      "selections": [
+        {
+          "text": "逻辑",
+          "dimension": "T"
+        },
+        {
+          "text": "感情",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 84,
+      "type": "JP",
+      "title": "我的生活节奏更像",
+      "selections": [
+        {
+          "text": "有计划",
+          "dimension": "J"
+        },
+        {
+          "text": "随性",
+          "dimension": "P"
+        }
+      ]
+    },
+    {
+      "id": 85,
+      "type": "EI",
+      "title": "当我遇到感兴趣的人时，我通常会",
+      "selections": [
+        {
+          "text": "主动制造交流机会",
+          "dimension": "E"
+        },
+        {
+          "text": "先默默观察对方",
+          "dimension": "I"
+        }
+      ]
+    },
+    {
+      "id": 86,
+      "type": "SN",
+      "title": "在了解一个人时，我更容易注意到",
+      "selections": [
+        {
+          "text": "对方真实而具体的表现",
+          "dimension": "S"
+        },
+        {
+          "text": "对方潜在的特质和可能性",
+          "dimension": "N"
+        }
+      ]
+    },
+    {
+      "id": 87,
+      "type": "TF",
+      "title": "当关系里遇到问题时，我通常会先",
+      "selections": [
+        {
+          "text": "判断问题本身该怎么解决",
+          "dimension": "T"
+        },
+        {
+          "text": "在意彼此会不会受伤",
+          "dimension": "F"
+        }
+      ]
+    },
+    {
+      "id": 88,
+      "type": "JP",
+      "title": "对于感情的发展节奏，我更倾向于",
+      "selections": [
+        {
+          "text": "希望关系逐步清晰、稳定下来",
+          "dimension": "J"
+        },
+        {
+          "text": "希望保留弹性，让关系自然生长",
+          "dimension": "P"
+        }
+      ]
+    }
+  ]
+}

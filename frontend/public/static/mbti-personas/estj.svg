@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="180" viewBox="0 0 160 180">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff7f1"/>
+      <stop offset="100%" stop-color="#ffd8bb"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#cf8351"/>
+      <stop offset="100%" stop-color="#8b451e"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="144" height="164" rx="30" fill="url(#bg)"/>
+  <circle cx="80" cy="50" r="27" fill="#ffe6d2" opacity=".68"/>
+  <ellipse cx="80" cy="152" rx="34" ry="8" fill="#e3aa80" opacity=".26"/>
+  <path d="M53 138c9-23 46-23 54 0" fill="url(#coat)"/>
+  <rect x="60" y="95" width="40" height="43" rx="18" fill="url(#coat)"/>
+  <rect x="67" y="82" width="26" height="17" rx="8.5" fill="#f2cdbd"/>
+  <circle cx="80" cy="67" r="21" fill="#f2cdbd"/>
+  <path d="M57 63c5-16 15-26 27-26 12 0 22 10 22 26-7-4-15-6-24-6-10 0-17 2-25 6z" fill="#50413f"/>
+  <circle cx="72" cy="67" r="2.5" fill="#433635"/>
+  <circle cx="88" cy="67" r="2.5" fill="#433635"/>
+  <path d="M74 77c4 2 9 2 13 0" stroke="#9b6f64" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M111 43h11v18h-11z" fill="#fff" stroke="#cb8755" stroke-width="2"/>
+  <path d="M111 43v23" stroke="#cb8755" stroke-width="2"/>
+  <text x="80" y="156" text-anchor="middle" font-size="14" font-family="Arial" fill="#8b451e" font-weight="700">ESTJ</text>
+</svg>

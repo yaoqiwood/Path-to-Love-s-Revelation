@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="180" viewBox="0 0 160 180">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5fff7"/>
+      <stop offset="100%" stop-color="#cdf7d8"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#62c274"/>
+      <stop offset="100%" stop-color="#1f6b33"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="144" height="164" rx="30" fill="url(#bg)"/>
+  <circle cx="80" cy="50" r="28" fill="#dffbe5" opacity=".65"/>
+  <ellipse cx="80" cy="152" rx="34" ry="8" fill="#8cd09c" opacity=".28"/>
+  <path d="M52 138c10-24 46-24 56 0" fill="url(#coat)"/>
+  <rect x="59" y="95" width="42" height="43" rx="18" fill="url(#coat)"/>
+  <rect x="67" y="82" width="26" height="17" rx="8.5" fill="#f2cbb8"/>
+  <circle cx="80" cy="67" r="21" fill="#f2cbb8"/>
+  <path d="M56 62c5-15 15-25 27-25s22 10 23 28c-8-7-16-9-26-9-9 0-16 2-24 6z" fill="#4f3f3c"/>
+  <circle cx="72" cy="67" r="2.5" fill="#433533"/>
+  <circle cx="88" cy="67" r="2.5" fill="#433533"/>
+  <path d="M73 77c4 4 10 4 14 0" stroke="#9b6d60" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M111 45a6 6 0 0 1 6 6v11" stroke="#ffd577" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="117" cy="63" r="4" fill="#ffd577"/>
+  <text x="80" y="156" text-anchor="middle" font-size="14" font-family="Arial" fill="#1f6b33" font-weight="700">ESFP</text>
+</svg>

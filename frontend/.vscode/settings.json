@@ -1,0 +1,22 @@
+{
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.fontFamily": "'JetBrainsMono NFM', Consolas, 'Microsoft YaHei UI', 'Microsoft YaHei', monospace",
+	"prettier.requireConfig": true,
+	"files.associations": {
+		"pages.json": "jsonc",
+		"manifest.json": "jsonc"
+	},
+	"[vue]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	}
+}
