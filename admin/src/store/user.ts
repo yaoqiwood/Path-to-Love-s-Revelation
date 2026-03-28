@@ -44,6 +44,22 @@ export const useUserStore = defineStore('user', () => {
         }
     }
 
+    // 参与者永久Token登录
+    async function loginByToken(permanentToken: string) {
+        loading.value = true
+        try {
+            const { participantApi } = await import('@/api/activity')
+            const response = await participantApi.loginByToken(permanentToken)
+            setToken(response.access_token)
+            await fetchCurrentUser()
+            return true
+        } catch (error) {
+            return false
+        } finally {
+            loading.value = false
+        }
+    }
+
     // 注册
     async function register(form: RegisterForm) {
         loading.value = true
@@ -143,6 +159,7 @@ export const useUserStore = defineStore('user', () => {
         isAdmin,
         // 方法
         login,
+        loginByToken,
         register,
         fetchCurrentUser,
         updateProfile,

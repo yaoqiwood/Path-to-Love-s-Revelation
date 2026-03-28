@@ -24,6 +24,7 @@ from app.api.endpoints import (
     roles_router,
     system_logs_router,
     storage_router,
+    participants_router,
 )
 
 # 初始化日志系统
@@ -161,6 +162,12 @@ app.include_router(
     storage_router, prefix=f"{settings.API_PREFIX}/storage", tags=["存储服务"]
 )
 app.include_router(storage_router, prefix=f"/storage", tags=["存储服务"])
+
+app.include_router(
+    participants_router,
+    prefix=f"{settings.API_PREFIX}/participants",
+    tags=["参与者管理"],
+)
 
 
 # 健康检查端点

@@ -5,26 +5,26 @@
       <div class="login-left">
         <div class="brand">
           <h1>In Grace</h1>
-          <p>广告素材制作管理系统</p>
+          <p>活动管理后台</p>
         </div>
         <div class="features">
           <div class="feature-item">
             <el-icon>
               <MagicStick />
             </el-icon>
-            <span>AI智能生成素材</span>
+            <span>性格测试</span>
           </div>
           <div class="feature-item">
             <el-icon>
               <VideoCamera />
             </el-icon>
-            <span>自动化视频制作</span>
+            <span>智能配对</span>
           </div>
           <div class="feature-item">
             <el-icon>
               <Files />
             </el-icon>
-            <span>丰富的模板库</span>
+            <span>热火朝天</span>
           </div>
         </div>
       </div>
@@ -55,9 +55,36 @@
             <span>还没有账户？</span>
             <router-link to="/register">立即注册</router-link>
           </div>
+
+          <div class="token-login-divider">
+            <span>或</span>
+          </div>
+
+          <el-button type="default" class="token-login-btn" @click="tokenDialogVisible = true">
+            🔑 参与者Token登录
+          </el-button>
         </el-card>
       </div>
     </div>
+
+    <!-- 参与者Token登录弹窗 -->
+    <el-dialog v-model="tokenDialogVisible" title="参与者登录" width="400px" destroy-on-close>
+      <el-form @submit.prevent="handleTokenLogin">
+        <el-form-item>
+          <el-input
+            v-model="tokenInput"
+            placeholder="请输入永久Token，如 holy-grace-847"
+            size="large"
+            clearable
+            :prefix-icon="Key"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="tokenDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="tokenLoading" @click="handleTokenLogin">登录</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -67,7 +94,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { User, Lock, MagicStick, VideoCamera, Files } from '@element-plus/icons-vue'
+import { User, Lock, Key, MagicStick, VideoCamera, Files } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -75,6 +102,11 @@ const userStore = useUserStore()
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
+
+// Token登录
+const tokenDialogVisible = ref(false)
+const tokenInput = ref('')
+const tokenLoading = ref(false)
 
 const form = reactive({
   username: '',
@@ -107,6 +139,23 @@ async function handleLogin() {
       router.push(redirect)
     }
   })
+}
+
+async function handleTokenLogin() {
+  const token = tokenInput.value.trim()
+  if (!token) {
+    ElMessage.warning('请输入永久Token')
+    return
+  }
+  tokenLoading.value = true
+  const success = await userStore.loginByToken(token)
+  tokenLoading.value = false
+  if (success) {
+    tokenDialogVisible.value = false
+    ElMessage.success('登录成功')
+    const redirect = route.query.redirect as string || '/dashboard'
+    router.push(redirect)
+  }
 }
 </script>
 
@@ -213,5 +262,51 @@ async function handleLogin() {
   color: #667eea;
   text-decoration: none;
   font-weight: 500;
+}
+
+.token-login-divider {
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+}
+
+.token-login-divider::before,
+.token-login-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #dcdfe6;
+}
+
+.token-login-divider::before {
+  left: 0;
+}
+
+.token-login-divider::after {
+  right: 0;
+}
+
+.token-login-divider span {
+  background: white;
+  padding: 0 12px;
+  color: #999;
+  font-size: 13px;
+}
+
+.token-login-btn {
+  width: 100%;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #667eea;
+  border-color: #667eea;
+}
+
+.token-login-btn:hover {
+  background: #f0f5ff;
+  color: #5a6fd6;
+  border-color: #5a6fd6;
 }
 </style>

@@ -216,6 +216,7 @@ dist-ssr
 .claude
 openspec
 frontend/pencil
+frontend/pnpm-lock.yaml
 
 # Logs
 logs

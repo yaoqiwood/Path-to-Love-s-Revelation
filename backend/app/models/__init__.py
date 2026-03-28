@@ -3,6 +3,7 @@
 from .user import SystemUser
 from .app_config import AppConfig
 from .system_log import SystemLogOperate
+from .participant import Participant
 
 __all__ = [
     # User
@@ -11,4 +12,6 @@ __all__ = [
     "AppConfig",
     # SystemLog
     "SystemLogOperate",
+    # Participant
+    "Participant",
 ]

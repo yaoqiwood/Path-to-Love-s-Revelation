@@ -74,6 +74,22 @@ const routes: RouteRecordRaw[] = [
             }
         ]
     },
+    // Activity Management
+    {
+        path: '/activity',
+        name: 'Activity',
+        component: { render: () => h(RouterView) },
+        redirect: '/activity/participant',
+        meta: { title: '活动管理', icon: 'Star', requiresAuth: true },
+        children: [
+            {
+                path: 'participant', // /activity/participant
+                name: 'Participant',
+                component: () => import('@/views/activity/participant/index.vue'),
+                meta: { title: '参与者管理', icon: 'User', requiresAuth: true }
+            }
+        ]
+    },
     {
         path: '/:pathMatch(.*)*',
         name: 'NotFound',
