@@ -3,51 +3,55 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/',
-    redirect: '/pages/index/index'
+    component: () => import('@/pages/welcome/love-path-welcome.vue')
+  },
+  {
+    path: '/welcome',
+    component: () => import('@/pages/welcome/love-path-welcome.vue')
   },
   {
     path: '/pages/index/index',
-    component: () => import('@/pages/index/index.vue')
+    component: () => import('@/pages/index/profile-route-gateway.vue')
   },
   {
     path: '/pages/index/service',
-    component: () => import('@/pages/index/service.vue')
+    component: () => import('@/pages/index/mbti-showcase-home.vue')
   },
   {
     path: '/pages/user/helper',
-    component: () => import('@/pages/user/helper.vue')
+    component: () => import('@/pages/user/test-access-entry.vue')
   },
   {
     path: '/pages/feed/entry',
-    component: () => import('@/pages/feed/entry.vue')
+    component: () => import('@/pages/feed/mbti-test-session.vue')
   },
   {
     path: '/pkg/guide/hub',
-    component: () => import('@/pages/guide/hub.vue')
+    component: () => import('@/pages/guide/admin-navigation-hub.vue')
   },
   {
     path: '/pkg/guide/panel',
-    component: () => import('@/pages/guide/panel.vue')
+    component: () => import('@/pages/guide/admin-user-management.vue')
   },
   {
     path: '/pkg/guide/roster',
-    component: () => import('@/pages/guide/roster.vue')
+    component: () => import('@/pages/guide/admin-personnel-management.vue')
   },
   {
     path: '/pkg/guide/insight',
-    component: () => import('@/pages/guide/insight.vue')
+    component: () => import('@/pages/guide/admin-mbti-pairing.vue')
   },
   {
     path: '/pkg/guide/relay',
-    component: () => import('@/pages/guide/relay.vue')
+    component: () => import('@/pages/guide/admin-heart-message-management.vue')
   },
   {
     path: '/pkg/guide/intent',
-    component: () => import('@/pages/guide/intent.vue')
+    component: () => import('@/pages/guide/admin-intent-ranking.vue')
   },
   {
     path: '/pkg/guide/detail',
-    component: () => import('@/pages/guide/detail.vue')
+    component: () => import('@/pages/guide/user-message-center.vue')
   },
   {
     path: '/pages/mbti-home/home',

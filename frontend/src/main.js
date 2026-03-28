@@ -8,8 +8,10 @@ import router from './router'
 import { registerAppRouter } from './router/holder'
 import compatComponentsPlugin from './plugins/compat-components'
 import legacyPageLifecyclePlugin from './plugins/legacy-page-lifecycle'
+import { ensureMockBootstrap } from './platform/mock-presets'
 
 registerAppRouter(router)
+ensureMockBootstrap()
 
 const app = createApp(App)
 
