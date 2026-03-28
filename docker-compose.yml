@@ -7,7 +7,7 @@ services:
   # ---- 基础设施 ----
 
   mysql:
-    image: mysql:8.0
+    image: mysql:8.0-debian
     container_name: ingrace-mysql
     restart: unless-stopped
     environment:
