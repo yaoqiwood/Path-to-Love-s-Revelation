@@ -34,7 +34,7 @@
 					<input class="matched-input" type="text" :value="matchedRecord.name" disabled />
 				</div>
 
-				<div v-if="shouldShowHint" class="hint-panel">
+				<div v-if="shouldShowHint && !matchedRecord" class="hint-panel">
 					<p class="hint-title">提示</p>
 					<p class="hint-copy">口令正确后，点击确认后下方会显示匹配到的人员姓名，确认无误后即可继续。</p>
 				</div>

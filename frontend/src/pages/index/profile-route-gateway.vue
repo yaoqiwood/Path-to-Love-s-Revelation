@@ -26,8 +26,7 @@ const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
 export default {
 	data() {
 		return {
-			loadingText: 'Checking login status...',
-			enableHeartChatPage: true
+			loadingText: 'Checking login status...'
 		}
 	},
 	async onLoad() {
@@ -160,27 +159,16 @@ export default {
 		},
 		async loadSystemConfig() {
 			try {
-				const result = await personnelUser.getSystemConfig({
+				await personnelUser.getSystemConfig({
 					configCode: 'default'
 				})
-				const config = (result && result.config) || {}
-				this.enableHeartChatPage =
-					typeof config.enable_heart_chat_page === 'boolean'
-						? config.enable_heart_chat_page
-						: true
 			} catch (error) {
 				console.error('loadSystemConfig failed', error)
-				this.enableHeartChatPage = true
 			}
 		},
 		isUserRole(roleValue) {
 			const role = Number(roleValue)
 			return role === 1 || role === 2 || role === 3
-		},
-		hasMbtiResult(record = {}) {
-			return !!String(record.mbti || '')
-				.trim()
-				.toUpperCase()
 		},
 		async getProfileFromDatabase() {
 			let openIds = []
@@ -217,38 +205,16 @@ export default {
 			if (profile && this.isUserRole(profile.user_role)) {
 				return '/pkg/guide/hub'
 			}
-			if (
-				profile &&
-				Number(profile.user_role) === 0 &&
-				this.hasMbtiResult(profile) &&
-				this.enableHeartChatPage
-			) {
-				return '/pkg/guide/detail'
-			}
 			if (profile && profile._id) {
-				const query = []
-				if (profile.name) {
-					query.push(`name=${encodeURIComponent(profile.name)}`)
-				}
-				if (profile._id) {
-					query.push(`personnelId=${encodeURIComponent(profile._id)}`)
-				}
-				if (profile.wechat_id || profile.wx_openid) {
-					query.push(
-						`wxOpenid=${encodeURIComponent(profile.wechat_id || profile.wx_openid || '')}`
-					)
-				}
-				return query.length ? `/pages/feed/entry?${query.join('&')}` : '/pages/feed/entry'
+				return '/pages/index/home'
 			}
 			return '/pages/index/login-home'
 		},
 		updateLoadingText(targetUrl) {
 			if (targetUrl === '/pkg/guide/hub') {
 				this.loadingText = 'User detected, opening dashboard...'
-			} else if (targetUrl === '/pkg/guide/detail') {
-				this.loadingText = 'User detected, opening contacts...'
-			} else if (targetUrl.startsWith('/pages/feed/entry')) {
-				this.loadingText = 'Profile matched, opening MBTI test...'
+			} else if (targetUrl === '/pages/index/home') {
+				this.loadingText = 'Profile matched, opening navigation...'
 			} else {
 				this.loadingText = 'Opening login home...'
 			}

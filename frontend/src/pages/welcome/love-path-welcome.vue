@@ -65,18 +65,18 @@ const orbitTypes = [
 
 function orbitStyle(index) {
   const positions = [
-    { top: '14px', left: '138px' },
-    { top: '34px', right: '72px' },
-    { top: '92px', right: '8px' },
-    { top: '174px', right: '-8px' },
-    { top: '258px', right: '24px' },
-    { top: '316px', right: '92px' },
-    { top: '334px', left: '138px' },
-    { top: '316px', left: '92px' },
-    { top: '258px', left: '24px' },
-    { top: '174px', left: '-8px' },
-    { top: '92px', left: '8px' },
-    { top: '34px', left: '72px' }
+    { top: '-12px', left: '138px' },
+    { top: '8px', right: '72px' },
+    { top: '66px', right: '8px' },
+    { top: '148px', right: '-8px' },
+    { top: '212px', right: '24px' },
+    { top: '254px', right: '92px' },
+    { top: '268px', left: '138px' },
+    { top: '254px', left: '92px' },
+    { top: '212px', left: '24px' },
+    { top: '148px', left: '-8px' },
+    { top: '66px', left: '8px' },
+    { top: '8px', left: '72px' }
   ]
 
   return positions[index] || {}
@@ -206,8 +206,8 @@ function enterLovePath() {
 
 .hero-stage {
   position: relative;
-  width: min(92vw, 420px);
-  height: min(72vw, 320px);
+  width: min(82vw, 380px);
+  height: min(42vw, 174px);
   margin: 18px auto 18px;
 }
 
@@ -249,8 +249,8 @@ function enterLovePath() {
 
 .orbit-chip {
   position: absolute;
-  min-width: 66px;
-  padding: 8px 10px;
+  min-width: 60px;
+  padding: 7px 9px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(8px);
@@ -262,14 +262,14 @@ function enterLovePath() {
 
 .orbit-chip-code {
   color: #614536;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
 
 .hero-actions {
   display: flex;
   justify-content: center;
-  margin-top: 115px;
+  margin-top: 146px;
 }
 
 .hero-action-btn {

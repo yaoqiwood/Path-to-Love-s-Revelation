@@ -14,8 +14,16 @@ const routes = [
     component: () => import('@/pages/index/profile-route-gateway.vue')
   },
   {
+    path: '/pages/index/home',
+    component: () => import('@/pages/index/love-feature-home.vue')
+  },
+  {
     path: '/pages/index/login-home',
     component: () => import('@/pages/index/love-login-home.vue')
+  },
+  {
+    path: '/pages/index/heart-priority-board',
+    component: () => import('@/pages/index/heart-priority-board.vue')
   },
   {
     path: '/pages/user/helper',
