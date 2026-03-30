@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { app } from '@/platform/app-bridge'
 
 const routes = [
   {
@@ -67,6 +68,43 @@ const routes = [
   }
 ]
 
+const LOGIN_PAGE_PATH = '/pages/index/login-home'
+const PUBLIC_ROUTE_PATHS = new Set(['/', '/welcome', LOGIN_PAGE_PATH])
+const LOGIN_PROFILE_COOKIE_KEY = 'mbtiPersonnelProfile'
+
+let authAlertVisible = false
+
+function readCookieRaw(name) {
+  if (typeof document === 'undefined') {
+    return ''
+  }
+
+  const prefix = `${encodeURIComponent(String(name))}=`
+  const segments = String(document.cookie || '').split(';')
+  for (let index = 0; index < segments.length; index += 1) {
+    const item = segments[index].trim()
+    if (item.startsWith(prefix)) {
+      return decodeURIComponent(item.slice(prefix.length))
+    }
+  }
+
+  return ''
+}
+
+function hasLoginProfileCookie() {
+  const rawValue = readCookieRaw(LOGIN_PROFILE_COOKIE_KEY)
+  if (!rawValue) {
+    return false
+  }
+
+  try {
+    const profile = JSON.parse(rawValue)
+    return !!(profile && typeof profile === 'object' && (profile._id || profile.id || profile.personnel_id))
+  } catch (error) {
+    return false
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes,
@@ -80,6 +118,40 @@ const router = createRouter({
     }
 
     return { top: 0 }
+  }
+})
+
+router.beforeEach(async (to) => {
+  if (PUBLIC_ROUTE_PATHS.has(to.path)) {
+    return true
+  }
+
+  if (hasLoginProfileCookie()) {
+    return true
+  }
+
+  if (authAlertVisible) {
+    return {
+      path: LOGIN_PAGE_PATH,
+      replace: true
+    }
+  }
+
+  authAlertVisible = true
+  try {
+    await app.showModal({
+      title: '提示',
+      content: '未检测到用户信息，请先登录。',
+      showCancel: false,
+      confirmText: '确定'
+    })
+  } finally {
+    authAlertVisible = false
+  }
+
+  return {
+    path: LOGIN_PAGE_PATH,
+    replace: true
   }
 })
 

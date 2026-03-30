@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { shouldUseMock, withMockFallback } from './mockService'
+import { getAuthStorageValue, AUTH_STORAGE_KEYS } from '@/platform/auth-storage'
 
 const apiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim()
 
@@ -14,16 +15,9 @@ export const http = axios.create({
 })
 
 http.interceptors.request.use((config) => {
-  const sessionText = localStorage.getItem('app-auth-session')
-  if (sessionText) {
-    try {
-      const session = JSON.parse(sessionText)
-      if (session?.token) {
-        config.headers.Authorization = `Bearer ${session.token}`
-      }
-    } catch (error) {
-      console.warn('Failed to parse app-auth-session before request.', error)
-    }
+  const session = getAuthStorageValue(AUTH_STORAGE_KEYS.session)
+  if (session?.token) {
+    config.headers.Authorization = `Bearer ${session.token}`
   }
 
   return config

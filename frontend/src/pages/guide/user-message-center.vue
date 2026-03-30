@@ -4,6 +4,7 @@
 		<div class="page-glow page-glow-right"></div>
 		<div class="top-bar">
 			<div class="top-copy">
+				<text class="top-back" @click="goBack">返回</text>
 				<text class="top-title">消息</text>
 				<div class="top-subtitle-row">
 					<text class="top-subtitle">今天也适合说句悄悄话</text>
@@ -21,7 +22,6 @@
 		<div class="wechat-shell">
 			<div v-if="activeTab === 'contacts'" class="search-bar">
 				<div class="search-box">
-					<text class="search-icon">搜</text>
 					<input
 						v-model.trim="keyword"
 						class="search-input"
@@ -39,7 +39,7 @@
 					<text class="panel-tip">遇见 {{ contacts.length }} 位心动对象</text>
 				</div>
 
-				<div v-if="loading" class="empty-box">
+				<div v-if="loading || !contactsLoaded" class="empty-box">
 					<text>正在加载联系人...</text>
 				</div>
 				<div v-else-if="!contacts.length" class="empty-box">
@@ -61,9 +61,9 @@
 									:src="item.personal_photo"
 									mode="aspectFill"
 								></image>
-								<div v-else class="avatar avatar-fallback">{{
-									getAvatarText(item.nickname || item.name)
-								}}</div>
+								<div v-else class="avatar avatar-fallback">
+									{{ getAvatarText(item.nickname || item.name) }}
+								</div>
 							</div>
 							<div class="contact-main">
 								<div class="contact-top">
@@ -78,6 +78,7 @@
 										>
 											{{ getGenderBadge(item.gender).symbol }}
 										</text>
+									<text v-if="item.mbti" class="mbti-badge">{{ String(item.mbti).toUpperCase() }}</text>
 									</div>
 									<text class="contact-time">{{ formatTime(item.latest_message_at) }}</text>
 								</div>
@@ -105,7 +106,7 @@
 					<text class="panel-title">收信箱</text>
 					<text class="panel-tip">陌生人来信 {{ inboxList.length }} 封</text>
 				</div>
-				<div v-if="inboxLoading" class="empty-box">
+				<div v-if="inboxLoading || !inboxLoaded" class="empty-box">
 					<text>正在加载收信箱...</text>
 				</div>
 				<div v-else-if="!inboxList.length" class="empty-box">
@@ -147,9 +148,9 @@
 								:src="activeContact.personal_photo"
 								mode="aspectFill"
 							></image>
-							<div v-else class="avatar avatar-fallback">{{
-								getAvatarText(activeContact.nickname || activeContact.name)
-							}}</div>
+							<div v-else class="avatar avatar-fallback">
+								{{ getAvatarText(activeContact.nickname || activeContact.name) }}
+							</div>
 						</div>
 						<div class="chat-user-text">
 							<text class="chat-name">{{ activeContact.nickname || activeContact.name }}</text>
@@ -196,9 +197,9 @@
 										:src="activeContact.personal_photo"
 										mode="aspectFill"
 									></image>
-									<div v-else class="avatar avatar-fallback">{{
-										getAvatarText(activeContact.nickname || activeContact.name)
-									}}</div>
+									<div v-else class="avatar avatar-fallback">
+										{{ getAvatarText(activeContact.nickname || activeContact.name) }}
+									</div>
 								</div>
 								<div class="bubble-box">
 									<div class="bubble">
@@ -288,14 +289,20 @@
 
 <script>
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import { shouldUseMock } from '@/api/mockService'
+	import { getCurrentUserInfo } from '@/platform/app-runtime'
+	import { app } from '@/platform/app-bridge'
 	const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
 
 	export default {
 		data() {
 			return {
 				activeTab: 'contacts',
+				bootstrapping: false,
 				loading: false,
+				contactsLoaded: false,
 				inboxLoading: false,
+				inboxLoaded: false,
 				chatLoading: false,
 				sending: false,
 				inboxSending: false,
@@ -345,20 +352,15 @@
 			}
 		},
 		async onLoad() {
-			if (!this.ensurePageAccess()) {
-				return
-			}
+			this.activeTab = 'contacts'
 			this.bindPushRefresh()
-			await Promise.all([this.loadHome(), this.loadInbox()])
-			await this.syncMessageState({ refreshOnChange: false, silent: true })
-			this.startMessageStatePolling()
+			await this.ensureInitialData({ force: true })
 		},
 		async onShow() {
-			if (this.showChatPopup && this.activeContact && this.activeContact._id) {
+			const ready = await this.ensureInitialData()
+			if (ready && this.showChatPopup && this.activeContact && this.activeContact._id) {
 				this.startRealtime()
 			}
-			await this.syncMessageState({ refreshOnChange: false, silent: true })
-			this.startMessageStatePolling()
 		},
 		onHide() {
 			this.stopRealtime()
@@ -385,21 +387,85 @@
 		methods: {
 			getStoredProfile() {
 				try {
-					const profile = uni.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
+					const profile = app.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
 					return profile && typeof profile === 'object' ? profile : null
 				} catch (error) {
 					return null
 				}
 			},
-			ensurePageAccess() {
-				const profile = this.getStoredProfile()
-				const userRole = Number(profile && profile.user_role) || 0
-				if (!profile || !(profile.personnel_id || profile.id)) {
-					uni.reLaunch({ url: '/pages/mbti-home/home' })
+			setStoredProfile(profile) {
+				try {
+					app.setStorageSync(PERSONNEL_PROFILE_STORAGE_KEY, {
+						...(profile || {}),
+						cached_at: Date.now()
+					})
+				} catch (error) {}
+			},
+			async adaptMockPersona(profile) {
+				if (!shouldUseMock || !personnelUser) {
 					return false
 				}
+				const currentUserInfo = getCurrentUserInfo() || {}
+				const personnelId = (profile && (profile.personnel_id || profile.id)) || ''
+				const userId =
+					(currentUserInfo && (currentUserInfo.uid || currentUserInfo._id)) ||
+					(profile && profile.user_id) ||
+					''
+				const attempts = [
+					{
+						personnelId,
+						userId
+					},
+					{
+						userId
+					},
+					{}
+				]
+				try {
+					let record = null
+					for (const payload of attempts) {
+						const result = await personnelUser.ensureMockCurrentUserPersona(payload)
+						record = result && result.record ? result.record : null
+						if (record && record._id && Number(record.user_role) === 0) {
+							break
+						}
+					}
+					if (!record || !record._id || Number(record.user_role) !== 0) {
+						return false
+					}
+					const nextProfile = {
+						...(profile || {}),
+						...record,
+						id: record._id || personnelId,
+						personnel_id: record._id || personnelId,
+						person_id: typeof record.person_id !== 'undefined' ? record.person_id : '',
+						user_role: Number(record.user_role) || 0,
+						user_id: record.user_id || userId || ''
+					}
+					this.setStoredProfile(nextProfile)
+					this.personnelId = nextProfile.personnel_id || nextProfile.id || ''
+					return !!this.personnelId && Number(nextProfile.user_role) === 0
+				} catch (error) {
+					console.error('adaptMockPersona failed', error)
+					return false
+				}
+			},
+			async ensurePageAccess() {
+				let profile = this.getStoredProfile()
+				if (shouldUseMock) {
+					const adapted = await this.adaptMockPersona(profile || {})
+					if (adapted) {
+						return true
+					}
+					profile = this.getStoredProfile() || profile
+				}
+				if (!profile || !(profile.personnel_id || profile.id)) {
+					app.reLaunch({ url: '/pages/mbti-home/home' })
+					return false
+				}
+				const userRole = Number(profile && profile.user_role) || 0
 				if (userRole !== 0) {
-					uni.reLaunch({ url: '/pkg/guide/hub' })
+					app.reLaunch({ url: '/pkg/guide/hub' })
 					return false
 				}
 				this.personnelId = profile.personnel_id || profile.id || ''
@@ -411,6 +477,45 @@
 					inboxVersion: 0,
 					latestMessageAtText: '',
 					updatedAtText: ''
+				}
+			},
+			async ensureInitialData(options = {}) {
+				if (this.bootstrapping) {
+					return false
+				}
+				const force = !!(options && options.force)
+				if (!this.personnelId) {
+					const allowed = await this.ensurePageAccess()
+					if (!allowed) {
+						return false
+					}
+				}
+				const shouldLoadContacts = force || !this.contactsLoaded
+				const shouldLoadInbox = force || !this.inboxLoaded
+				const shouldSyncMessageState = force || !this.messageStateReady
+				if (!shouldLoadContacts && !shouldLoadInbox && !shouldSyncMessageState) {
+					this.startMessageStatePolling()
+					return true
+				}
+				this.bootstrapping = true
+				try {
+					const tasks = []
+					if (shouldLoadContacts) {
+						tasks.push(this.loadHome())
+					}
+					if (shouldLoadInbox) {
+						tasks.push(this.loadInbox({ silent: true }))
+					}
+					if (tasks.length) {
+						await Promise.all(tasks)
+					}
+					if (shouldSyncMessageState) {
+						await this.syncMessageState({ refreshOnChange: false, silent: true })
+					}
+					this.startMessageStatePolling()
+					return true
+				} finally {
+					this.bootstrapping = false
 				}
 			},
 			normalizeMessageState(state = {}) {
@@ -432,7 +537,8 @@
 						keyword: this.keyword
 					})
 					this.selfProfile = Object.assign({}, this.selfProfile, res && res.self ? res.self : {})
-					this.contacts = Array.isArray(res && res.contacts) ? res.contacts : []
+					const sourceContacts = Array.isArray(res && res.contacts) ? res.contacts : []
+					this.contacts = sourceContacts.filter((item) => this.isOppositeGender(item && item.gender))
 					if (!this.contacts.length) {
 						this.showChatPopup = false
 						this.activeContact = null
@@ -452,12 +558,13 @@
 						}
 					}
 				} catch (error) {
-					uni.showToast({
+					app.showToast({
 						title: (error && error.message) || '加载失败',
 						icon: 'none'
 					})
 				} finally {
 					this.loading = false
+					this.contactsLoaded = true
 				}
 			},
 			async loadInbox(options = {}) {
@@ -489,12 +596,13 @@
 					}
 				} catch (error) {
 					if (!silent) {
-						uni.showToast({
+						app.showToast({
 							title: (error && error.message) || '收信箱加载失败',
 							icon: 'none'
 						})
 					}
 				} finally {
+					this.inboxLoaded = true
 					if (!silent) {
 						this.inboxLoading = false
 					}
@@ -545,20 +653,20 @@
 				}
 			},
 			bindPushRefresh() {
-				if (!uni.onPushMessage || this.pushRefreshHandler) {
+				if (!app.onPushMessage || this.pushRefreshHandler) {
 					return
 				}
 				this.pushRefreshHandler = (res) => {
 					this.handlePushRefresh(res)
 				}
-				uni.onPushMessage(this.pushRefreshHandler)
+				app.onPushMessage(this.pushRefreshHandler)
 			},
 			unbindPushRefresh() {
-				if (!uni.offPushMessage || !this.pushRefreshHandler) {
+				if (!app.offPushMessage || !this.pushRefreshHandler) {
 					this.pushRefreshHandler = null
 					return
 				}
-				uni.offPushMessage(this.pushRefreshHandler)
+				app.offPushMessage(this.pushRefreshHandler)
 				this.pushRefreshHandler = null
 			},
 			async handlePushRefresh(res) {
@@ -782,7 +890,7 @@
 						this.scrollIntoView = lastMessage ? 'msg-' + lastMessage._id : ''
 					})
 				} catch (error) {
-					uni.showToast({
+					app.showToast({
 						title: (error && error.message) || '聊天记录加载失败',
 						icon: 'none'
 					})
@@ -809,6 +917,13 @@
 				this.activeTab = 'contacts'
 				this.loadHome()
 			},
+			goBack() {
+				if (typeof window !== 'undefined' && window.history && window.history.length > 1) {
+					app.navigateBack({ delta: 1 })
+					return
+				}
+				app.reLaunch({ url: '/pages/index/home' })
+			},
 			handleSearch() {
 				if (this.activeTab === 'inbox') {
 					this.loadInbox()
@@ -826,7 +941,7 @@
 					return
 				}
 				if (item.can_reply === false) {
-					uni.showToast({
+					app.showToast({
 						title: item.can_reply_reason || '请等待对方再次来信',
 						icon: 'none'
 					})
@@ -846,7 +961,7 @@
 					return
 				}
 				if (!this.inboxReplyText) {
-					uni.showToast({
+					app.showToast({
 						title: '请输入回复内容',
 						icon: 'none'
 					})
@@ -867,12 +982,12 @@
 					this.closeInboxReplyPopup()
 					await Promise.all([this.loadHome(), this.loadInbox()])
 					await this.syncMessageState({ refreshOnChange: false, silent: true })
-					uni.showToast({
+					app.showToast({
 						title: '回复成功',
 						icon: 'success'
 					})
 				} catch (error) {
-					uni.showToast({
+					app.showToast({
 						title: (error && error.message) || '回复失败',
 						icon: 'none'
 					})
@@ -885,14 +1000,14 @@
 					return
 				}
 				if (!this.canSendToActive) {
-					uni.showToast({
+					app.showToast({
 						title: this.cannotSendReason || '请等待对方回复后再发送下一条',
 						icon: 'none'
 					})
 					return
 				}
 				if (!this.draftMessage) {
-					uni.showToast({
+					app.showToast({
 						title: '请输入消息内容',
 						icon: 'none'
 					})
@@ -918,12 +1033,12 @@
 						await this.selectContact(nextActive, { silent: true })
 					}
 					await this.syncMessageState({ refreshOnChange: false, silent: true })
-					uni.showToast({
+					app.showToast({
 						title: '发送成功',
 						icon: 'success'
 					})
 				} catch (error) {
-					uni.showToast({
+					app.showToast({
 						title: (error && error.message) || '发送失败',
 						icon: 'none'
 					})
@@ -935,7 +1050,7 @@
 				const text = String(value || '').trim()
 				return text ? text.slice(0, 1) : '聊'
 			},
-			getGenderBadge(value) {
+			normalizeGender(value) {
 				const gender = String(value || '')
 					.trim()
 					.toLowerCase()
@@ -946,10 +1061,7 @@
 					gender === 'male' ||
 					gender === 'man'
 				) {
-					return {
-						symbol: '♂',
-						className: 'gender-male'
-					}
+					return 'male'
 				}
 				if (
 					gender === '女' ||
@@ -958,6 +1070,27 @@
 					gender === 'female' ||
 					gender === 'woman'
 				) {
+					return 'female'
+				}
+				return ''
+			},
+			isOppositeGender(targetGender) {
+				const selfGender = this.normalizeGender(this.selfProfile && this.selfProfile.gender)
+				const contactGender = this.normalizeGender(targetGender)
+				if (!selfGender || !contactGender) {
+					return true
+				}
+				return selfGender !== contactGender
+			},
+			getGenderBadge(value) {
+				const gender = this.normalizeGender(value)
+				if (gender === 'male') {
+					return {
+						symbol: '♂',
+						className: 'gender-male'
+					}
+				}
+				if (gender === 'female') {
 					return {
 						symbol: '♀',
 						className: 'gender-female'
@@ -1013,6 +1146,16 @@
 
 <style scoped lang="less">
 	.page {
+		--page-ink: #2f342d;
+		--page-ink-soft: #697062;
+		--page-ink-muted: #8b9084;
+		--panel-surface: rgba(255, 255, 255, 0.9);
+		--panel-border: rgba(219, 219, 207, 0.92);
+		--panel-shadow: 0 20rpx 44rpx rgba(104, 112, 92, 0.12);
+		--accent-green: #7da57f;
+		--accent-gold: #c6a763;
+		--accent-warm: #f8f1dc;
+		--accent-cool: #edf5e8;
 		position: relative;
 		height: 100vh;
 		background:
@@ -1023,83 +1166,160 @@
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
+		isolation: isolate;
+	}
+
+	.page::before,
+	.page::after {
+		content: '';
+		position: absolute;
+		pointer-events: none;
+	}
+
+	.page::before {
+		inset: 0;
+		background:
+			linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0) 28%),
+			radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.52), transparent 24%);
+		opacity: 0.85;
+	}
+
+	.page::after {
+		left: 50%;
+		top: -240rpx;
+		width: 860rpx;
+		height: 420rpx;
+		border-radius: 50%;
+		transform: translateX(-50%);
+		background:
+			radial-gradient(circle at center, rgba(255, 255, 255, 0.74), transparent 62%),
+			linear-gradient(180deg, rgba(255, 249, 236, 0.52), rgba(255, 255, 255, 0));
+		opacity: 0.9;
 	}
 
 	.page-glow {
 		position: absolute;
 		border-radius: 50%;
-		filter: blur(10rpx);
-		opacity: 0.8;
+		filter: blur(18rpx);
+		opacity: 0.85;
 		pointer-events: none;
 	}
 
 	.page-glow-left {
-		left: -80rpx;
-		top: 140rpx;
-		width: 220rpx;
-		height: 220rpx;
-		background: rgba(184, 214, 188, 0.62);
+		left: -104rpx;
+		top: 132rpx;
+		width: 256rpx;
+		height: 256rpx;
+		background: rgba(184, 214, 188, 0.72);
 	}
 
 	.page-glow-right {
-		right: -60rpx;
-		top: 420rpx;
-		width: 180rpx;
-		height: 180rpx;
-		background: rgba(220, 205, 168, 0.58);
+		right: -82rpx;
+		top: 394rpx;
+		width: 228rpx;
+		height: 228rpx;
+		background: rgba(220, 205, 168, 0.64);
 	}
 
 	.top-bar {
 		position: relative;
 		z-index: 1;
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
-		padding: 28rpx 24rpx 18rpx;
+		gap: 18rpx;
+		padding: calc(30rpx + env(safe-area-inset-top)) 24rpx 22rpx;
 		background: linear-gradient(
 			180deg,
-			rgba(255, 255, 255, 0.78) 0%,
-			rgba(246, 244, 236, 0.34) 100%
+			rgba(255, 255, 255, 0.88) 0%,
+			rgba(246, 244, 236, 0.42) 100%
+		);
+		backdrop-filter: blur(12rpx);
+	}
+
+	.top-bar::after {
+		content: '';
+		position: absolute;
+		left: 24rpx;
+		right: 24rpx;
+		bottom: 0;
+		height: 1rpx;
+		background: linear-gradient(
+			90deg,
+			rgba(201, 196, 181, 0),
+			rgba(201, 196, 181, 0.92),
+			rgba(201, 196, 181, 0)
 		);
 	}
 
 	.top-copy {
-		max-width: 70%;
+		flex: 1;
+		min-width: 0;
+		max-width: 72%;
+	}
+
+	.top-back {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		height: 56rpx;
+		padding: 0 18rpx;
+		border-radius: 999rpx;
+		background: rgba(255, 255, 255, 0.84);
+		border: 1rpx solid rgba(214, 210, 195, 0.9);
+		box-shadow: 0 10rpx 20rpx rgba(129, 133, 113, 0.12);
+		font-size: 24rpx;
+		color: #5f6559;
+		cursor: pointer;
+		user-select: none;
+		margin-bottom: 10rpx;
 	}
 
 	.top-title {
 		display: block;
-		font-size: 40rpx;
+		font-size: 42rpx;
 		font-weight: 700;
-		color: #2f342d;
+		letter-spacing: 1rpx;
+		color: var(--page-ink);
 	}
 
 	.top-subtitle-row {
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
 		gap: 10rpx;
+		margin-top: 8rpx;
 	}
 
 	.top-subtitle {
 		display: block;
-		margin-top: 8rpx;
 		font-size: 24rpx;
-		color: #72786c;
+		line-height: 1.5;
+		color: #70766a;
 	}
 
 	.top-heart {
-		margin-top: 8rpx;
-		font-size: 24rpx;
-		color: #7da57f;
+		font-size: 26rpx;
+		color: var(--accent-green);
+		text-shadow: 0 0 18rpx rgba(125, 165, 127, 0.2);
 	}
 
 	.top-badge {
-		padding: 12rpx 20rpx;
+		display: inline-flex;
+		align-items: center;
+		min-height: 72rpx;
+		padding: 0 24rpx;
 		border-radius: 999rpx;
-		background: linear-gradient(135deg, #edf4e9 0%, #f9f1dc 100%);
+		background: linear-gradient(135deg, var(--accent-cool) 0%, var(--accent-warm) 100%);
 		font-size: 24rpx;
+		font-weight: 600;
 		color: #5f775d;
-		box-shadow: 0 10rpx 24rpx rgba(127, 149, 118, 0.12);
+		box-shadow:
+			0 12rpx 28rpx rgba(127, 149, 118, 0.12),
+			inset 0 1rpx 0 rgba(255, 255, 255, 0.68);
+		border: 1rpx solid rgba(255, 255, 255, 0.68);
+		box-sizing: border-box;
 	}
 
 	.wechat-shell {
@@ -1109,7 +1329,7 @@
 		display: flex;
 		flex-direction: column;
 		min-height: 0;
-		padding: 0 0 calc(164rpx + env(safe-area-inset-bottom));
+		padding: 6rpx 0 calc(176rpx + env(safe-area-inset-bottom));
 		box-sizing: border-box;
 		overflow: hidden;
 	}
@@ -1117,20 +1337,34 @@
 	.search-bar {
 		display: flex;
 		align-items: center;
-		gap: 18rpx;
-		padding: 0 24rpx 20rpx;
+		gap: 16rpx;
+		padding: 10rpx 24rpx 22rpx;
 	}
 
 	.search-box {
 		flex: 1;
-		height: 72rpx;
-		padding: 0 24rpx;
-		border-radius: 18rpx;
-		background: rgba(255, 255, 255, 0.92);
+		position: relative;
+		height: 76rpx;
+		padding: 0 24rpx 0 30rpx;
+		border-radius: 22rpx;
+		background: rgba(255, 255, 255, 0.95);
 		display: flex;
 		align-items: center;
 		box-sizing: border-box;
-		box-shadow: 0 12rpx 24rpx rgba(140, 146, 122, 0.1);
+		border: 1rpx solid rgba(230, 227, 216, 0.92);
+		box-shadow:
+			0 14rpx 30rpx rgba(140, 146, 122, 0.1),
+			inset 0 1rpx 0 rgba(255, 255, 255, 0.82);
+	}
+
+	.search-box::before {
+		content: '';
+		width: 16rpx;
+		height: 16rpx;
+		margin-right: 18rpx;
+		border: 3rpx solid rgba(110, 123, 95, 0.55);
+		border-radius: 50%;
+		box-sizing: border-box;
 	}
 
 	.search-icon {
@@ -1141,23 +1375,43 @@
 
 	.search-input {
 		flex: 1;
-		height: 72rpx;
+		height: 76rpx;
 		font-size: 26rpx;
-		color: #222222;
+		color: #2d3229;
+		background: transparent;
+		border: none;
+		outline: none;
+		box-shadow: none;
+		appearance: none;
+		-webkit-appearance: none;
 	}
 
 	.search-reset {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 92rpx;
+		height: 68rpx;
+		padding: 0 22rpx;
+		border-radius: 18rpx;
+		background: rgba(255, 255, 255, 0.82);
+		border: 1rpx solid rgba(229, 225, 212, 0.96);
+		box-shadow: 0 10rpx 22rpx rgba(140, 146, 122, 0.08);
 		font-size: 26rpx;
-		color: #6b7d63;
+		color: #61735a;
+		box-sizing: border-box;
 	}
 
 	.panel {
+		position: relative;
+		flex: 1;
 		margin: 0 24rpx 24rpx;
-		border-radius: 24rpx;
+		border-radius: 30rpx;
 		overflow: hidden;
-		background: rgba(255, 255, 255, 0.9);
-		box-shadow: 0 18rpx 34rpx rgba(126, 128, 111, 0.1);
-		backdrop-filter: blur(8rpx);
+		background: var(--panel-surface);
+		border: 1rpx solid var(--panel-border);
+		box-shadow: var(--panel-shadow);
+		backdrop-filter: blur(12rpx);
 	}
 
 	.contacts-panel {
@@ -1188,15 +1442,17 @@
 	.panel-head {
 		align-items: center;
 		justify-content: space-between;
-		padding: 24rpx;
-		border-bottom: 1rpx solid #ece8dc;
+		gap: 18rpx;
+		padding: 28rpx 24rpx 24rpx;
+		border-bottom: 1rpx solid rgba(231, 227, 215, 0.96);
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0));
 	}
 
 	.panel-title,
 	.chat-name {
-		font-size: 30rpx;
-		font-weight: 600;
-		color: #2f342d;
+		font-size: 32rpx;
+		font-weight: 700;
+		color: var(--page-ink);
 	}
 
 	.panel-tip,
@@ -1209,6 +1465,7 @@
 	.empty-chat-tip {
 		font-size: 24rpx;
 		color: #7c7f73;
+		line-height: 1.6;
 	}
 
 	.contact-list {
@@ -1217,20 +1474,27 @@
 
 	.contact-item {
 		align-items: center;
-		padding: 22rpx 24rpx;
+		padding: 24rpx;
 		gap: 20rpx;
 		position: relative;
-		transition: all 0.2s ease;
+		transition:
+			background 0.2s ease,
+			transform 0.2s ease,
+			box-shadow 0.2s ease;
 	}
 
 	.contact-item::after {
 		content: '';
 		position: absolute;
-		left: 140rpx;
+		left: 144rpx;
 		right: 24rpx;
 		bottom: 0;
 		height: 1rpx;
-		background: #ece8dc;
+		background: rgba(236, 232, 220, 0.96);
+	}
+
+	.contact-item:last-child::after {
+		display: none;
 	}
 
 	.contact-item.active::after {
@@ -1238,23 +1502,33 @@
 	}
 
 	.contact-item.active {
-		background: linear-gradient(135deg, #f4f6ef 0%, #faf7ec 100%);
+		background: linear-gradient(
+			135deg,
+			rgba(241, 247, 236, 0.98) 0%,
+			rgba(251, 246, 232, 0.98) 100%
+		);
+		box-shadow:
+			inset 0 1rpx 0 rgba(255, 255, 255, 0.72),
+			0 12rpx 26rpx rgba(143, 149, 122, 0.12);
+		transform: translateY(-2rpx);
 	}
 
 	.avatar-shell {
 		flex-shrink: 0;
-		width: 96rpx;
-		height: 96rpx;
-		border-radius: 20rpx;
+		width: 100rpx;
+		height: 100rpx;
+		border-radius: 24rpx;
 		overflow: hidden;
 		background: linear-gradient(180deg, #dcebd8 0%, #efe2bb 100%);
-		box-shadow: 0 10rpx 20rpx rgba(150, 162, 129, 0.16);
+		box-shadow:
+			0 14rpx 28rpx rgba(150, 162, 129, 0.16),
+			inset 0 1rpx 0 rgba(255, 255, 255, 0.68);
 	}
 
 	.avatar-shell.small {
-		width: 76rpx;
-		height: 76rpx;
-		border-radius: 18rpx;
+		width: 80rpx;
+		height: 80rpx;
+		border-radius: 20rpx;
 	}
 
 	.avatar-shell.mini {
@@ -1278,6 +1552,7 @@
 		color: #ffffff;
 		font-size: 32rpx;
 		font-weight: 700;
+		letter-spacing: 1rpx;
 	}
 
 	.contact-main {
@@ -1295,11 +1570,20 @@
 		display: flex;
 		align-items: center;
 		gap: 10rpx;
+		flex: 1;
 		min-width: 0;
+		overflow: hidden;
 	}
 
 	.contact-name {
+		flex: 0 1 auto;
+		min-width: 0;
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		font-size: 30rpx;
+		font-weight: 600;
 		color: #33392f;
 	}
 
@@ -1328,9 +1612,33 @@
 		box-shadow: 0 8rpx 16rpx rgba(255, 127, 164, 0.2);
 	}
 
+	.mbti-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		height: 38rpx;
+		padding: 0 12rpx;
+		border-radius: 999rpx;
+		font-size: 20rpx;
+		font-weight: 600;
+		color: #5e6957;
+		background: rgba(236, 240, 230, 0.98);
+		flex-shrink: 0;
+	}
+
 	.contact-time {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		margin-left: auto;
+		flex-shrink: 0;
+		min-width: 90rpx;
+		height: 40rpx;
+		padding: 0 14rpx;
+		border-radius: 999rpx;
 		font-size: 22rpx;
-		color: #999999;
+		color: #8e9287;
+		background: rgba(245, 244, 236, 0.92);
 	}
 
 	.contact-meta {
@@ -1781,6 +2089,16 @@
 			margin-right: 20rpx;
 		}
 
+		.contact-top {
+			align-items: center;
+			flex-direction: row;
+			gap: 10rpx;
+		}
+
+		.contact-time {
+			margin-left: auto;
+		}
+
 		.composer-foot {
 			align-items: flex-start;
 			flex-direction: column;
@@ -1801,3 +2119,4 @@
 		}
 	}
 </style>
+

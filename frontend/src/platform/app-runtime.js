@@ -1,8 +1,9 @@
 import { getSelectedFile } from '@/platform/file-registry'
+import { getAuthStorageValue, AUTH_STORAGE_KEYS } from '@/platform/auth-storage'
 import { http, shouldUseMock, unwrapResponse } from '@/api/http'
 import { apiUrls } from '@/api/urls'
 
-const SESSION_KEY = 'app-auth-session'
+const SESSION_KEY = AUTH_STORAGE_KEYS.session
 
 function createEmptySession() {
   return {
@@ -14,17 +15,12 @@ function createEmptySession() {
 }
 
 export function getCurrentUserInfo() {
-  const rawValue = localStorage.getItem(SESSION_KEY)
-  if (!rawValue) {
+  const sessionValue = getAuthStorageValue(SESSION_KEY)
+  if (!sessionValue || typeof sessionValue !== 'object') {
     return createEmptySession()
   }
 
-  try {
-    return JSON.parse(rawValue)
-  } catch (error) {
-    console.warn('Failed to parse app-auth-session.', error)
-    return createEmptySession()
-  }
+  return sessionValue
 }
 
 export async function uploadAppFile({ filePath, cloudPath } = {}) {

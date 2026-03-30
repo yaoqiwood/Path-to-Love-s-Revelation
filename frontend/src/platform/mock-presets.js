@@ -1,8 +1,13 @@
 import { getPersonnelById, getPersonnelList } from '@/api/modules/personnel-user'
+import {
+  AUTH_STORAGE_KEYS,
+  removeAuthStorageValue,
+  setAuthStorageValue
+} from '@/platform/auth-storage'
 
-const PROFILE_KEY = 'mbtiPersonnelProfile'
-const SESSION_KEY = 'app-auth-session'
-const LEGACY_USER_KEY = 'uni-id-pages-userInfo'
+const PROFILE_KEY = AUTH_STORAGE_KEYS.profile
+const SESSION_KEY = AUTH_STORAGE_KEYS.session
+const LEGACY_USER_KEY = AUTH_STORAGE_KEYS.legacyUser
 const SYSTEM_CONFIG_KEY = 'mock-db-system-config'
 
 function clone(value) {
@@ -20,7 +25,8 @@ function buildStoredProfile(record = {}) {
   }
 }
 
-function buildSession(record = {}) {  const avatar = record.personal_photo || ''
+function buildSession(record = {}) {
+  const avatar = record.personal_photo || ''
   const userId = record.user_id || `mock-user-${record.person_id || 'guest'}`
 
   return {
@@ -29,15 +35,27 @@ function buildSession(record = {}) {  const avatar = record.personal_photo || ''
     tokenExpired: Date.now() + 7 * 24 * 60 * 60 * 1000,
     userInfo: {
       _id: userId,
-      nickname: record.nickname || record.name || 'Mock 用户',
+      nickname: record.nickname || record.name || 'Mock User',
       avatar,
-      avatar_file: avatar,
+      avatar_file: avatar
     }
   }
 }
 
 function writeJson(key, value) {
+  if (setAuthStorageValue(key, value)) {
+    return
+  }
+
   localStorage.setItem(key, JSON.stringify(value))
+}
+
+function removeStoredValue(key) {
+  if (removeAuthStorageValue(key)) {
+    return
+  }
+
+  localStorage.removeItem(key)
 }
 
 export function ensureMockBootstrap() {
@@ -52,9 +70,9 @@ export function ensureMockBootstrap() {
 }
 
 export function clearMockPreset() {
-  localStorage.removeItem(PROFILE_KEY)
-  localStorage.removeItem(SESSION_KEY)
-  localStorage.removeItem(LEGACY_USER_KEY)
+  removeStoredValue(PROFILE_KEY)
+  removeStoredValue(SESSION_KEY)
+  removeStoredValue(LEGACY_USER_KEY)
 }
 
 export function applyMockPreset(preset = 'guest') {
@@ -95,7 +113,7 @@ export function applyMockPersonnelLogin(record = {}) {
 
   const normalizedRecord = {
     ...record,
-    user_id: record.user_id || `mock-user-${record.person_id || 'guest'}`,
+    user_id: record.user_id || `mock-user-${record.person_id || 'guest'}`
   }
 
   const session = buildSession(normalizedRecord)

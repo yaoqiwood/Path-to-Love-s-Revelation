@@ -1,6 +1,7 @@
 import { getAppRouter } from '@/router/holder'
 import { rememberSelectedFile } from '@/platform/file-registry'
 import { hideLoading, openModal, pushToast, showLoading } from '@/platform/ui-state'
+import { getAuthStorageValue, isAuthStorageKey, removeAuthStorageValue, setAuthStorageValue } from '@/platform/auth-storage'
 
 function normalizePath(url = '/') {
   const value = String(url || '').trim()
@@ -180,13 +181,30 @@ export function createUniBridge() {
       })
     },
     setStorageSync(key, value) {
-      localStorage.setItem(String(key), JSON.stringify(value))
+      const normalizedKey = String(key)
+      if (isAuthStorageKey(normalizedKey)) {
+        setAuthStorageValue(normalizedKey, value)
+        return
+      }
+
+      localStorage.setItem(normalizedKey, JSON.stringify(value))
     },
     getStorageSync(key) {
-      return parseStoredValue(localStorage.getItem(String(key)))
+      const normalizedKey = String(key)
+      if (isAuthStorageKey(normalizedKey)) {
+        return getAuthStorageValue(normalizedKey)
+      }
+
+      return parseStoredValue(localStorage.getItem(normalizedKey))
     },
     removeStorageSync(key) {
-      localStorage.removeItem(String(key))
+      const normalizedKey = String(key)
+      if (isAuthStorageKey(normalizedKey)) {
+        removeAuthStorageValue(normalizedKey)
+        return
+      }
+
+      localStorage.removeItem(normalizedKey)
     },
     chooseImage(options = {}) {
       return new Promise((resolve, reject) => {

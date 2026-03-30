@@ -527,16 +527,77 @@ function getPersonnelList() {
 function savePersonnelList(list) {
   safeWriteStorage(STORAGE_KEYS.personnel, list)
 }
+function ensureInboxMockSeedMessages(list = []) {
+  const sourceList = Array.isArray(list) ? list : []
+  const nextList = [...sourceList]
+  const existingIds = new Set(sourceList.map((item) => normalizeText(item && item._id)))
+
+  const seedSpecs = [
+    { _id: 'heart-inbox-seed-31', senderId: 'personnel-111', receiverId: 'personnel-102', content: 'Anonymous inbox: your boundaries feel warm and clear.', hoursAgo: 1.4, isAnonymous: true, userRemark: 'inbox-anonymous' },
+    { _id: 'heart-inbox-seed-32', senderId: 'personnel-106', receiverId: 'personnel-103', content: 'Anonymous inbox: your listening style feels very safe.', hoursAgo: 1.2, isAnonymous: true, userRemark: 'inbox-anonymous' },
+    { _id: 'heart-inbox-seed-33', senderId: 'personnel-102', receiverId: 'personnel-108', content: 'Anonymous inbox: your social vibe is really comfortable.', hoursAgo: 1.0, isAnonymous: true, userRemark: 'inbox-anonymous' },
+    { _id: 'heart-inbox-seed-34', senderId: 'personnel-104', receiverId: 'personnel-107', content: 'Anonymous inbox: your sincerity makes me want to know you more.', hoursAgo: 0.9, isAnonymous: true, userRemark: 'inbox-anonymous' },
+    { _id: 'heart-inbox-seed-35', senderId: 'personnel-103', receiverId: 'personnel-110', content: 'Anonymous inbox: you are quiet but strong in a good way.', hoursAgo: 0.8, isAnonymous: true, userRemark: 'inbox-anonymous' },
+    { _id: 'heart-inbox-seed-36', senderId: 'personnel-107', receiverId: 'personnel-101', content: 'Anonymous inbox: your view on relationship pace resonates with me.', hoursAgo: 0.7, isAnonymous: true, userRemark: 'inbox-anonymous' },
+    { _id: 'heart-inbox-seed-37', senderId: 'personnel-101', receiverId: 'personnel-107', content: 'Thanks for your inbox letter. I would like to continue chatting.', hoursAgo: 0.5, isAnonymous: false, userRemark: 'inbox-reply' },
+    { _id: 'heart-inbox-seed-38', senderId: 'personnel-112', receiverId: 'personnel-106', content: 'Anonymous inbox: your replies feel sincere and grounded.', hoursAgo: 0.4, isAnonymous: true, userRemark: 'inbox-anonymous' }
+  ]
+
+  let changed = false
+
+  for (let index = 0; index < seedSpecs.length; index += 1) {
+    const spec = seedSpecs[index]
+    const id = normalizeText(spec._id)
+    if (!id || existingIds.has(id)) {
+      continue
+    }
+
+    const sender = getPersonnelById(spec.senderId)
+    const receiver = getPersonnelById(spec.receiverId)
+    if (!sender || !receiver) {
+      continue
+    }
+
+    const timestamp = new Date(Date.now() - toNumber(spec.hoursAgo) * 60 * 60 * 1000).toISOString()
+    nextList.push({
+      _id: id,
+      sender_record_id: sender._id,
+      receiver_record_id: receiver._id,
+      content: normalizeText(spec.content),
+      status: 'delivered',
+      is_anonymous: !!spec.isAnonymous,
+      quota_cost: 1,
+      user_remark: normalizeText(spec.userRemark),
+      message_scene: 'inbox',
+      created_at: timestamp,
+      created_at_text: timestamp
+    })
+
+    existingIds.add(id)
+    changed = true
+  }
+
+  return {
+    list: nextList,
+    changed
+  }
+}
+
 
 function getHeartMessageList() {
   const cachedList = safeReadStorage(STORAGE_KEYS.heartMessages, [])
   if (cachedList.length) {
-    return cachedList
+    const patchedCached = ensureInboxMockSeedMessages(cachedList)
+    if (patchedCached.changed) {
+      safeWriteStorage(STORAGE_KEYS.heartMessages, patchedCached.list)
+    }
+    return patchedCached.list
   }
 
   const seedList = buildSeedHeartMessages()
-  safeWriteStorage(STORAGE_KEYS.heartMessages, seedList)
-  return seedList
+  const patchedSeedList = ensureInboxMockSeedMessages(seedList)
+  safeWriteStorage(STORAGE_KEYS.heartMessages, patchedSeedList.list)
+  return patchedSeedList.list
 }
 
 function saveHeartMessageList(list) {
