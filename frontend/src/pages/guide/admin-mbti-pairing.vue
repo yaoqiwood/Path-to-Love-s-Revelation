@@ -1,33 +1,33 @@
 <template>
-	<view class="page">
-		<view class="toolbar">
+	<div class="page">
+		<div class="toolbar">
 			<button class="ghost-btn" @click="goBack">返回上一页</button>
 			<button class="solid-btn" @click="loadPairGroups">刷新查询</button>
-		</view>
+		</div>
 
-		<view class="summary-card">
+		<div class="summary-card">
 			<text class="summary-title">MBTI 组合配对查询</text>
-			<view class="summary-stats">
-				<view class="stat-item">
+			<div class="summary-stats">
+				<div class="stat-item">
 					<text class="stat-label">总人数</text>
 					<text class="stat-value">{{ displayTotalMembers }}</text>
-				</view>
-				<view class="stat-item">
+				</div>
+				<div class="stat-item">
 					<text class="stat-label">可配对人数</text>
 					<text class="stat-value">{{ displayValidMembers }}</text>
-				</view>
-				<view class="stat-item">
+				</div>
+				<div class="stat-item">
 					<text class="stat-label">配对数量</text>
 					<text class="stat-value">{{ displayTotalPairs }}</text>
-				</view>
-				<view class="stat-item">
+				</div>
+				<div class="stat-item">
 					<text class="stat-label">分组数</text>
 					<text class="stat-value">{{ displayGroupCount }}</text>
-				</view>
-			</view>
-		</view>
+				</div>
+			</div>
+		</div>
 
-		<view class="filter-card">
+		<div class="filter-card">
 			<input
 				v-model.trim="filterKeyword"
 				class="search-input"
@@ -35,23 +35,23 @@
 				confirm-type="search"
 			/>
 			<text class="filter-tip">支持按组合、别名、成员姓名或 MBTI 或 姓名x姓名 关键词筛选</text>
-		</view>
+		</div>
 
-		<view v-if="loading" class="state-box state-panel">
+		<div v-if="loading" class="state-box state-panel">
 			<text>正在计算组合，请稍候...</text>
-		</view>
-		<view v-else-if="!groupList.length" class="state-box state-panel">
+		</div>
+		<div v-else-if="!groupList.length" class="state-box state-panel">
 			<text>暂无可配对数据，请先补充人员 MBTI。</text>
-		</view>
-		<view v-else-if="!displayGroupList.length" class="state-box state-panel">
+		</div>
+		<div v-else-if="!displayGroupList.length" class="state-box state-panel">
 			<text>当前筛选条件下暂无匹配组合。</text>
-		</view>
+		</div>
 
-		<view v-else class="result-panel" @click="closeMemberDetail">
+		<div v-else class="result-panel" @click="closeMemberDetail">
 			<scroll-view class="group-list-scroll" scroll-y>
-				<view class="group-list">
-					<view v-for="group in pagedGroupList" :key="group.key" class="group-card">
-						<view class="group-head">
+				<div class="group-list">
+					<div v-for="group in pagedGroupList" :key="group.key" class="group-card">
+						<div class="group-head">
 							<text class="group-name"
 								>{{ group.name
 								}}<text v-if="group.subname" class="group-subname"
@@ -59,8 +59,8 @@
 								></text
 							>
 							<text class="group-meta">{{ group.pairs.length }} 对</text>
-						</view>
-						<view class="pair-rating-row group-rating-row">
+						</div>
+						<div class="pair-rating-row group-rating-row">
 							<text
 								class="pair-rating-badge"
 								:class="'pair-rating-' + getScoreAssessment(group.compatibilityScore).key"
@@ -69,20 +69,20 @@
 								{{ getScoreAssessment(group.compatibilityScore).label }} ·
 								{{ group.compatibilityScore }}分
 							</text>
-						</view>
+						</div>
 						<text class="group-combos"
 							>组合：{{ group.comboSummary }}｜成员池：{{ group.memberSummary }}</text
 						>
 
 						<scroll-view class="table-scroll" scroll-x @click.stop>
-							<view class="table">
-								<view class="table-row table-header">
+							<div class="table">
+								<div class="table-row table-header">
 									<text class="col col-member">{{ group.leftMbti }} 成员</text>
 									<text class="col col-member">{{ group.rightMbti }} 成员</text>
-								</view>
+								</div>
 								<block v-for="pair in group.pairs" :key="pair.key">
-									<view class="table-row">
-										<view
+									<div class="table-row">
+										<div
 											class="col col-member member-cell"
 											:class="
 												selectedDetailTarget &&
@@ -99,8 +99,8 @@
 											>
 												{{ pair.leftName }}（{{ pair.leftMbti }}） {{ getMemberGenderSymbol(pair.leftMember) }}
 											</text>
-										</view>
-										<view
+										</div>
+										<div
 											class="col col-member member-cell"
 											:class="
 												selectedDetailTarget &&
@@ -117,12 +117,12 @@
 											>
 												{{ pair.rightName }}（{{ pair.rightMbti }}{{ getMemberGenderSymbol(pair.rightMember) }}）
 											</text>
-										</view>
-									</view>
-									<view v-if="isPairMemberSelected(pair)" class="detail-row" @click.stop>
-										<view class="member-detail-card">
-											<view class="member-detail-head">
-												<view>
+										</div>
+									</div>
+									<div v-if="isPairMemberSelected(pair)" class="detail-row" @click.stop>
+										<div class="member-detail-card">
+											<div class="member-detail-head">
+												<div>
 													<text class="member-detail-title">{{
 														selectedMemberDetail.displayName || '-'
 													}}</text>
@@ -131,11 +131,11 @@
 															selectedMemberDetail.mbti || '-'
 														}}</text
 													>
-												</view>
+												</div>
 												<text class="member-detail-close" @click.stop="closeMemberDetail"
 													>收起</text
 												>
-											</view>
+											</div>
 											<!-- <text class="member-detail-tip">点击其他空白区域也可收起</text> -->
 											<image
 												v-if="selectedMemberDetail.personal_photo"
@@ -143,7 +143,7 @@
 												:src="selectedMemberDetail.personal_photo"
 												mode="aspectFill"
 											></image>
-											<view class="member-detail-grid">
+											<div class="member-detail-grid">
 												<text class="member-detail-item"
 													>姓名：{{ selectedMemberDetail.name || '-' }}</text
 												>
@@ -177,20 +177,20 @@
 												<text class="member-detail-item"
 													>出行方式：{{ selectedMemberDetail.travel_mode || '-' }}</text
 												>
-											</view>
-											<view v-if="selectedMemberDetail.address" class="member-detail-block">
+											</div>
+											<div v-if="selectedMemberDetail.address" class="member-detail-block">
 												<text class="member-detail-block-title">地址</text>
 												<text class="member-detail-block-text">{{
 													selectedMemberDetail.address
 												}}</text>
-											</view>
-											<view v-if="selectedMemberDetail.family_overview" class="member-detail-block">
+											</div>
+											<div v-if="selectedMemberDetail.family_overview" class="member-detail-block">
 												<text class="member-detail-block-title">家庭概况</text>
 												<text class="member-detail-block-text">{{
 													selectedMemberDetail.family_overview
 												}}</text>
-											</view>
-											<view
+											</div>
+											<div
 												v-if="selectedMemberDetail.self_introduction"
 												class="member-detail-block"
 											>
@@ -198,32 +198,32 @@
 												<text class="member-detail-block-text">{{
 													selectedMemberDetail.self_introduction
 												}}</text>
-											</view>
-										</view>
-									</view>
+											</div>
+										</div>
+									</div>
 								</block>
-							</view>
+							</div>
 						</scroll-view>
-					</view>
-				</view>
+					</div>
+				</div>
 			</scroll-view>
-			<view v-if="paginationTotal > pagination.pageSize" class="pagination-wrap">
-				<view
+			<div v-if="paginationTotal > pagination.pageSize" class="pagination-wrap">
+				<div
 					class="pager-btn"
 					:class="isFirstPage ? 'pager-btn is-disabled' : ''"
 					@click="goPrevPage"
-					>上一页</view
+					>上一页</div
 				>
 				<text class="pager-text">第 {{ pagination.page }} / {{ totalPages }} 页</text>
-				<view
+				<div
 					class="pager-btn"
 					:class="isLastPage ? 'pager-btn is-disabled' : ''"
 					@click="goNextPage"
-					>下一页</view
+					>下一页</div
 				>
-			</view>
-		</view>
-	</view>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>

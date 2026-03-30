@@ -1,20 +1,20 @@
 <template>
-	<view class="page">
-		<view class="hero">
-			<view class="hero-backdrop hero-backdrop-left"></view>
-			<view class="hero-backdrop hero-backdrop-right"></view>
-			<view class="hero-copy">
+	<div class="page">
+		<div class="hero">
+			<div class="hero-backdrop hero-backdrop-left"></div>
+			<div class="hero-backdrop hero-backdrop-right"></div>
+			<div class="hero-copy">
 				<text class="eyebrow">LOVE MBTI LAB</text>
 				<text class="headline">Opening your home</text>
 				<text class="subhead">We are checking your saved login profile.</text>
-			</view>
+			</div>
 
-			<view class="loading-card">
-				<view class="loading-orb"></view>
+			<div class="loading-card">
+				<div class="loading-orb"></div>
 				<text class="loading-text">{{ loadingText }}</text>
-			</view>
-		</view>
-	</view>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>

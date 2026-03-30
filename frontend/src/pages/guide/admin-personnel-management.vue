@@ -1,59 +1,59 @@
 <template>
-	<view class="page">
-		<view v-if="showDetailPopup && detailRecord" class="detail-mask" @click="closeDetail">
-			<view class="detail-dialog" @click.stop>
-				<view class="detail-head">
+	<div class="page">
+		<div v-if="showDetailPopup && detailRecord" class="detail-mask" @click="closeDetail">
+			<div class="detail-dialog" @click.stop>
+				<div class="detail-head">
 					<text class="detail-title">人员详情</text>
 					<text class="detail-close" @click="closeDetail">×</text>
-				</view>
-				<view class="detail-grid">
-					<view class="detail-item">
+				</div>
+				<div class="detail-grid">
+					<div class="detail-item">
 						<text class="detail-label">编号</text>
 						<text class="detail-value">#{{ detailRecord.person_id || '-' }}</text>
-					</view>
-					<view class="detail-item">
+					</div>
+					<div class="detail-item">
 						<text class="detail-label">昵称</text>
 						<text class="detail-value">{{ formatDetailValue(detailRecord.nickname) }}</text>
-					</view>
-					<view class="detail-item">
+					</div>
+					<div class="detail-item">
 						<text class="detail-label">姓名</text>
 						<text class="detail-value">{{ formatDetailValue(detailRecord.name) }}</text>
-					</view>
-					<view class="detail-item">
+					</div>
+					<div class="detail-item">
 						<text class="detail-label">口令</text>
 						<text class="detail-value detail-passcode">{{ formatDetailValue(detailRecord.passcode) }}</text>
-					</view>
-					<view class="detail-item">
+					</div>
+					<div class="detail-item">
 						<text class="detail-label">手机号</text>
 						<text class="detail-value">{{ formatDetailValue(detailRecord.mobile) }}</text>
-					</view>
-					<view class="detail-item">
+					</div>
+					<div class="detail-item">
 						<text class="detail-label">MBTI</text>
 						<text class="detail-value">{{ formatDetailValue(detailRecord.mbti) }}</text>
-					</view>
-					<view class="detail-item">
+					</div>
+					<div class="detail-item">
 						<text class="detail-label">审核状态</text>
 						<text class="detail-value">{{ reviewStatusText(detailRecord.review_status) }}</text>
-					</view>
-					<view class="detail-item">
+					</div>
+					<div class="detail-item">
 						<text class="detail-label">审核人</text>
 						<text class="detail-value">{{ formatDetailValue(detailRecord.reviewer) }}</text>
-					</view>
-					<view class="detail-item detail-item-full">
+					</div>
+					<div class="detail-item detail-item-full">
 						<text class="detail-label">备注</text>
 						<text class="detail-value">{{ formatDetailValue(detailRecord.remark) }}</text>
-					</view>
-				</view>
+					</div>
+				</div>
 				<button class="solid-btn detail-confirm-btn" @click="closeDetail">关闭</button>
-			</view>
-		</view>
-		<view v-if="showActionMenu && actionMenuRecord" class="action-menu-mask" @click="closeActionMenu">
-			<view class="action-menu-dialog" @click.stop>
-				<view class="action-menu-head">
+			</div>
+		</div>
+		<div v-if="showActionMenu && actionMenuRecord" class="action-menu-mask" @click="closeActionMenu">
+			<div class="action-menu-dialog" @click.stop>
+				<div class="action-menu-head">
 					<text class="action-menu-title">操作</text>
 					<text class="action-menu-close" @click="closeActionMenu">×</text>
-				</view>
-				<view class="action-menu-actions">
+				</div>
+				<div class="action-menu-actions">
 					<button class="mini-btn" @click="handleActionMenu('detail')">详情</button>
 					<button
 						class="mini-btn"
@@ -79,48 +79,48 @@
 					>
 						删除
 					</button>
-				</view>
-			</view>
-		</view>
-		<view v-if="!showFormOnly" class="hero-card">
-			<view class="hero-copy">
+				</div>
+			</div>
+		</div>
+		<div v-if="!showFormOnly" class="hero-card">
+			<div class="hero-copy">
 				<text class="hero-kicker">MBTI PERSONNEL USER</text>
 				<text class="hero-title">后台人员信息录入</text>
 				<text class="hero-desc"
 					>首页已切换为管理录入页，原 MBTI 首页仍然保留，可从这里直接进入。</text
 				>
-			</view>
-			<view class="hero-actions">
+			</div>
+			<div class="hero-actions">
 				<!-- <button class="light-btn" :disabled="resettingPasscodes" @click="resetAllPasscodes">生成全部口令</button> -->
 				<button class="solid-btn" @click="importSignupSheet">报名表格导入</button>
 				<!-- <button class="ghost-btn" @click="goLegacyHome">原 MBTI 首页</button> -->
-			</view>
-		</view>
+			</div>
+		</div>
 
-		<view class="stats-wrap">
-			<view class="stat-card">
+		<div class="stats-wrap">
+			<div class="stat-card">
 				<text class="stat-label">总人数</text>
 				<text class="stat-value">{{ stats.total }}</text>
-			</view>
-			<view class="stat-card">
+			</div>
+			<div class="stat-card">
 				<text class="stat-label">待审核</text>
 				<text class="stat-value">{{ stats.pending }}</text>
-			</view>
-			<view class="stat-card">
+			</div>
+			<div class="stat-card">
 				<text class="stat-label">已通过</text>
 				<text class="stat-value">{{ stats.approved }}</text>
-			</view>
-			<view class="stat-card">
+			</div>
+			<div class="stat-card">
 				<text class="stat-label">已驳回</text>
 				<text class="stat-value">{{ stats.rejected }}</text>
-			</view>
-		</view>
+			</div>
+		</div>
 
-		<view class="filter-card">
-			<view v-if="!showFormOnly">
+		<div class="filter-card">
+			<div v-if="!showFormOnly">
 				<scroll-view class="status-scroll" scroll-x>
-					<view class="status-row">
-						<view
+					<div class="status-row">
+						<div
 							v-for="item in reviewStatusFilters"
 							:key="item.value"
 							class="status-chip"
@@ -128,8 +128,8 @@
 							@click="changeStatusFilter(item.value)"
 						>
 							{{ item.label }}
-						</view>
-					</view>
+						</div>
+					</div>
 				</scroll-view>
 				<input
 					v-model="keyword"
@@ -138,25 +138,25 @@
 					confirm-type="search"
 					@confirm="searchList"
 				/>
-			</view>
-			<view class="filter-toolbar">
+			</div>
+			<div class="filter-toolbar">
 				<button v-if="!showFormOnly" class="solid-btn" @click="openCreate">新增人员</button>
 				<button v-else class="ghost-btn" @click="exitFormMode">返回列表</button>
-				<view v-if="!showFormOnly" class="filter-actions">
+				<div v-if="!showFormOnly" class="filter-actions">
 					<button class="light-btn" @click="resetFilters">重置</button>
 					<button class="solid-btn" @click="searchList">查询</button>
-				</view>
-			</view>
-		</view>
+				</div>
+			</div>
+		</div>
 
-		<view v-if="!showFormOnly" class="table-card">
-			<view class="card-head">
+		<div v-if="!showFormOnly" class="table-card">
+			<div class="card-head">
 				<text class="card-title">人员信息表</text>
 				<text class="card-tip">小程序端使用横向滚动表格，避免字段过多时布局挤压。</text>
-			</view>
+			</div>
 			<scroll-view scroll-x class="table-scroll">
-				<view class="table">
-					<view class="table-header table-row">
+				<div class="table">
+					<div class="table-header table-row">
 						<text class="col col-id">编号</text>
 						<text class="col col-name">昵称 / 姓名</text>
 						<text class="col col-gender">性别</text>
@@ -167,205 +167,205 @@
 						<text class="col col-reviewer">审核人</text>
 						<text class="col col-time">提交时间</text>
 						<text class="col col-action">操作</text>
-					</view>
-					<view v-if="!loading && !records.length" class="empty-box">
+					</div>
+					<div v-if="!loading && !records.length" class="empty-box">
 						<text>暂无数据</text>
-					</view>
-					<view v-for="item in records" :key="item._id" class="table-row body-row">
+					</div>
+					<div v-for="item in records" :key="item._id" class="table-row body-row">
 						<text class="col col-id">#{{ item.person_id }}</text>
-						<view class="col col-name name-cell">
+						<div class="col col-name name-cell">
 							<text class="primary-text">{{ item.nickname || '-' }}</text>
 							<text class="secondary-text">{{ item.name || '-' }}</text>
-						</view>
+						</div>
 						<text class="col col-gender">{{ item.gender || '-' }}</text>
 						<text class="col col-age">{{ item.age || '-' }}</text>
 						<text class="col col-mobile">{{ item.mobile || '-' }}</text>
 						<text class="col col-mbti">{{ item.mbti || '-' }}</text>
-						<view class="col col-status">
+						<div class="col col-status">
 							<text :class="statusClass(item.review_status)">{{
 								reviewStatusText(item.review_status)
 							}}</text>
-						</view>
+						</div>
 						<text class="col col-reviewer">{{ item.reviewer || '-' }}</text>
 						<text class="col col-time">{{ formatDate(item.submitted_at) }}</text>
-						<view class="col col-action action-cell">
+						<div class="col col-action action-cell">
 							<button class="mini-btn" @click="openActionMenu(item)">操作</button>
-						</view>
-					</view>
-				</view>
+						</div>
+					</div>
+				</div>
 			</scroll-view>
-			<view v-if="pagination.total > pagination.pageSize" class="pagination-wrap">
-				<view
+			<div v-if="pagination.total > pagination.pageSize" class="pagination-wrap">
+				<div
 					class="pager-btn"
 					:class="isFirstPage ? 'pager-btn is-disabled' : ''"
 					@click="goPrevPage"
-					>上一页</view
+					>上一页</div
 				>
 				<text class="pager-text">第 {{ pagination.page }} / {{ totalPages }} 页</text>
-				<view
+				<div
 					class="pager-btn"
 					:class="isLastPage ? 'pager-btn is-disabled' : ''"
 					@click="goNextPage"
-					>下一页</view
+					>下一页</div
 				>
-			</view>
-		</view>
+			</div>
+		</div>
 
-		<view v-if="showFormOnly" class="form-card">
-			<view class="card-head">
+		<div v-if="showFormOnly" class="form-card">
+			<div class="card-head">
 				<text class="card-title">{{ isEditMode ? '编辑人员' : '新增人员' }}</text>
 				<text class="card-tip">提交时间和修改时间由云端自动维护，自增编号由云对象分配。</text>
-			</view>
+			</div>
 
-			<view class="section-block">
+			<div class="section-block">
 				<text class="section-title">基础信息</text>
-				<view class="form-grid">
-					<view class="field">
+				<div class="form-grid">
+					<div class="field">
 						<text class="label">昵称</text>
 						<input v-model="form.nickname" class="input" placeholder="请输入昵称" />
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">姓名</text>
 						<input v-model="form.name" class="input" placeholder="请输入姓名" />
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">性别</text>
 						<picker :range="genderOptions" :value="genderIndex" @change="onGenderChange">
-							<view class="picker">{{ form.gender || '请选择性别' }}</view>
+							<div class="picker">{{ form.gender || '请选择性别' }}</div>
 						</picker>
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">年龄</text>
 						<input v-model="form.age" class="input" type="number" placeholder="请输入年龄" />
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">手机号</text>
 						<input v-model="form.mobile" class="input" type="number" placeholder="请输入手机号" />
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">身份证号</text>
 						<input v-model="form.id_card" class="input" placeholder="请输入身份证号" />
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">MBTI</text>
 						<picker :range="mbtiOptions" :value="mbtiIndex" @change="onMbtiChange">
-							<view class="picker">{{ form.mbti || '请选择 MBTI' }}</view>
+							<div class="picker">{{ form.mbti || '请选择 MBTI' }}</div>
 						</picker>
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">籍贯</text>
 						<input v-model="form.native_place" class="input" placeholder="请输入籍贯" />
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">职业</text>
 						<input v-model="form.profession" class="input" placeholder="请输入职业" />
-					</view>
-					<view class="field field-full">
+					</div>
+					<div class="field field-full">
 						<text class="label">住址</text>
 						<input v-model="form.address" class="input" placeholder="请输入住址" />
-					</view>
-				</view>
-			</view>
+					</div>
+				</div>
+			</div>
 
-			<view class="section-block">
+			<div class="section-block">
 				<text class="section-title">照片与背景</text>
-				<view class="photo-box">
+				<div class="photo-box">
 					<image
 						v-if="form.personal_photo"
 						class="photo-preview"
 						:src="form.personal_photo"
 						mode="aspectFill"
 					></image>
-					<view v-else class="photo-placeholder">未上传照片</view>
-					<view class="photo-actions">
+					<div v-else class="photo-placeholder">未上传照片</div>
+					<div class="photo-actions">
 						<button class="light-btn" @click="uploadPhoto">上传照片</button>
 						<button class="ghost-btn" @click="clearPhoto">清空照片</button>
-					</view>
-				</view>
-				<view class="form-grid">
-					<view class="field field-full">
+					</div>
+				</div>
+				<div class="form-grid">
+					<div class="field field-full">
 						<text class="label">家庭大致情况</text>
 						<textarea
 							v-model="form.family_overview"
 							class="textarea"
 							placeholder="请输入家庭大致情况"
 						></textarea>
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">所在教会</text>
 						<input v-model="form.church" class="input" placeholder="请输入所在教会" />
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">推荐人</text>
 						<input v-model="form.referrer" class="input" placeholder="请输入推荐人" />
-					</view>
-					<view class="field field-full">
+					</div>
+					<div class="field field-full">
 						<text class="label">自我介绍</text>
 						<textarea
 							v-model="form.self_introduction"
 							class="textarea"
 							placeholder="请输入自我介绍"
 						></textarea>
-					</view>
-				</view>
-			</view>
+					</div>
+				</div>
+			</div>
 
-			<view class="section-block">
+			<div class="section-block">
 				<text class="section-title">审核信息</text>
-				<view class="form-grid">
-					<view class="field">
+				<div class="form-grid">
+					<div class="field">
 						<text class="label">感情情况</text>
 						<picker
 							:range="relationshipOptions"
 							:value="relationshipIndex"
 							@change="onRelationshipChange"
 						>
-							<view class="picker">{{ form.relationship_status || '请选择感情情况' }}</view>
+							<div class="picker">{{ form.relationship_status || '请选择感情情况' }}</div>
 						</picker>
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">活动出行方式</text>
 						<picker
 							:range="travelModeOptions"
 							:value="travelModeIndex"
 							@change="onTravelModeChange"
 						>
-							<view class="picker">{{ form.travel_mode || '请选择出行方式' }}</view>
+							<div class="picker">{{ form.travel_mode || '请选择出行方式' }}</div>
 						</picker>
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">当前审核状态</text>
 						<picker
 							:range="reviewStatusOptionLabels"
 							:value="reviewStatusIndex"
 							@change="onReviewStatusChange"
 						>
-							<view class="picker">{{ reviewStatusText(form.review_status) }}</view>
+							<div class="picker">{{ reviewStatusText(form.review_status) }}</div>
 						</picker>
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">审核人</text>
 						<input v-model="form.reviewer" class="input" placeholder="请输入审核人" />
-					</view>
-					<view class="field field-full">
+					</div>
+					<div class="field field-full">
 						<text class="label">remark 说明</text>
 						<textarea
 							v-model="form.remark"
 							class="textarea"
 							placeholder="请输入备注说明"
 						></textarea>
-					</view>
-				</view>
-			</view>
+					</div>
+				</div>
+			</div>
 
-			<view class="form-actions">
+			<div class="form-actions">
 				<button class="ghost-btn action-btn" @click="resetForm">清空</button>
 				<button class="solid-btn action-btn" @click="submitForm">
 					{{ isEditMode ? '保存修改' : '提交录入' }}
 				</button>
-			</view>
-		</view>
-	</view>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>

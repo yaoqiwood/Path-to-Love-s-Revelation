@@ -1,46 +1,46 @@
 <template>
-	<view class="page">
-		<view class="toolbar">
+	<div class="page">
+		<div class="toolbar">
 			<button class="ghost-btn" @click="goBack">返回上一页</button>
 			<button class="solid-btn" @click="loadRecordList">刷新数据</button>
-		</view>
+		</div>
 
-		<view v-if="accessChecked" class="panel-card hero-card">
-			<view class="card-head">
+		<div v-if="accessChecked" class="panel-card hero-card">
+			<div class="card-head">
 				<text class="card-title">意向记录总览</text>
 				<text class="card-tip">
 					进入页面时会在云端先聚合最新意向记录，再按双方互选与匹配总分生成排行榜，页面只接收聚合后的配对结果。
 				</text>
-			</view>
+			</div>
 
-			<view class="stats-wrap">
-				<view class="stat-card">
+			<div class="stats-wrap">
+				<div class="stat-card">
 					<text class="stat-label">配对总数</text>
 					<text class="stat-value">{{ summaryStats.totalPairs }}</text>
-				</view>
-				<view class="stat-card">
+				</div>
+				<div class="stat-card">
 					<text class="stat-label">当前展示</text>
 					<text class="stat-value">{{ summaryStats.filteredPairs }}</text>
-				</view>
-				<view class="stat-card">
+				</div>
+				<div class="stat-card">
 					<text class="stat-label">匹配总分</text>
 					<text class="stat-value">{{ formatScoreValue(summaryStats.totalMatchScore) }}</text>
-				</view>
-				<view class="stat-card">
+				</div>
+				<div class="stat-card">
 					<text class="stat-label">{{ isWeightedPanel ? '最低总分' : '最高匹配分' }}</text>
 					<text class="stat-value">{{ formatScoreValue(isWeightedPanel ? summaryStats.lowestMatchScore : summaryStats.topMatchScore) }}</text>
-				</view>
-			</view>
-		</view>
+				</div>
+			</div>
+		</div>
 
-		<view v-if="accessChecked" class="panel-card switch-card">
-			<view class="switch-card-head">
-				<view class="card-head">
+		<div v-if="accessChecked" class="panel-card switch-card">
+			<div class="switch-card-head">
+				<div class="card-head">
 					<text class="card-title">榜单切换</text>
 					<text class="card-tip">切换不同计算方式的排行榜，筛选条件已经合并到榜单卡片内。</text>
-				</view>
-				<view class="panel-tabs">
-					<view
+				</div>
+				<div class="panel-tabs">
+					<div
 						v-for="item in panelOptions"
 						:key="item.value"
 						class="panel-tab"
@@ -48,18 +48,18 @@
 						@click="switchPanel(item.value)"
 					>
 						{{ item.label }}
-					</view>
-				</view>
-			</view>
-		</view>
+					</div>
+				</div>
+			</div>
+		</div>
 
-		<view v-if="accessChecked" class="panel-card">
-			<view class="card-head">
+		<div v-if="accessChecked" class="panel-card">
+			<div class="card-head">
 				<text class="card-title">{{ currentPanelMeta.title }}</text>
 				<text class="card-tip">{{ currentPanelMeta.tip }}</text>
-			</view>
+			</div>
 
-			<view class="filter-box">
+			<div class="filter-box">
 				<input
 					v-model.trim="keyword"
 					class="search-input filter-search-input"
@@ -67,8 +67,8 @@
 					confirm-type="search"
 				/>
 				<scroll-view class="status-scroll" scroll-x>
-					<view class="status-row">
-						<view
+					<div class="status-row">
+						<div
 							v-for="item in statusOptions"
 							:key="item.value"
 							class="status-chip"
@@ -76,12 +76,12 @@
 							@click="changeStatus(item.value)"
 						>
 							{{ item.label }}
-						</view>
-					</view>
+						</div>
+					</div>
 				</scroll-view>
-			</view>
+			</div>
 
-			<view class="table-shell">
+			<div class="table-shell">
 				<scroll-view
 					scroll-x
 					scroll-y
@@ -90,61 +90,61 @@
 					:scroll-left="tableScrollLeft"
 					@scroll="handleTableScroll"
 				>
-					<view class="table">
-						<view class="table-row table-header">
+					<div class="table">
+						<div class="table-row table-header">
 							<text class="col col-rank">排行</text>
 							<text class="col col-score">{{ isWeightedPanel ? '总分' : '匹配总分' }}</text>
 							<text class="col col-pair">配对双方</text>
 							<text class="col col-status">状态</text>
 							<text class="col col-pair-rank">{{ isWeightedPanel ? '双方排名' : '双方志愿' }}</text>
 							<text class="col col-expand">明细</text>
-						</view>
+						</div>
 
-						<view v-if="!loading && !recordList.length" class="empty-box">
+						<div v-if="!loading && !recordList.length" class="empty-box">
 							<text>当前没有可展示的互选配对</text>
-						</view>
-						<view v-else-if="!loading && !filteredRecordList.length" class="empty-box">
+						</div>
+						<div v-else-if="!loading && !filteredRecordList.length" class="empty-box">
 							<text>当前筛选条件下没有匹配结果</text>
-						</view>
+						</div>
 
 						<block v-for="item in pagedRecordList" :key="item.pair_key">
-							<view
+							<div
 								class="table-row body-row is-expandable"
 								:class="isPairExpanded(item.pair_key) ? 'is-expanded' : ''"
 								@click="togglePairDetail(item.pair_key)"
 							>
 								<text class="col col-rank rank-text">#{{ item.pair_rank }}</text>
 								<text class="col col-score score-strong">{{ formatScoreValue(item.match_score_total) }}</text>
-								<view class="col col-pair pair-cell">
-									<view class="pair-person pair-person-inline">
+								<div class="col col-pair pair-cell">
+									<div class="pair-person pair-person-inline">
 										<text class="primary-text">#{{ item.left_person.person_id || '-' }} · {{ item.left_person.name || '-' }}</text>
 										<text class="secondary-text">{{ item.left_person.nickname || '未填写昵称' }} · {{ item.left_person.mbti || 'MBTI 未知' }}</text>
-									</view>
+									</div>
 									<text class="pair-divider">VS</text>
-									<view class="pair-person pair-person-inline">
+									<div class="pair-person pair-person-inline">
 										<text class="primary-text">#{{ item.right_person.person_id || '-' }} · {{ item.right_person.name || '-' }}</text>
 										<text class="secondary-text">{{ item.right_person.nickname || '未填写昵称' }} · {{ item.right_person.mbti || 'MBTI 未知' }}</text>
-									</view>
-								</view>
-								<view class="col col-status">
+									</div>
+								</div>
+								<div class="col col-status">
 									<text class="status-pill" :class="statusClass(item.pair_status)">
 										{{ statusText(item.pair_status) }}
 									</text>
-								</view>
+								</div>
 								<text class="col col-pair-rank">{{ formatRankValue(item.rank_left_to_right) }} / {{ formatRankValue(item.rank_right_to_left) }}</text>
-								<view class="col col-expand expand-cell">
+								<div class="col col-expand expand-cell">
 									<text class="expand-text">{{ isPairExpanded(item.pair_key) ? '收起 ▲' : '展开 ▼' }}</text>
-								</view>
-							</view>
+								</div>
+							</div>
 
-							<view v-if="isPairExpanded(item.pair_key)" class="detail-panel">
-								<view class="detail-head">
+							<div v-if="isPairExpanded(item.pair_key)" class="detail-panel">
+								<div class="detail-head">
 									<text class="detail-title">配对明细</text>
 									<text class="detail-summary">
 										总分 {{ formatScoreValue(item.match_score_total) }} 分 · 双方排名 {{ formatRankValue(item.rank_left_to_right) }} / {{ formatRankValue(item.rank_right_to_left) }}
 									</text>
-								</view>
-								<view class="formula-card">
+								</div>
+								<div class="formula-card">
 									<text class="formula-title">得分细节</text>
 									<block v-if="isWeightedPanel">
 										<text class="formula-text">
@@ -171,54 +171,54 @@
 											总分 = {{ formatScoreValue(item.score_left_to_right) }} + {{ formatScoreValue(item.score_right_to_left) }} + {{ formatScoreValue(item.mutual_bonus_score) }} = {{ formatScoreValue(item.match_score_total) }}
 										</text>
 									</block>
-								</view>
-								<view class="pick-list">
-									<view class="pick-card">
-										<view class="pick-top">
+								</div>
+								<div class="pick-list">
+									<div class="pick-card">
+										<div class="pick-top">
 											<text class="pick-rank">{{ item.left_person.name || '-' }}</text>
 											<text class="pick-nickname">{{ item.left_person.nickname || '未填写昵称' }}</text>
 											<text class="pick-mbti">{{ item.left_person.mbti || 'MBTI 未知' }}</text>
 											<text class="pick-state" :class="statusClass(item.left_status)">
 												{{ statusText(item.left_status) }}
 											</text>
-										</view>
+										</div>
 										<text class="pick-meta">编号 #{{ item.left_person.person_id || '-' }} · 选择对象 {{ item.right_person.name || '-' }}</text>
-										<view class="pick-score-row">
+										<div class="pick-score-row">
 											<text class="pick-score">志愿排名 {{ formatRankValue(item.rank_left_to_right) }}</text>
 											<text class="pick-score">给分 {{ formatScoreValue(item.score_left_to_right) }}</text>
-										</view>
+										</div>
 										<text class="pick-meta">提交 {{ formatDate(item.left_submitted_at) }} · 更新 {{ formatDate(item.left_updated_at) }}</text>
-									</view>
-									<view class="pick-card">
-										<view class="pick-top">
+									</div>
+									<div class="pick-card">
+										<div class="pick-top">
 											<text class="pick-rank">{{ item.right_person.name || '-' }}</text>
 											<text class="pick-nickname">{{ item.right_person.nickname || '未填写昵称' }}</text>
 											<text class="pick-mbti">{{ item.right_person.mbti || 'MBTI 未知' }}</text>
 											<text class="pick-state" :class="statusClass(item.right_status)">
 												{{ statusText(item.right_status) }}
 											</text>
-										</view>
+										</div>
 										<text class="pick-meta">编号 #{{ item.right_person.person_id || '-' }} · 选择对象 {{ item.left_person.name || '-' }}</text>
-										<view class="pick-score-row">
+										<div class="pick-score-row">
 											<text class="pick-score">志愿排名 {{ formatRankValue(item.rank_right_to_left) }}</text>
 											<text class="pick-score">给分 {{ formatScoreValue(item.score_right_to_left) }}</text>
-										</view>
+										</div>
 										<text class="pick-meta">提交 {{ formatDate(item.right_submitted_at) }} · 更新 {{ formatDate(item.right_updated_at) }}</text>
-									</view>
-								</view>
-							</view>
+									</div>
+								</div>
+							</div>
 						</block>
-					</view>
+					</div>
 				</scroll-view>
 
-				<view v-if="loading" class="table-loading-mask">
-					<view class="table-loading-card">
+				<div v-if="loading" class="table-loading-mask">
+					<div class="table-loading-card">
 						<text class="table-loading-text">正在加载{{ currentPanelMeta.title }}...</text>
-					</view>
-				</view>
-			</view>
+					</div>
+				</div>
+			</div>
 
-			<view v-if="totalCount > pagination.pageSize" class="table-pagination">
+			<div v-if="totalCount > pagination.pageSize" class="table-pagination">
 				<uni-pagination
 					show-icon
 					:current="pagination.page"
@@ -226,9 +226,9 @@
 					:total="totalCount"
 					@change="handlePageChange"
 				/>
-			</view>
-		</view>
-	</view>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>

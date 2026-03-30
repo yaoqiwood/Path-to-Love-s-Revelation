@@ -1,11 +1,11 @@
 <template>
-	<view class="page">
-		<view v-if="showCandidatePopup" class="candidate-popup-mask" @click="closeCandidatePopup">
-			<view class="candidate-popup" @click.stop>
-				<view class="candidate-head">
+	<div class="page">
+		<div v-if="showCandidatePopup" class="candidate-popup-mask" @click="closeCandidatePopup">
+			<div class="candidate-popup" @click.stop>
+				<div class="candidate-head">
 					<text class="section-title">选择人员加入用户</text>
 					<button class="ghost-btn mini-ghost-btn" @click="closeCandidatePopup">关闭</button>
-				</view>
+				</div>
 				<input
 					v-model.trim="candidateKeyword"
 					class="search-input"
@@ -13,25 +13,25 @@
 					confirm-type="search"
 					@confirm="loadCandidateList"
 				/>
-				<view class="candidate-toolbar">
+				<div class="candidate-toolbar">
 					<button class="light-btn" @click="loadCandidateList">查询候选人</button>
 					<button class="ghost-btn" @click="goPersonnelManagement">去人员管理</button>
-				</view>
-				<view v-if="candidateLoading" class="empty-box">
+				</div>
+				<div v-if="candidateLoading" class="empty-box">
 					<text>正在加载候选人...</text>
-				</view>
-				<view v-else-if="!candidateList.length" class="empty-box">
+				</div>
+				<div v-else-if="!candidateList.length" class="empty-box">
 					<text>暂无可提升的候选人</text>
-				</view>
-				<view v-else class="candidate-list">
-					<view v-for="item in pagedCandidateList" :key="item._id" class="candidate-item">
-						<view class="candidate-main">
+				</div>
+				<div v-else class="candidate-list">
+					<div v-for="item in pagedCandidateList" :key="item._id" class="candidate-item">
+						<div class="candidate-main">
 							<text class="candidate-name">#{{ item.person_id }} · {{ item.nickname || '-' }} / {{ item.name || '-' }}</text>
 							<text class="candidate-meta">手机：{{ item.mobile || '-' }}　MBTI：{{ item.mbti || '-' }}</text>
-						</view>
+						</div>
 						<button class="mini-btn" :disabled="actionLoading" @click="promoteToUser(item)">设为用户</button>
-					</view>
-					<view v-if="candidateList.length > candidatePagination.pageSize" class="candidate-pagination">
+					</div>
+					<div v-if="candidateList.length > candidatePagination.pageSize" class="candidate-pagination">
 						<uni-pagination
 							show-icon
 							:current="candidatePagination.page"
@@ -39,41 +39,41 @@
 							:total="candidateList.length"
 							@change="handleCandidatePageChange"
 						/>
-					</view>
-				</view>
-			</view>
-		</view>
+					</div>
+				</div>
+			</div>
+		</div>
 
-		<view class="toolbar">
+		<div class="toolbar">
 			<button class="back-btn" @click="goBack">返回上一页</button>
-		</view>
+		</div>
 
-		<view v-if="accessChecked" class="panel-card user-card">
-			<view class="card-head">
+		<div v-if="accessChecked" class="panel-card user-card">
+			<div class="card-head">
 				<text class="card-title">用户管理</text>
 				<text class="card-tip">默认只显示用户与高级用户；高级用户不可变更，普通用户可降级为普通测试者。</text>
-			</view>
+			</div>
 
-			<view class="stats-wrap">
-				<view class="stat-card">
+			<div class="stats-wrap">
+				<div class="stat-card">
 					<text class="stat-label">用户总数</text>
 					<text class="stat-value">{{ userStats.total }}</text>
-				</view>
-				<view class="stat-card">
+				</div>
+				<div class="stat-card">
 					<text class="stat-label">普通用户</text>
 					<text class="stat-value">{{ userStats.users }}</text>
-				</view>
-				<view class="stat-card">
+				</div>
+				<div class="stat-card">
 					<text class="stat-label">高级用户</text>
 					<text class="stat-value">{{ userStats.superUsers }}</text>
-				</view>
-				<view class="stat-card">
+				</div>
+				<div class="stat-card">
 					<text class="stat-label">候选人数</text>
 					<text class="stat-value">{{ candidateList.length }}</text>
-				</view>
-			</view>
+				</div>
+			</div>
 
-			<view class="toolbar-row">
+			<div class="toolbar-row">
 				<input
 					v-model.trim="userKeyword"
 					class="search-input"
@@ -81,17 +81,17 @@
 					confirm-type="search"
 					@confirm="loadUserList"
 				/>
-				<view class="toolbar-actions">
+				<div class="toolbar-actions">
 					<button class="light-btn" @click="loadUserList">刷新</button>
 					<button class="solid-btn" @click="openCandidatePopup">新增用户</button>
-				</view>
-			</view>
+				</div>
+			</div>
 
-			<view v-if="showAddPanel" class="candidate-panel">
-				<view class="candidate-head">
+			<div v-if="showAddPanel" class="candidate-panel">
+				<div class="candidate-head">
 					<text class="section-title">选择人员加入用户</text>
 					<button class="ghost-btn mini-ghost-btn" @click="toggleAddPanel">收起</button>
-				</view>
+				</div>
 				<input
 					v-model.trim="candidateKeyword"
 					class="search-input"
@@ -99,25 +99,25 @@
 					confirm-type="search"
 					@confirm="loadCandidateList"
 				/>
-				<view class="candidate-toolbar">
+				<div class="candidate-toolbar">
 					<button class="light-btn" @click="loadCandidateList">查询候选人</button>
 					<button class="ghost-btn" @click="goPersonnelManagement">去人员管理</button>
-				</view>
-				<view v-if="candidateLoading" class="empty-box">
+				</div>
+				<div v-if="candidateLoading" class="empty-box">
 					<text>正在加载候选人员...</text>
-				</view>
-				<view v-else-if="!candidateList.length" class="empty-box">
+				</div>
+				<div v-else-if="!candidateList.length" class="empty-box">
 					<text>暂无可提升的普通测试者</text>
-				</view>
-				<view v-else class="candidate-list">
-					<view v-for="item in pagedCandidateList" :key="item._id" class="candidate-item">
-						<view class="candidate-main">
+				</div>
+				<div v-else class="candidate-list">
+					<div v-for="item in pagedCandidateList" :key="item._id" class="candidate-item">
+						<div class="candidate-main">
 							<text class="candidate-name">#{{ item.person_id }} · {{ item.nickname || '-' }} / {{ item.name || '-' }}</text>
 							<text class="candidate-meta">手机：{{ item.mobile || '-' }}　MBTI：{{ item.mbti || '-' }}</text>
-						</view>
+						</div>
 						<button class="mini-btn" :disabled="actionLoading" @click="promoteToUser(item)">设为用户</button>
-					</view>
-					<view v-if="candidateList.length > candidatePagination.pageSize" class="candidate-pagination">
+					</div>
+					<div v-if="candidateList.length > candidatePagination.pageSize" class="candidate-pagination">
 						<uni-pagination
 							show-icon
 							:current="candidatePagination.page"
@@ -125,13 +125,13 @@
 							:total="candidateList.length"
 							@change="handleCandidatePageChange"
 						/>
-					</view>
-				</view>
-			</view>
+					</div>
+				</div>
+			</div>
 
 			<scroll-view scroll-x class="table-scroll">
-				<view class="table">
-					<view class="table-row table-header">
+				<div class="table">
+					<div class="table-row table-header">
 						<text class="col col-id">编号</text>
 						<text class="col col-name">昵称 / 姓名</text>
 						<text class="col col-mobile">手机号</text>
@@ -140,27 +140,27 @@
 						<text class="col col-status">审核状态</text>
 						<text class="col col-time">更新时间</text>
 						<text class="col col-action">操作</text>
-					</view>
-					<view v-if="loading" class="empty-box">
+					</div>
+					<div v-if="loading" class="empty-box">
 						<text>正在加载用户数据...</text>
-					</view>
-					<view v-else-if="!userList.length" class="empty-box">
+					</div>
+					<div v-else-if="!userList.length" class="empty-box">
 						<text>当前没有用户数据</text>
-					</view>
-					<view v-for="item in pagedUserList" :key="item._id" class="table-row body-row">
+					</div>
+					<div v-for="item in pagedUserList" :key="item._id" class="table-row body-row">
 						<text class="col col-id">#{{ item.person_id || '-' }}</text>
-						<view class="col col-name name-cell">
+						<div class="col col-name name-cell">
 							<text class="primary-text">{{ item.nickname || '-' }}</text>
 							<text class="secondary-text">{{ item.name || '-' }}</text>
-						</view>
+						</div>
 						<text class="col col-mobile">{{ item.mobile || '-' }}</text>
 						<text class="col col-mbti">{{ item.mbti || '-' }}</text>
-						<view class="col col-role">
+						<div class="col col-role">
 							<text class="role-pill" :class="roleClass(item.user_role)">{{ userRoleText(item.user_role) }}</text>
-						</view>
+						</div>
 						<text class="col col-status">{{ reviewStatusText(item.review_status) }}</text>
 						<text class="col col-time">{{ formatDate(item.updated_at || item.updated_at_text) }}</text>
-						<view class="col col-action action-cell">
+						<div class="col col-action action-cell">
 							<button
 								v-if="Number(item.user_role) === 2"
 								class="mini-btn danger-btn"
@@ -170,9 +170,9 @@
 								降级为普通
 							</button>
 							<text v-else class="fixed-tip">高级用户不可变更</text>
-						</view>
-					</view>
-					<view v-if="userList.length > userPagination.pageSize" class="table-pagination">
+						</div>
+					</div>
+					<div v-if="userList.length > userPagination.pageSize" class="table-pagination">
 						<uni-pagination
 							show-icon
 							:current="userPagination.page"
@@ -180,11 +180,11 @@
 							:total="userList.length"
 							@change="handleUserPageChange"
 						/>
-					</view>
-				</view>
+					</div>
+				</div>
 			</scroll-view>
-		</view>
-	</view>
+		</div>
+	</div>
 </template>
 
 <script>

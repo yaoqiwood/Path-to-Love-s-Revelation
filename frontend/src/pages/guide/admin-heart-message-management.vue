@@ -1,48 +1,48 @@
 <template>
-	<view class="page">
-		<view class="toolbar">
+	<div class="page">
+		<div class="toolbar">
 			<button class="ghost-btn" @click="goBack">返回上一页</button>
 			<button class="solid-btn" @click="loadAll">刷新数据</button>
-		</view>
+		</div>
 
-		<view class="hero-card">
-			<view class="card-head">
+		<div class="hero-card">
+			<div class="card-head">
 				<text class="card-title">心动私信管理表</text>
 				<text class="card-tip">
 					用户可为参与者分配私信次数，并创建匿名心动私信记录。当前版本默认由用户录入发送关系，被发送者不会看到发送者身份。
 				</text>
-			</view>
-			<view class="stats-wrap">
-				<view class="stat-card">
+			</div>
+			<div class="stats-wrap">
+				<div class="stat-card">
 					<text class="stat-label">私信总数</text>
 					<text class="stat-value">{{ stats.total }}</text>
-				</view>
-				<view class="stat-card">
+				</div>
+				<div class="stat-card">
 					<text class="stat-label">待投递</text>
 					<text class="stat-value">{{ stats.queued }}</text>
-				</view>
-				<view class="stat-card">
+				</div>
+				<div class="stat-card">
 					<text class="stat-label">已投递</text>
 					<text class="stat-value">{{ stats.delivered }}</text>
-				</view>
-				<view class="stat-card">
+				</div>
+				<div class="stat-card">
 					<text class="stat-label">草稿/撤销</text>
 					<text class="stat-value">{{ stats.draft + stats.revoked }}</text>
-				</view>
-			</view>
-		</view>
+				</div>
+			</div>
+		</div>
 
-		<view class="panel-card">
-			<view class="card-head">
+		<div class="panel-card">
+			<div class="card-head">
 				<text class="card-title">私信次数分配</text>
 				<text class="card-tip">先搜索参与者，再为其直接设置、增加或扣减可发送次数。</text>
-			</view>
-			<view class="action-row quota-entry-row">
+			</div>
+			<div class="action-row quota-entry-row">
 				<button class="solid-btn" @click="toggleQuotaPanel">
 					{{ showQuotaPanel ? '收起次数分配' : '打开次数分配' }}
 				</button>
-			</view>
-			<view v-if="showQuotaPanel" class="quota-panel">
+			</div>
+			<div v-if="showQuotaPanel" class="quota-panel">
 				<input
 					v-model.trim="candidateKeyword"
 					class="search-input"
@@ -50,25 +50,25 @@
 					confirm-type="search"
 					@confirm="loadCandidates"
 				/>
-				<view v-if="candidateLoading" class="empty-box">
+				<div v-if="candidateLoading" class="empty-box">
 					<text>正在加载参与者...</text>
-				</view>
-				<view v-else-if="!candidateList.length" class="empty-box">
+				</div>
+				<div v-else-if="!candidateList.length" class="empty-box">
 					<text>暂无可分配私信次数的参与者</text>
-				</view>
-					<view v-else class="candidate-list">
-					<view v-for="item in candidateList" :key="item._id" class="candidate-item">
-						<view class="candidate-top">
-							<view class="candidate-main">
+				</div>
+					<div v-else class="candidate-list">
+					<div v-for="item in candidateList" :key="item._id" class="candidate-item">
+						<div class="candidate-top">
+							<div class="candidate-main">
 								<text class="candidate-name">{{ item.label }}</text>
 								<text class="candidate-meta">
 									手机号 {{ item.mobile || '-' }} | 当前可发次数 {{ item.private_message_quota || 0 }}
 								</text>
-							</view>
-						</view>
-						<view class="candidate-bottom">
-							<view class="candidate-bottom-spacer"></view>
-							<view class="candidate-actions">
+							</div>
+						</div>
+						<div class="candidate-bottom">
+							<div class="candidate-bottom-spacer"></div>
+							<div class="candidate-actions">
 								<input
 									v-model="quotaInputs[item._id]"
 									class="mini-input"
@@ -78,10 +78,10 @@
 								<button class="mini-btn" @click="changeQuota(item, 'set')">设置</button>
 								<button class="mini-btn" @click="changeQuota(item, 'increase')">增加</button>
 								<button class="mini-btn danger-btn" @click="changeQuota(item, 'decrease')">扣减</button>
-							</view>
-						</view>
-					</view>
-					<view
+							</div>
+						</div>
+					</div>
+					<div
 						v-if="candidatePagination.total > candidatePagination.pageSize"
 						class="candidate-pager"
 					>
@@ -102,19 +102,19 @@
 						>
 							下一页
 						</button>
-					</view>
-				</view>
-			</view>
-		</view>
+					</div>
+				</div>
+			</div>
+		</div>
 
-		<view class="panel-card">
-			<view class="card-head">
+		<div class="panel-card">
+			<div class="card-head">
 				<text class="card-title">私信记录</text>
 				<text class="card-tip">支持筛选状态、搜索内容与双方信息，并手动新增或编辑私信记录。</text>
-			</view>
+			</div>
 			<scroll-view class="status-scroll" scroll-x>
-				<view class="status-row">
-					<view
+				<div class="status-row">
+					<div
 						v-for="item in statusFilters"
 						:key="item.value"
 						class="status-chip"
@@ -122,8 +122,8 @@
 						@click="changeStatus(item.value)"
 					>
 						{{ item.label }}
-					</view>
-				</view>
+					</div>
+				</div>
 			</scroll-view>
 			<input
 				v-model.trim="messageKeyword"
@@ -132,47 +132,47 @@
 				confirm-type="search"
 				@confirm="searchMessages"
 			/>
-			<view class="action-row space-between">
+			<div class="action-row space-between">
 				<!-- <button class="solid-btn" @click="openCreate">新增私信</button> -->
-				<view class="inline-actions">
+				<div class="inline-actions">
 					<button class="light-btn" @click="resetFilters">重置</button>
 					<button class="solid-btn" @click="searchMessages">查询</button>
-				</view>
-			</view>
+				</div>
+			</div>
 
-			<view v-if="showForm" class="form-panel">
-				<view class="candidate-head">
+			<div v-if="showForm" class="form-panel">
+				<div class="candidate-head">
 					<text class="section-title">{{ currentId ? '编辑私信' : '新增私信' }}</text>
 					<button class="ghost-btn mini-ghost-btn" @click="closeForm">收起</button>
-				</view>
-				<view class="form-grid">
-					<view class="field">
+				</div>
+				<div class="form-grid">
+					<div class="field">
 						<text class="label">发送方</text>
 						<picker :range="candidateLabels" :value="senderIndex" @change="onSenderChange">
-							<view class="picker">{{ form.sender_record_id ? selectedSenderLabel : '请选择发送方' }}</view>
+							<div class="picker">{{ form.sender_record_id ? selectedSenderLabel : '请选择发送方' }}</div>
 						</picker>
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">接收方</text>
 						<picker :range="candidateLabels" :value="receiverIndex" @change="onReceiverChange">
-							<view class="picker">{{ form.receiver_record_id ? selectedReceiverLabel : '请选择接收方' }}</view>
+							<div class="picker">{{ form.receiver_record_id ? selectedReceiverLabel : '请选择接收方' }}</div>
 						</picker>
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">状态</text>
 						<picker :range="statusOptionLabels" :value="statusIndex" @change="onStatusChange">
-							<view class="picker">{{ statusText(form.status) }}</view>
+							<div class="picker">{{ statusText(form.status) }}</div>
 						</picker>
-					</view>
-					<view class="field">
+					</div>
+					<div class="field">
 						<text class="label">消耗次数</text>
 						<input v-model="form.quota_cost" class="input" type="number" placeholder="默认 1" />
-					</view>
-					<view class="field field-full switch-field">
+					</div>
+					<div class="field field-full switch-field">
 						<text class="label switch-label">匿名发送</text>
 						<switch :checked="form.is_anonymous" color="#1f6b52" @change="onAnonymousChange" />
-					</view>
-					<view class="field field-full">
+					</div>
+					<div class="field field-full">
 						<text class="label">私信内容</text>
 						<textarea
 							v-model.trim="form.content"
@@ -180,8 +180,8 @@
 							maxlength="300"
 							placeholder="请输入这条心动私信的内容"
 						></textarea>
-					</view>
-					<view class="field field-full">
+					</div>
+					<div class="field field-full">
 						<text class="label">用户备注</text>
 						<textarea
 							v-model.trim="form.user_remark"
@@ -189,17 +189,17 @@
 							maxlength="200"
 							placeholder="可填写来源、投递说明、保留意见等"
 						></textarea>
-					</view>
-				</view>
-				<view class="action-row">
+					</div>
+				</div>
+				<div class="action-row">
 					<button class="ghost-btn" @click="resetForm">清空</button>
 					<button class="solid-btn" @click="submitForm">{{ currentId ? '保存修改' : '创建私信' }}</button>
-				</view>
-			</view>
+				</div>
+			</div>
 
 			<scroll-view scroll-x class="table-scroll">
-				<view class="table">
-					<view class="table-row table-header">
+				<div class="table">
+					<div class="table-row table-header">
 						<text class="col col-status">状态</text>
 						<text class="col col-sender">发送方</text>
 						<text class="col col-receiver">接收方</text>
@@ -207,39 +207,39 @@
 						<text class="col col-quota">消耗次数</text>
 						<text class="col col-time">创建时间</text>
 						<text class="col col-action">操作</text>
-					</view>
-					<view v-if="loading" class="empty-box">
+					</div>
+					<div v-if="loading" class="empty-box">
 						<text>正在加载私信记录...</text>
-					</view>
-					<view v-else-if="!records.length" class="empty-box">
+					</div>
+					<div v-else-if="!records.length" class="empty-box">
 						<text>暂无私信记录</text>
-					</view>
-					<view v-for="item in records" :key="item._id" class="table-row body-row">
-						<view class="col col-status">
+					</div>
+					<div v-for="item in records" :key="item._id" class="table-row body-row">
+						<div class="col col-status">
 							<text :class="'status-pill status-' + item.status">{{ statusText(item.status) }}</text>
-						</view>
-						<view class="col col-sender name-cell">
+						</div>
+						<div class="col col-sender name-cell">
 							<text class="primary-text">#{{ item.sender_person_id }} {{ item.sender_nickname || item.sender_name || '-' }}</text>
 							<text class="secondary-text">{{ item.sender_name || '-' }} / {{ item.sender_mbti || '-' }}</text>
-						</view>
-						<view class="col col-receiver name-cell">
+						</div>
+						<div class="col col-receiver name-cell">
 							<text class="primary-text">#{{ item.receiver_person_id }} {{ item.receiver_nickname || item.receiver_name || '-' }}</text>
 							<text class="secondary-text">{{ item.receiver_name || '-' }} / {{ item.receiver_mbti || '-' }}</text>
-						</view>
-						<view class="col col-content content-cell">
+						</div>
+						<div class="col col-content content-cell">
 							<text class="content-text">{{ item.content || '-' }}</text>
 							<text class="secondary-text">{{ item.user_remark || '无备注' }}</text>
-						</view>
+						</div>
 						<text class="col col-quota">{{ item.quota_cost || 1 }}</text>
 						<text class="col col-time">{{ formatDate(item.created_at || item.created_at_text) }}</text>
-						<view class="col col-action action-cell">
+						<div class="col col-action action-cell">
 							<button class="mini-btn" @click="openEdit(item)">编辑</button>
 							<button class="mini-btn danger-btn" @click="removeMessage(item)">删除</button>
-						</view>
-					</view>
-				</view>
+						</div>
+					</div>
+				</div>
 			</scroll-view>
-			<view v-if="pagination.total > pagination.pageSize" class="message-pager">
+			<div v-if="pagination.total > pagination.pageSize" class="message-pager">
 				<button
 					class="pager-btn"
 					:class="isMessageFirstPage ? 'pager-btn is-disabled' : ''"
@@ -257,9 +257,9 @@
 				>
 					下一页
 				</button>
-			</view>
-		</view>
-	</view>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>

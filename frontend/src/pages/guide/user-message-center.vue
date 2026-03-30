@@ -1,26 +1,26 @@
 <template>
-	<view class="page">
-		<view class="page-glow page-glow-left"></view>
-		<view class="page-glow page-glow-right"></view>
-		<view class="top-bar">
-			<view class="top-copy">
+	<div class="page">
+		<div class="page-glow page-glow-left"></div>
+		<div class="page-glow page-glow-right"></div>
+		<div class="top-bar">
+			<div class="top-copy">
 				<text class="top-title">消息</text>
-				<view class="top-subtitle-row">
+				<div class="top-subtitle-row">
 					<text class="top-subtitle">今天也适合说句悄悄话</text>
 					<text class="top-heart">♡</text>
-				</view>
-			</view>
-			<view class="top-badge">
+				</div>
+			</div>
+			<div class="top-badge">
 				<text
 					>剩余心动值
 					{{ selfProfile.remaining_heart_value ?? selfProfile.heart_message_quota ?? 0 }}</text
 				>
-			</view>
-		</view>
+			</div>
+		</div>
 
-		<view class="wechat-shell">
-			<view v-if="activeTab === 'contacts'" class="search-bar">
-				<view class="search-box">
+		<div class="wechat-shell">
+			<div v-if="activeTab === 'contacts'" class="search-bar">
+				<div class="search-box">
 					<text class="search-icon">搜</text>
 					<input
 						v-model.trim="keyword"
@@ -29,45 +29,45 @@
 						confirm-type="search"
 						@confirm="handleSearch"
 					/>
-				</view>
+				</div>
 				<text v-if="keyword" class="search-reset" @click="resetKeyword">清空</text>
-			</view>
+			</div>
 
-			<view v-if="activeTab === 'contacts'" class="panel contacts-panel">
-				<view class="panel-head">
+			<div v-if="activeTab === 'contacts'" class="panel contacts-panel">
+				<div class="panel-head">
 					<text class="panel-title">联系人</text>
 					<text class="panel-tip">遇见 {{ contacts.length }} 位心动对象</text>
-				</view>
+				</div>
 
-				<view v-if="loading" class="empty-box">
+				<div v-if="loading" class="empty-box">
 					<text>正在加载联系人...</text>
-				</view>
-				<view v-else-if="!contacts.length" class="empty-box">
+				</div>
+				<div v-else-if="!contacts.length" class="empty-box">
 					<text>暂时还没有可聊天的人</text>
-				</view>
+				</div>
 				<scroll-view v-else scroll-y class="contact-scroll">
-					<view class="contact-list">
-						<view
+					<div class="contact-list">
+						<div
 							v-for="item in contacts"
 							:key="item._id"
 							class="contact-item"
 							:class="activeContact && activeContact._id === item._id ? 'contact-item active' : ''"
 							@click="selectContact(item)"
 						>
-							<view class="avatar-shell">
+							<div class="avatar-shell">
 								<image
 									v-if="item.personal_photo"
 									class="avatar"
 									:src="item.personal_photo"
 									mode="aspectFill"
 								></image>
-								<view v-else class="avatar avatar-fallback">{{
+								<div v-else class="avatar avatar-fallback">{{
 									getAvatarText(item.nickname || item.name)
-								}}</view>
-							</view>
-							<view class="contact-main">
-								<view class="contact-top">
-									<view class="contact-name-row">
+								}}</div>
+							</div>
+							<div class="contact-main">
+								<div class="contact-top">
+									<div class="contact-name-row">
 										<text class="contact-name">{{
 											item.nickname || item.name || '未命名联系人'
 										}}</text>
@@ -78,92 +78,92 @@
 										>
 											{{ getGenderBadge(item.gender).symbol }}
 										</text>
-									</view>
+									</div>
 									<text class="contact-time">{{ formatTime(item.latest_message_at) }}</text>
-								</view>
+								</div>
 								<text class="contact-meta">{{ item.name || '暂未填写姓名' }}</text>
-								<view class="contact-preview-row">
+								<div class="contact-preview-row">
 									<text class="contact-preview">{{
 										item.latest_message || '还没有消息，快去打个招呼吧'
 									}}</text>
-								</view>
+								</div>
 								<text v-if="item.can_send === false" class="turn-tip"
 									>等待对方回复后才能继续发送</text
 								>
-							</view>
-							<view
+							</div>
+							<div
 								v-if="activeContact && activeContact._id === item._id"
 								class="contact-active-dot"
-							></view>
-						</view>
-					</view>
+							></div>
+						</div>
+					</div>
 				</scroll-view>
-			</view>
+			</div>
 
-			<view v-if="activeTab === 'inbox'" class="panel contacts-panel">
-				<view class="panel-head">
+			<div v-if="activeTab === 'inbox'" class="panel contacts-panel">
+				<div class="panel-head">
 					<text class="panel-title">收信箱</text>
 					<text class="panel-tip">陌生人来信 {{ inboxList.length }} 封</text>
-				</view>
-				<view v-if="inboxLoading" class="empty-box">
+				</div>
+				<div v-if="inboxLoading" class="empty-box">
 					<text>正在加载收信箱...</text>
-				</view>
-				<view v-else-if="!inboxList.length" class="empty-box">
+				</div>
+				<div v-else-if="!inboxList.length" class="empty-box">
 					<text>暂时没有陌生人来信</text>
-				</view>
+				</div>
 				<scroll-view v-else scroll-y class="contact-scroll">
-					<view class="contact-list">
-						<view v-for="item in inboxList" :key="item.message_id" class="contact-item">
-							<view class="avatar-shell">
-								<view class="avatar avatar-fallback">匿</view>
-							</view>
-							<view class="contact-main">
-								<view class="contact-top">
-									<view class="contact-name-row">
+					<div class="contact-list">
+						<div v-for="item in inboxList" :key="item.message_id" class="contact-item">
+							<div class="avatar-shell">
+								<div class="avatar avatar-fallback">匿</div>
+							</div>
+							<div class="contact-main">
+								<div class="contact-top">
+									<div class="contact-name-row">
 										<text class="contact-name">陌生人来信</text>
 										<text class="preview-tag normal-tag"> {{ item.sender_mbti || '-' }}</text>
-									</view>
+									</div>
 									<text class="contact-time">{{ formatTime(item.created_at) }}</text>
-								</view>
-								<view class="contact-preview-row">
+								</div>
+								<div class="contact-preview-row">
 									<text class="contact-preview">{{ item.content || '-' }}</text>
-								</view>
-							</view>
+								</div>
+							</div>
 							<button class="mini-reply-btn" @click="openInboxReply(item)">回复</button>
-						</view>
-					</view>
+						</div>
+					</div>
 				</scroll-view>
-			</view>
-		</view>
+			</div>
+		</div>
 
-		<view v-if="showChatPopup && activeContact" class="chat-popup-mask" @click="closeChatPopup">
-			<view class="chat-popup" @click.stop>
-				<view class="chat-head">
-					<view class="chat-user">
-						<view class="avatar-shell small">
+		<div v-if="showChatPopup && activeContact" class="chat-popup-mask" @click="closeChatPopup">
+			<div class="chat-popup" @click.stop>
+				<div class="chat-head">
+					<div class="chat-user">
+						<div class="avatar-shell small">
 							<image
 								v-if="activeContact.personal_photo"
 								class="avatar"
 								:src="activeContact.personal_photo"
 								mode="aspectFill"
 							></image>
-							<view v-else class="avatar avatar-fallback">{{
+							<div v-else class="avatar avatar-fallback">{{
 								getAvatarText(activeContact.nickname || activeContact.name)
-							}}</view>
-						</view>
-						<view class="chat-user-text">
+							}}</div>
+						</div>
+						<div class="chat-user-text">
 							<text class="chat-name">{{ activeContact.nickname || activeContact.name }}</text>
 							<text class="chat-meta">{{ activeContact.name || '未填写姓名' }}</text>
 							<text class="chat-mood">和 Ta 的聊天，也许会有一点点心动</text>
-						</view>
-					</view>
-					<view class="chat-head-actions">
-						<view class="quota-badge">
+						</div>
+					</div>
+					<div class="chat-head-actions">
+						<div class="quota-badge">
 							<!-- <text>{{ selfProfile.heart_message_quota || 0 }} 点</text> -->
-						</view>
+						</div>
 						<text class="chat-close" @click="closeChatPopup">×</text>
-					</view>
-				</view>
+					</div>
+				</div>
 
 				<scroll-view
 					scroll-y
@@ -171,14 +171,14 @@
 					:scroll-into-view="scrollIntoView"
 					scroll-with-animation
 				>
-					<view v-if="chatLoading && !messages.length" class="empty-box small-empty">
+					<div v-if="chatLoading && !messages.length" class="empty-box small-empty">
 						<text>正在加载聊天记录...</text>
-					</view>
-					<view v-else-if="!messages.length" class="empty-box small-empty">
+					</div>
+					<div v-else-if="!messages.length" class="empty-box small-empty">
 						<text>还没有聊天记录，主动说句话吧</text>
-					</view>
-					<view v-else class="message-list">
-						<view
+					</div>
+					<div v-else class="message-list">
+						<div
 							v-for="item in messages"
 							:id="'msg-' + item._id"
 							:key="item._id"
@@ -188,102 +188,102 @@
 							<text class="bubble-time">{{
 								formatDateTime(item.created_at_text || item.created_at)
 							}}</text>
-							<view class="bubble-wrap">
-								<view class="avatar-shell mini" v-if="item.sender_record_id !== selfProfile._id">
+							<div class="bubble-wrap">
+								<div class="avatar-shell mini" v-if="item.sender_record_id !== selfProfile._id">
 									<image
 										v-if="activeContact.personal_photo"
 										class="avatar"
 										:src="activeContact.personal_photo"
 										mode="aspectFill"
 									></image>
-									<view v-else class="avatar avatar-fallback">{{
+									<div v-else class="avatar avatar-fallback">{{
 										getAvatarText(activeContact.nickname || activeContact.name)
-									}}</view>
-								</view>
-								<view class="bubble-box">
-									<view class="bubble">
+									}}</div>
+								</div>
+								<div class="bubble-box">
+									<div class="bubble">
 										<text class="bubble-text">{{ item.content }}</text>
-									</view>
-								</view>
-							</view>
-						</view>
-					</view>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
 				</scroll-view>
 
-				<view class="composer">
+				<div class="composer">
 					<textarea
 						v-model.trim="draftMessage"
 						class="composer-input"
 						maxlength="300"
 						placeholder="输入你想说的话"
 					></textarea>
-					<view class="composer-foot">
+					<div class="composer-foot">
 						<text class="composer-tip">发送后需等待对方回复，你才能继续发送下一条</text>
-					</view>
-					<view class="composer-actions">
+					</div>
+					<div class="composer-actions">
 						<button class="send-btn" :disabled="!canSubmitMessage" @click="sendMessage">
 							发送
 						</button>
-					</view>
-				</view>
-			</view>
-		</view>
+					</div>
+				</div>
+			</div>
+		</div>
 
-		<view
+		<div
 			v-if="showInboxReplyPopup && activeInboxItem"
 			class="chat-popup-mask"
 			@click="closeInboxReplyPopup"
 		>
-			<view class="chat-popup" @click.stop>
-				<view class="chat-head">
-					<view class="chat-user-text">
+			<div class="chat-popup" @click.stop>
+				<div class="chat-head">
+					<div class="chat-user-text">
 						<text class="chat-name">回复陌生人来信</text>
 						<text class="chat-meta"
 							>仅显示发件人 MBTI：{{ activeInboxItem.sender_mbti || '-' }}</text
 						>
-					</view>
+					</div>
 					<text class="chat-close" @click="closeInboxReplyPopup">×</text>
-				</view>
-				<view class="inbox-letter-box">
+				</div>
+				<div class="inbox-letter-box">
 					<text class="inbox-letter-time">{{ formatDateTime(activeInboxItem.created_at) }}</text>
 					<text class="inbox-letter-text">{{ activeInboxItem.content || '-' }}</text>
-				</view>
-				<view class="composer">
+				</div>
+				<div class="composer">
 					<textarea
 						v-model.trim="inboxReplyText"
 						class="composer-input"
 						maxlength="300"
 						placeholder="输入你的回复内容"
 					></textarea>
-					<view class="composer-foot">
+					<div class="composer-foot">
 						<text class="composer-tip">回复后需要等待对方再次发送，你才能继续发下一条</text>
-					</view>
-					<view class="composer-actions">
+					</div>
+					<div class="composer-actions">
 						<button class="send-btn" :disabled="!canSubmitInboxReply" @click="sendInboxReply">
 							回复
 						</button>
-					</view>
-				</view>
-			</view>
-		</view>
+					</div>
+				</div>
+			</div>
+		</div>
 
-		<view class="bottom-nav">
-			<view
+		<div class="bottom-nav">
+			<div
 				class="bottom-tab"
 				:class="activeTab === 'contacts' ? 'bottom-tab-active' : ''"
 				@click="openContacts"
 			>
 				<text class="bottom-tab-text">联系人</text>
-			</view>
-			<view
+			</div>
+			<div
 				class="bottom-tab"
 				:class="activeTab === 'inbox' ? 'bottom-tab-active' : ''"
 				@click="openInbox"
 			>
 				<text class="bottom-tab-text">收信箱</text>
-			</view>
-		</view>
-	</view>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>

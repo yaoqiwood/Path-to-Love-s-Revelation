@@ -1,25 +1,25 @@
 <template>
-	<view class="page">
-		<view class="hero">
-			<view class="hero-backdrop hero-backdrop-left"></view>
-			<view class="hero-backdrop hero-backdrop-right"></view>
+	<div class="page">
+		<div class="hero">
+			<div class="hero-backdrop hero-backdrop-left"></div>
+			<div class="hero-backdrop hero-backdrop-right"></div>
 
-			<view class="hero-copy">
+			<div class="hero-copy">
 				<text class="eyebrow">LOVE MBTI LAB</text>
 				<text class="headline">{{ pageTitle }}</text>
 				<text class="subhead">{{ pageSubtitle }}</text>
-			</view>
+			</div>
 
-			<view class="progress-card">
-				<view class="progress-meta">
+			<div class="progress-card">
+				<div class="progress-meta">
 					<text class="progress-title">答题进度</text>
 					<text class="progress-count">{{ answeredCount }}/{{ totalQuestions }}</text>
-				</view>
-				<view class="progress-track">
-					<view class="progress-fill" :style="{ width: `${progressPercent}%` }"></view>
-				</view>
-				<view class="stage-row">
-					<view
+				</div>
+				<div class="progress-track">
+					<div class="progress-fill" :style="{ width: `${progressPercent}%` }"></div>
+				</div>
+				<div class="stage-row">
+					<div
 						v-for="(stage, index) in stageList"
 						:key="stage.label"
 						class="stage-pill"
@@ -27,108 +27,109 @@
 					>
 						<text class="stage-index">{{ formatStageIndex(index + 1) }}</text>
 						<text class="stage-label">{{ stage.label }}</text>
-					</view>
-				</view>
-			</view>
+					</div>
+				</div>
+			</div>
 
-			<view v-if="showStageSummary" class="summary-card">
+			<div v-if="showStageSummary" class="summary-card">
 				<text class="card-eyebrow">STAGE CHECKPOINT</text>
 				<text class="summary-title">{{ stageSummary.title }}</text>
 				<text class="summary-copy">{{ stageSummary.description }}</text>
 
-				<view class="summary-portrait">
+				<div class="summary-portrait">
 					<text class="summary-portrait-label">阶段画像</text>
 					<text class="summary-portrait-copy">{{ stageSummary.personalityDescription }}</text>
-				</view>
+				</div>
 
-				<view class="summary-chip-row">
-					<view v-for="item in stageSummary.badges" :key="item" class="summary-chip">
+				<div class="summary-chip-row">
+					<div v-for="item in stageSummary.badges" :key="item" class="summary-chip">
 						<text>{{ item }}</text>
-					</view>
-				</view>
+					</div>
+				</div>
 
 				<text class="summary-encourage">{{ stageSummary.encouragement }}</text>
 
-				<view class="action-btn primary-btn" @click="continueToNextStage">
+				<div class="action-btn primary-btn" @click="continueToNextStage">
 					<text>{{ pendingStageNumber === stageList.length ? '查看最终结果' : '继续答题' }}</text>
-				</view>
-			</view>
+				</div>
+			</div>
 
-			<view v-else-if="showResult" class="result-card">
+			<div v-else-if="showResult" class="result-card">
 				<text class="card-eyebrow">FINAL RESULT</text>
 				<text class="result-type">{{ resultType }}</text>
 				<text class="result-copy">{{ resultSummary }}</text>
 
-				<view class="result-chip-row">
-					<view v-for="item in resultKeywords" :key="item" class="summary-chip accent-chip">
+				<div class="result-chip-row">
+					<div v-for="item in resultKeywords" :key="item" class="summary-chip accent-chip">
 						<text>{{ item }}</text>
-					</view>
-				</view>
+					</div>
+				</div>
 
-				<view class="trait-list">
-					<view v-for="trait in resultTraits" :key="trait.axis" class="trait-item">
-						<view class="trait-meta">
+				<div class="trait-list">
+					<div v-for="trait in resultTraits" :key="trait.axis" class="trait-item">
+						<div class="trait-meta">
 							<text class="trait-axis">{{ trait.axis }}</text>
 							<text class="trait-score">{{ trait.leftCount }} : {{ trait.rightCount }}</text>
-						</view>
-						<view class="trait-track">
-							<view class="trait-half trait-left"></view>
-							<view class="trait-half trait-right"></view>
-							<view
+						</div>
+						<div class="trait-track">
+							<div class="trait-half trait-left"></div>
+							<div class="trait-half trait-right"></div>
+							<div
 								class="trait-fill"
 								:class="trait.dominant === trait.right ? 'fill-right' : 'fill-left'"
 								:style="{ width: `${trait.fillWidth}%` }"
-							></view>
-						</view>
+							></div>
+						</div>
 						<text class="trait-note">
 							更偏向 {{ trait.dominant }} · {{ trait.dominantPercent }}%
 						</text>
-					</view>
-				</view>
+					</div>
+				</div>
 
-				<view class="result-actions">
-					<view class="action-btn ghost-btn" @click="goHome">
+				<div class="result-actions">
+					<div class="action-btn ghost-btn" @click="goHome">
 						<text>返回首页</text>
-					</view>
-				</view>
-			</view>
+					</div>
+				</div>
+			</div>
 
-			<view v-else class="question-card" :class="{ locked: isTransitioning }">
-				<view class="question-meta">
+			<div v-else class="question-card" :class="{ locked: isTransitioning }">
+				<div class="question-meta">
 					<text class="question-index">Q{{ currentIndex + 1 }}</text>
 					<!-- <text class="question-type">{{ currentQuestion.type }} 维度</text> -->
-				</view>
+				</div>
 
 				<text class="question-title">{{ currentQuestion.title }}</text>
 				<text class="question-caption">选择更接近你真实状态的一项</text>
 
-				<view class="option-list">
-					<view
+				<div class="option-list">
+					<div
 						v-for="option in currentQuestion.selections"
 						:key="`${currentQuestion.id}-${option.dimension}`"
 						class="option-card"
 						:class="{ selected: selectedDimension === option.dimension }"
 						@click="selectOption(option)"
 					>
-						<view class="option-head">
+						<div class="option-head">
 							<!-- <text class="option-dimension">{{ option.dimension }}</text> -->
 							<!-- <text class="option-tip">点击选择</text> -->
-						</view>
+						</div>
 						<text class="option-text">{{ option.text }}</text>
-					</view>
-				</view>
+					</div>
+				</div>
 
-				<view class="feedback-panel">
+				<div class="feedback-panel">
 					<text class="feedback-title">{{ liveHintTitle }}</text>
 					<text class="feedback-copy">{{ liveHintCopy }}</text>
-				</view>
-			</view>
-		</view>
-	</view>
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script setup>
 	import { computed, nextTick, reactive, ref } from 'vue'
+	import { useRouter } from 'vue-router'
 	import { onLoad } from '@dcloudio/uni-app'
 	import questionsSource from '@/data/mbti-88-questions.json'
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
@@ -137,6 +138,7 @@
 	const questions = questionsSource.questions || []
 	const totalQuestions = questions.length
 	const stageSize = totalQuestions / 4
+	const router = useRouter()
 
 	const stageList = [
 		{
@@ -859,10 +861,15 @@
 		}
 	}
 
-	function goHome() {
-		uni.reLaunch({
-			url: '/pages/index/home'
-		})
+	async function goHome() {
+		try {
+			await router.push('/pages/index/home')
+		} catch (error) {
+			console.error('router push to home failed', error)
+			uni.reLaunch({
+				url: '/pages/index/home'
+			})
+		}
 	}
 </script>
 
@@ -887,7 +894,7 @@
 		box-sizing: border-box;
 	}
 
-	.page view,
+	.page div,
 	.page text {
 		display: block;
 	}

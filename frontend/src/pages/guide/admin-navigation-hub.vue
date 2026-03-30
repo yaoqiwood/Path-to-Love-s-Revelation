@@ -1,29 +1,29 @@
 <template>
-	<view class="page">
-		<view class="panel-card">
-			<view class="card-head">
+	<div class="page">
+		<div class="panel-card">
+			<div class="card-head">
 				<text class="card-title">后台功能导航</text>
 				<text class="card-tip">点击模块卡片后进入对应管理页面。</text>
-			</view>
+			</div>
 
-			<view class="feature-grid">
-				<view
+			<div class="feature-grid">
+				<div
 					v-for="item in visibleFeatureList"
 					:key="item.key"
 					class="feature-card"
 					@click="handleFeatureTap(item)"
 				>
-					<!-- <view class="feature-top">
+					<!-- <div class="feature-top">
 						<text class="feature-tag">{{ formatModuleTag(index) }}</text>
 						<text v-if="!item.available" class="feature-status is-pending">建设中</text>
 						<text v-else class="feature-status is-ready">可用</text>
-					</view> -->
+					</div> -->
 					<text class="feature-title">{{ item.title }}</text>
 					<text class="feature-desc">{{ item.desc }}</text>
-				</view>
-			</view>
-		</view>
-	</view>
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>

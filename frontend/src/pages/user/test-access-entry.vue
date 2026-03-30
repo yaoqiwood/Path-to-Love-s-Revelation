@@ -1,28 +1,28 @@
 <template>
-	<view class="page">
-		<view v-if="shouldShowProfilePopup" class="profile-mask" @click="closeProfilePopup">
-			<view class="profile-dialog" @click.stop>
+	<div class="page">
+		<div v-if="shouldShowProfilePopup" class="profile-mask" @click="closeProfilePopup">
+			<div class="profile-dialog" @click.stop>
 				<text class="profile-close" @click="closeProfilePopup">×</text>
 				<text class="profile-title">请先完善资料</text>
 				<text class="profile-desc">进入测试前，请填写昵称并上传头像。</text>
 
-				<view class="profile-avatar-wrap">
-					<view class="profile-avatar-trigger" @click="chooseAvatarImage">
+				<div class="profile-avatar-wrap">
+					<div class="profile-avatar-trigger" @click="chooseAvatarImage">
 						<image
 							v-if="profileForm.avatar"
 							class="profile-avatar"
 							:src="profileForm.avatar"
 							mode="aspectFill"
 						></image>
-						<view v-else class="profile-avatar profile-avatar-empty">
+						<div v-else class="profile-avatar profile-avatar-empty">
 							<text>头像</text>
-						</view>
-					</view>
-				</view>
+						</div>
+					</div>
+				</div>
 
 				<button class="profile-picker-btn" @click="chooseAvatarImage">选择头像</button>
 
-				<view class="profile-input-shell">
+				<div class="profile-input-shell">
 					<input
 						v-model="profileForm.nickname"
 						class="profile-input"
@@ -30,24 +30,24 @@
 						placeholder="请输入昵称"
 						confirm-type="done"
 					/>
-				</view>
+				</div>
 
 				<button class="profile-confirm-btn" @click="confirmProfile">确认资料</button>
-			</view>
-		</view>
+			</div>
+		</div>
 
-		<view class="hero">
-			<view class="hero-backdrop hero-backdrop-left"></view>
-			<view class="hero-backdrop hero-backdrop-right"></view>
-			<view class="hero-copy" @click="handleHeroCopyTap">
+		<div class="hero">
+			<div class="hero-backdrop hero-backdrop-left"></div>
+			<div class="hero-backdrop hero-backdrop-right"></div>
+			<div class="hero-copy" @click="handleHeroCopyTap">
 				<text class="eyebrow">LOVE MBTI LAB</text>
 				<text class="headline">信息确认</text>
-			</view>
+			</div>
 
-			<view class="form-card">
-				<view v-if="shouldShowInviteCodeField" class="field-block">
+			<div class="form-card">
+				<div v-if="shouldShowInviteCodeField" class="field-block">
 					<text class="field-label">邀请码</text>
-					<view class="input-shell">
+					<div class="input-shell">
 						<input
 							v-model="password"
 							class="text-input"
@@ -57,20 +57,20 @@
 							placeholder="请输入邀请码（如没有可不填）"
 							confirm-type="done"
 						/>
-					</view>
-				</view>
+					</div>
+				</div>
 
-				<view :class="['action-row', { 'action-row-stacked': !shouldShowInviteCodeField }]">
-					<view class="action-btn primary-btn" @click="handlePrimaryAction">
+				<div :class="['action-row', { 'action-row-stacked': !shouldShowInviteCodeField }]">
+					<div class="action-btn primary-btn" @click="handlePrimaryAction">
 						<text>{{ shouldShowInviteCodeField ? '确认' : '进入测试' }}</text>
-					</view>
-					<view class="action-btn ghost-btn" @click="goHome">
+					</div>
+					<div class="action-btn ghost-btn" @click="goHome">
 						<text>返回首页</text>
-					</view>
-				</view>
-			</view>
-		</view>
-	</view>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>
