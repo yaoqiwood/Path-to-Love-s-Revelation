@@ -19,6 +19,7 @@
 
 <script>
 import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+import { app } from '@/platform/app-bridge'
 import { getCurrentUserInfo } from '@/platform/app-runtime'
 
 const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
@@ -35,7 +36,7 @@ export default {
 	methods: {
 		getPersonnelProfileFromStorage() {
 			try {
-				const profile = uni.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
+				const profile = app.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
 				return profile && typeof profile === 'object' ? profile : null
 			} catch (error) {
 				console.error('getPersonnelProfileFromStorage failed', error)
@@ -44,7 +45,7 @@ export default {
 		},
 		savePersonnelProfileToStorage(payload) {
 			try {
-				uni.setStorageSync(PERSONNEL_PROFILE_STORAGE_KEY, {
+				app.setStorageSync(PERSONNEL_PROFILE_STORAGE_KEY, {
 					...payload,
 					cached_at: Date.now()
 				})
@@ -54,7 +55,7 @@ export default {
 		},
 		clearPersonnelProfileStorage() {
 			try {
-				uni.removeStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
+				app.removeStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
 			} catch (error) {
 				console.error('clearPersonnelProfileStorage failed', error)
 			}
@@ -122,7 +123,7 @@ export default {
 			try {
 				const currentUserInfo = getCurrentUserInfo() || {}
 				const currentUserInfoUser = currentUserInfo.userInfo || {}
-				const cachedUser = uni.getStorageSync('uni-id-pages-userInfo') || {}
+				const cachedUser = app.getStorageSync('uni-id-pages-userInfo') || {}
 				return {
 					...currentUserInfoUser,
 					...cachedUser,
@@ -247,7 +248,7 @@ export default {
 			this.updateLoadingText(targetUrl)
 
 			setTimeout(() => {
-				uni.reLaunch({
+				app.reLaunch({
 					url: targetUrl
 				})
 			}, 120)

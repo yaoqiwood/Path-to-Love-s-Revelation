@@ -27,6 +27,8 @@
 </template>
 
 <script>
+	import { app } from '@/platform/app-bridge'
+
 	const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
 
 	export default {
@@ -88,7 +90,7 @@
 		methods: {
 			getCurrentUserRole() {
 				try {
-					const profile = uni.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
+					const profile = app.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
 					return Number(profile && profile.user_role) || 0
 				} catch (error) {
 					console.error('getCurrentUserRole failed', error)
@@ -108,14 +110,14 @@
 			},
 			handleFeatureTap(item) {
 				if (!this.hasFeatureAccess(item)) {
-					uni.showToast({ title: '当前权限不可访问', icon: 'none' })
+					app.showToast({ title: '当前权限不可访问', icon: 'none' })
 					return
 				}
 				if (item && item.available && item.url) {
-					uni.navigateTo({ url: item.url })
+					app.navigateTo({ url: item.url })
 					return
 				}
-				uni.showToast({ title: '功能建设中', icon: 'none' })
+				app.showToast({ title: '功能建设中', icon: 'none' })
 			}
 		}
 	}

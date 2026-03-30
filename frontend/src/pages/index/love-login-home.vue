@@ -196,7 +196,7 @@
 			}
 
 			applyMockPersonnelLogin(nextRecord)
-			router.replace('/pages/index/index')
+			router.replace('/pages/index/home')
 		} catch (error) {
 			helperText.value = error?.message || '登录确认失败，请稍后重试。'
 		} finally {

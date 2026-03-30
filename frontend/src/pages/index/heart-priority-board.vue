@@ -6,16 +6,16 @@
 
       <header class="hero-copy">
         <p class="eyebrow">PATH TO LOVE</p>
-        <h1 class="headline">心动优先榜</h1>
-        <p class="subhead">把 24 位异性放进同一张心动地图里，排出你最想进一步了解的前 10 位。</p>
+        <h1 class="headline">心动坐标</h1>
+        <p class="subhead">男生和女生各自面对 24 位异性，选出最想进一步了解的 10 位并完成排序。</p>
       </header>
 
       <section class="story-card">
         <p class="story-kicker">HOW IT WORKS</p>
-        <h2 class="story-title">先看见顺序，再看见自己</h2>
+        <h2 class="story-title">先画出坐标，再看见心动方向</h2>
         <p class="story-copy">
-          这个功能适合在活动现场或统一资料池里使用。你会面对 24 位异性的候选资料，从中挑选出最想深入了解的
-          10 位，并按优先级排列，最终形成一份只属于你的心动顺位。
+          这个功能会分别为男生和女生开启独立排序。每个人都会面对 24 位异性的候选资料，从中选出最想深入了解的
+          10 位，并按顺位排列，最终形成一张属于自己的心动坐标。
         </p>
       </section>
 
@@ -23,7 +23,7 @@
         <article class="step-card">
           <span class="step-no">01</span>
           <h3>浏览候选资料</h3>
-          <p>从 24 位异性里逐一浏览，先形成整体印象。</p>
+          <p>从 24 位异性里逐一浏览，先形成整体印象与第一轮心动坐标。</p>
         </article>
         <article class="step-card">
           <span class="step-no">02</span>
@@ -32,8 +32,8 @@
         </article>
         <article class="step-card">
           <span class="step-no">03</span>
-          <h3>完成优先排序</h3>
-          <p>从第 1 名到第 10 名排出你这一轮最真实的心动顺位。</p>
+          <h3>完成坐标排序</h3>
+          <p>从第 1 名到第 10 名排出你这一轮最真实的了解优先级。</p>
         </article>
       </section>
 

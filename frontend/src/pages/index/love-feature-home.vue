@@ -8,7 +8,7 @@
       <header class="hero-copy">
         <p class="eyebrow">PATH TO LOVE</p>
         <h1 class="headline">爱的导航台</h1>
-        <p class="subhead">从这里开始测试、投递心意，或整理你最想进一步了解的人。</p>
+        <p class="subhead">从这里开始测试、进入信号小屋，或排出这一轮最想进一步了解的心动坐标。</p>
       </header>
 
       <section class="profile-strip">
@@ -38,20 +38,20 @@
 
         <article class="feature-card">
           <p class="card-kicker">MODULE 02</p>
-          <h2 class="card-title">投递邮局</h2>
-          <p class="card-copy">进入心意邮局，查看来信、发送消息，慢慢推进你想表达的靠近。</p>
-          <button class="card-btn" type="button" @click="goHeartPostOffice">
-            进入邮局
+          <h2 class="card-title">信号小屋</h2>
+          <p class="card-copy">进入聊天功能的信号小屋，查看消息、开启对话，慢慢靠近你想认识的人。</p>
+          <button class="card-btn" type="button" @click="goSignalCabin">
+            进入小屋
           </button>
         </article>
 
         <article class="feature-card feature-card-accent">
           <p class="card-kicker">MODULE 03</p>
-          <h2 class="card-title">心动优先榜</h2>
+          <h2 class="card-title">心动坐标</h2>
           <p class="card-copy">
-            面对 24 位异性时，按顺序选出你最想了解的 10 位，整理这一轮最真实的心动优先级。
+            男生和女生分别从 24 位异性里选出自己最想了解的 10 个人，并完成一份带顺序的心动排序。
           </p>
-          <button class="card-btn" type="button" @click="goHeartPriorityBoard">
+          <button class="card-btn" type="button" @click="goHeartCoordinate">
             查看入口
           </button>
         </article>
@@ -63,6 +63,7 @@
 <script setup>
 import { computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { app } from '@/platform/app-bridge'
 
 const PROFILE_KEY = 'mbtiPersonnelProfile'
 
@@ -74,7 +75,7 @@ const mbtiStatus = computed(() => (String(profile.mbti || '').trim() ? profile.m
 
 function getStoredProfile() {
   try {
-    const storedProfile = uni.getStorageSync(PROFILE_KEY)
+    const storedProfile = app.getStorageSync(PROFILE_KEY)
     return storedProfile && typeof storedProfile === 'object' ? storedProfile : {}
   } catch (error) {
     return {}
@@ -96,11 +97,11 @@ function goMbtiTest() {
   router.push(query.length ? `/pages/feed/entry?${query.join('&')}` : '/pages/feed/entry')
 }
 
-function goHeartPostOffice() {
+function goSignalCabin() {
   router.push('/pkg/guide/detail')
 }
 
-function goHeartPriorityBoard() {
+function goHeartCoordinate() {
   router.push('/pages/index/heart-priority-board')
 }
 </script>

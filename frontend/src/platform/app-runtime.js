@@ -1,5 +1,6 @@
 import { getSelectedFile } from '@/platform/file-registry'
 import { http, shouldUseMock, unwrapResponse } from '@/api/http'
+import { apiUrls } from '@/api/urls'
 
 const SESSION_KEY = 'app-auth-session'
 
@@ -48,7 +49,7 @@ export async function uploadAppFile({ filePath, cloudPath } = {}) {
   formData.append('cloudPath', cloudPath || '')
 
   return unwrapResponse(
-    await http.post('/api/files/upload', formData, {
+    await http.post(apiUrls.files.upload(), formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

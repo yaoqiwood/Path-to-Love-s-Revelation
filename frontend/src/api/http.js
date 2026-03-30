@@ -1,15 +1,9 @@
 import axios from 'axios'
+import { shouldUseMock, withMockFallback } from './mockService'
 
-const explicitMockValue = String(import.meta.env.VITE_USE_MOCK || '')
-  .trim()
-  .toLowerCase()
 const apiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim()
 
-export const shouldUseMock =
-  explicitMockValue === 'true' ||
-  explicitMockValue === '1' ||
-  explicitMockValue === 'yes' ||
-  !apiBaseUrl
+export { shouldUseMock } from './mockService'
 
 export const http = axios.create({
   baseURL: apiBaseUrl,
@@ -53,4 +47,29 @@ http.interceptors.response.use(
 
 export function unwrapResponse(response) {
   return response?.data ?? response
+}
+
+export async function get(url, config = {}, mockHandler) {
+  return withMockFallback(
+    async () => unwrapResponse(await http.get(url, config)),
+    mockHandler,
+    {
+      method: 'get',
+      url,
+      config
+    }
+  )
+}
+
+export async function post(url, data = {}, config = {}, mockHandler) {
+  return withMockFallback(
+    async () => unwrapResponse(await http.post(url, data, config)),
+    mockHandler,
+    {
+      method: 'post',
+      url,
+      data,
+      config
+    }
+  )
 }

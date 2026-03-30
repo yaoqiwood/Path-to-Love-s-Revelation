@@ -1,4 +1,6 @@
-import { http, shouldUseMock, unwrapResponse } from '@/api/http'
+import { http, unwrapResponse } from '@/api/http'
+import { withMockFallback } from '@/api/mockService'
+import { apiUrls } from '@/api/urls'
 
 const STORAGE_KEYS = {
   personnel: 'mock-db-personnel',
@@ -969,19 +971,6 @@ function buildIntentStats(list) {
   }
 }
 
-async function withMockFallback(requestFactory, fallbackFactory) {
-  if (shouldUseMock) {
-    return fallbackFactory()
-  }
-
-  try {
-    return await requestFactory()
-  } catch (error) {
-    console.warn('Remote request failed, fallback to mock data.', error)
-    return fallbackFactory()
-  }
-}
-
 export {
   getPersonnelList,
   getHeartMessageList,
@@ -995,7 +984,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/personnel/system-config', {
+          await http.get(apiUrls.personnel.systemConfig(), {
             params
           })
         ),
@@ -1009,7 +998,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/personnel/current-login-openids', {
+          await http.get(apiUrls.personnel.currentLoginOpenIds(), {
             params: {
               uid
             }
@@ -1029,7 +1018,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/personnel/by-wx-openid', {
+          await http.get(apiUrls.personnel.byWxOpenid(), {
             params: {
               wxOpenid
             }
@@ -1046,7 +1035,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/personnel/login-profiles', {
+          await http.get(apiUrls.personnel.loginProfiles(), {
             params: {
               keyword,
               reviewStatus,
@@ -1070,7 +1059,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/personnel/login-profile', {
+          await http.get(apiUrls.personnel.loginProfile(), {
             params: {
               passcode
             }
@@ -1090,7 +1079,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.patch(`/api/personnel/${id}/wechat-id`, {
+          await http.patch(apiUrls.personnel.bindLoginWechatId(id), {
             wechatId
           })
         ),
@@ -1113,7 +1102,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/personnel/search-names', {
+          await http.get(apiUrls.personnel.searchNames(), {
             params: {
               keyword,
               limit
@@ -1144,7 +1133,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/personnel/list', {
+          await http.get(apiUrls.personnel.list(), {
             params: {
               keyword,
               reviewStatus,
@@ -1178,7 +1167,7 @@ export const personnelUserService = {
 
   async create({ data } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.post('/api/personnel', data)),
+      async () => unwrapResponse(await http.post(apiUrls.personnel.create(), data)),
       async () => {
         const generatedPersonId = nextPersonId()
         const nextRecord = {
@@ -1218,7 +1207,7 @@ export const personnelUserService = {
 
   async update({ id, data } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.put(`/api/personnel/${id}`, data)),
+      async () => unwrapResponse(await http.put(apiUrls.personnel.byId(id), data)),
       async () => {
         const nextRecord = updatePersonnelRecord(normalizeText(id), data || {})
         return {
@@ -1231,7 +1220,7 @@ export const personnelUserService = {
 
   async softDelete({ id } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.delete(`/api/personnel/${id}`)),
+      async () => unwrapResponse(await http.delete(apiUrls.personnel.byId(id))),
       async () => {
         updatePersonnelRecord(normalizeText(id), {
           is_deleted: true
@@ -1245,7 +1234,7 @@ export const personnelUserService = {
 
   async resetAllPasscodes() {
     return withMockFallback(
-      async () => unwrapResponse(await http.post('/api/personnel/reset-passcodes')),
+      async () => unwrapResponse(await http.post(apiUrls.personnel.resetAllPasscodes())),
       async () => {
         const nextList = getPersonnelList().map((item) => ({
           ...item,
@@ -1262,7 +1251,7 @@ export const personnelUserService = {
 
   async importExcel() {
     return withMockFallback(
-      async (...args) => unwrapResponse(await http.post('/api/personnel/import', ...args)),
+      async (...args) => unwrapResponse(await http.post(apiUrls.personnel.importExcel(), ...args)),
       async () => {
         const createdRecords = [
           {
@@ -1300,7 +1289,7 @@ export const personnelUserService = {
 
   async upsertByUser({ userId, data } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.post('/api/personnel/upsert-by-user', { userId, data })),
+      async () => unwrapResponse(await http.post(apiUrls.personnel.upsertByUser(), { userId, data })),
       async () => {
         const normalizedUserId = normalizeText(userId)
         const normalizedPasscode = normalizeUpper(data?.passcode)
@@ -1342,7 +1331,7 @@ export const personnelUserService = {
 
   async saveMbtiResult({ id, mbti } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.post(`/api/personnel/${id}/mbti`, { mbti })),
+      async () => unwrapResponse(await http.post(apiUrls.personnel.saveMbtiResult(id), { mbti })),
       async () => {
         updatePersonnelRecord(normalizeText(id), {
           mbti: normalizeUpper(mbti)
@@ -1359,7 +1348,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/personnel/users', {
+          await http.get(apiUrls.personnel.users(), {
             params: {
               keyword
             }
@@ -1386,7 +1375,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/personnel/user-candidates', {
+          await http.get(apiUrls.personnel.userCandidates(), {
             params: {
               keyword
             }
@@ -1403,7 +1392,7 @@ export const personnelUserService = {
 
   async updateUserRole({ id, userRole } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.patch(`/api/personnel/${id}/user-role`, { userRole })),
+      async () => unwrapResponse(await http.patch(apiUrls.personnel.updateUserRole(id), { userRole })),
       async () => {
         const nextRecord = updatePersonnelRecord(normalizeText(id), {
           user_role: toNumber(userRole)
@@ -1420,7 +1409,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/heart-messages/candidates', {
+          await http.get(apiUrls.heartMessages.candidates(), {
             params: {
               keyword
             }
@@ -1439,7 +1428,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.patch(`/api/personnel/${id}/private-message-quota`, {
+          await http.patch(apiUrls.personnel.updatePrivateMessageQuota(id), {
             value,
             mode
           })
@@ -1474,7 +1463,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/heart-messages', {
+          await http.get(apiUrls.heartMessages.list(), {
             params: {
               keyword,
               status
@@ -1502,7 +1491,7 @@ export const personnelUserService = {
 
   async createHeartMessage({ data } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.post('/api/heart-messages', data)),
+      async () => unwrapResponse(await http.post(apiUrls.heartMessages.create(), data)),
       async () => {
         const nextRecord = {
           _id: ensureUniqueId('heart'),
@@ -1525,7 +1514,7 @@ export const personnelUserService = {
 
   async updateHeartMessage({ id, data } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.put(`/api/heart-messages/${id}`, data)),
+      async () => unwrapResponse(await http.put(apiUrls.heartMessages.byId(id), data)),
       async () => {
         const nextList = getHeartMessageList().map((item) =>
           item._id === normalizeText(id)
@@ -1545,7 +1534,7 @@ export const personnelUserService = {
 
   async removeHeartMessage({ id } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.delete(`/api/heart-messages/${id}`)),
+      async () => unwrapResponse(await http.delete(apiUrls.heartMessages.byId(id))),
       async () => {
         saveHeartMessageList(getHeartMessageList().filter((item) => item._id !== normalizeText(id)))
         return {
@@ -1559,7 +1548,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get(`/api/personnel/${personnelId}/heart-home`, {
+          await http.get(apiUrls.personnel.heartHome(personnelId), {
             params: {
               keyword
             }
@@ -1573,7 +1562,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get(`/api/personnel/${personnelId}/heart-inbox`, {
+          await http.get(apiUrls.personnel.heartInbox(personnelId), {
             params: {
               keyword
             }
@@ -1585,7 +1574,7 @@ export const personnelUserService = {
 
   async getUserHeartMessageState({ personnelId } = {}) {
     return withMockFallback(
-      async () => unwrapResponse(await http.get(`/api/personnel/${personnelId}/heart-state`)),
+      async () => unwrapResponse(await http.get(apiUrls.personnel.heartState(personnelId))),
       async () => ({
         self: getPersonnelById(normalizeText(personnelId)),
         state: buildHeartbeatState(normalizeText(personnelId))
@@ -1597,7 +1586,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get(`/api/personnel/${personnelId}/heart-messages`, {
+          await http.get(apiUrls.personnel.heartMessages(personnelId), {
             params: {
               contactId,
               since
@@ -1634,7 +1623,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.post(`/api/personnel/${personnelId}/heart-messages`, {
+          await http.post(apiUrls.personnel.heartMessages(personnelId), {
             contactId,
             content
           })
@@ -1682,7 +1671,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/intent/rankings', {
+          await http.get(apiUrls.intent.rankings(), {
             params: {
               keyword,
               status,
@@ -1710,7 +1699,7 @@ export const personnelUserService = {
     return withMockFallback(
       async () =>
         unwrapResponse(
-          await http.get('/api/intent/rankings/weighted', {
+          await http.get(apiUrls.intent.weightedRankings(), {
             params: {
               keyword,
               status,
