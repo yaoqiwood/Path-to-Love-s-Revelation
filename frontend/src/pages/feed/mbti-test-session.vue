@@ -767,14 +767,54 @@
 	async function scrollPageToTop() {
 		await nextTick()
 		try {
-			await new Promise((resolve) => {
-				uni.pageScrollTo({
-					scrollTop: 0,
-					duration: 250,
-					success: resolve,
-					fail: resolve
+			const scrollOnce = (duration = 0) =>
+				new Promise((resolve) => {
+					uni.pageScrollTo({
+						scrollTop: 0,
+						duration,
+						success: resolve,
+						fail: resolve
+					})
 				})
-			})
+			const wait = (delay) =>
+				new Promise((resolve) => {
+					setTimeout(resolve, delay)
+				})
+			const resetH5ScrollContainers = () => {
+				if (typeof document === 'undefined') {
+					return
+				}
+				const targets = [
+					document.scrollingElement,
+					document.documentElement,
+					document.body,
+					document.querySelector('uni-page-body'),
+					document.querySelector('.uni-page-body'),
+					document.querySelector('.uni-page-wrapper'),
+					document.querySelector('.uni-page'),
+					document.querySelector('#app'),
+					document.querySelector('.page')
+				].filter(Boolean)
+
+				targets.forEach((element) => {
+					element.scrollTop = 0
+				})
+
+				if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+					window.scrollTo(0, 0)
+				}
+			}
+
+			resetH5ScrollContainers()
+			await scrollOnce(0)
+			await wait(30)
+			resetH5ScrollContainers()
+			await scrollOnce(180)
+			await wait(80)
+			resetH5ScrollContainers()
+			await scrollOnce(0)
+			await wait(120)
+			resetH5ScrollContainers()
 		} catch (error) {
 			console.error('scrollPageToTop failed', error)
 		}
@@ -821,7 +861,7 @@
 
 	function goHome() {
 		uni.reLaunch({
-			url: '/pages/index/index'
+			url: '/pages/index/home'
 		})
 	}
 </script>
@@ -1294,4 +1334,3 @@
 		}
 	}
 </style>
-
