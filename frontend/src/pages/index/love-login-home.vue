@@ -88,10 +88,6 @@
 		const reviewStatus = matchedRecord.value?.review_status || ''
 		return reviewStatusMap[reviewStatus] || '未设置'
 	})
-	const generatedWechatId = computed(() => {
-		const personId = matchedRecord.value?.person_id || 'guest'
-		return `mock-wechat-${personId}`
-	})
 	const primaryButtonText = computed(() => (matchedRecord.value ? '确认进入' : '确认'))
 	const isPrimaryDisabled = computed(() => {
 		if (isLookingUp.value || isSubmitting.value) {
@@ -112,10 +108,11 @@
 			.slice(0, 32)
 	}
 
-	async function handlePasscodeInput(event) {
+	function handlePasscodeInput(event) {
 		const nextValue = normalizePasscode(event?.target?.value)
 		passcode.value = nextValue
 		matchedRecord.value = null
+
 		if (!nextValue) {
 			helperText.value = '请输入口令进行匹配。'
 			return
@@ -153,21 +150,12 @@
 			}
 
 			matchedRecord.value = null
-			helperText.value = '口令校验失败，请稍后重试。'
+			helperText.value = error?.message || '口令校验失败，请稍后重试。'
 		} finally {
 			if (currentToken === lookupToken) {
 				isLookingUp.value = false
 			}
 		}
-	}
-
-	async function handlePrimaryAction() {
-		if (matchedRecord.value) {
-			await confirmLogin()
-			return
-		}
-
-		await lookupMatchedRecord()
 	}
 
 	async function confirmLogin() {
@@ -184,24 +172,24 @@
 		isSubmitting.value = true
 
 		try {
-			const wechatId = matchedRecord.value.wechat_id || generatedWechatId.value
-			const bindResult = await personnelUser.bindLoginWechatId({
-				id: matchedRecord.value._id,
-				wechatId
+			applyMockPersonnelLogin({
+				...matchedRecord.value
 			})
-			const nextRecord = {
-				...matchedRecord.value,
-				...(bindResult?.record || {}),
-				wechat_id: bindResult?.wechat_id || wechatId
-			}
-
-			applyMockPersonnelLogin(nextRecord)
-			router.replace('/pages/index/home')
+			await router.replace('/pages/index/home')
 		} catch (error) {
 			helperText.value = error?.message || '登录确认失败，请稍后重试。'
 		} finally {
 			isSubmitting.value = false
 		}
+	}
+
+	async function handlePrimaryAction() {
+		if (matchedRecord.value) {
+			await confirmLogin()
+			return
+		}
+
+		await lookupMatchedRecord()
 	}
 
 	function backToWelcome() {

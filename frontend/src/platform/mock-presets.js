@@ -20,19 +20,7 @@ function buildStoredProfile(record = {}) {
   }
 }
 
-function resolveWechatId(record = {}) {
-  if (record.wechat_id) {
-    return record.wechat_id
-  }
-  if (record.person_id) {
-    return `mock-wechat-${record.person_id}`
-  }
-  return record.wx_openid || ''
-}
-
-function buildSession(record = {}) {
-  const wechatId = resolveWechatId(record)
-  const avatar = record.personal_photo || record.wx_avatar || ''
+function buildSession(record = {}) {  const avatar = record.personal_photo || ''
   const userId = record.user_id || `mock-user-${record.person_id || 'guest'}`
 
   return {
@@ -44,9 +32,6 @@ function buildSession(record = {}) {
       nickname: record.nickname || record.name || 'Mock 用户',
       avatar,
       avatar_file: avatar,
-      wechat_id: wechatId,
-      wx_openid: wechatId,
-      wx_unionid: record.wx_unionid || ''
     }
   }
 }
@@ -111,7 +96,6 @@ export function applyMockPersonnelLogin(record = {}) {
   const normalizedRecord = {
     ...record,
     user_id: record.user_id || `mock-user-${record.person_id || 'guest'}`,
-    wechat_id: resolveWechatId(record) || `mock-wechat-${record.person_id || 'guest'}`
   }
 
   const session = buildSession(normalizedRecord)

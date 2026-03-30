@@ -63,7 +63,7 @@
 				<input
 					v-model.trim="keyword"
 					class="search-input filter-search-input"
-					placeholder="搜索编号 / 姓名 / 昵称 / OpenID / MBTI / 分数"
+					placeholder="搜索编号 / 姓名 / 昵称 / 用户ID / MBTI / 分数"
 					confirm-type="search"
 				/>
 				<scroll-view class="status-scroll" scroll-x>
@@ -265,7 +265,7 @@ function normalizeKeyword(value) {
 	return normalizeText(value).toLowerCase()
 }
 
-function normalizeOpenid(value) {
+function normalizeUserId(value) {
 	return normalizeText(value)
 }
 
@@ -532,14 +532,14 @@ export default {
 			var normalizedPairKey = normalizeText(pairKey)
 			this.expandedPairKey = this.expandedPairKey === normalizedPairKey ? '' : normalizedPairKey
 		},
-		buildIdentityKey(recordId, openid, personId) {
+		buildIdentityKey(recordId, userId, personId) {
 			var normalizedRecordId = normalizeText(recordId)
 			if (normalizedRecordId) {
 				return `record:${normalizedRecordId}`
 			}
-			var normalizedOpenid = normalizeOpenid(openid)
+			var normalizedOpenid = normalizeUserId(userId)
 			if (normalizedOpenid) {
-				return `openid:${normalizedOpenid}`
+				return `userId:${normalizedOpenid}`
 			}
 			var normalizedPersonId = toNumber(personId)
 			return normalizedPersonId ? `person:${normalizedPersonId}` : ''
@@ -562,7 +562,7 @@ export default {
 					record_id: '',
 					person_id: 0,
 					user_id: '',
-					wx_openid: '',
+					wx_userId: '',
 					name: '',
 					nickname: '',
 					mbti: ''
@@ -573,7 +573,7 @@ export default {
 			var recordId = normalizeText(payload && payload.record_id)
 			var personId = toNumber(payload && payload.person_id)
 			var userId = normalizeText(payload && payload.user_id)
-			var wxOpenid = normalizeOpenid(payload && payload.wx_openid)
+			var wxOpenid = normalizeUserId(payload && payload.wx_userId)
 			var name = normalizeText(payload && payload.name)
 			var nickname = normalizeText(payload && payload.nickname)
 			var mbti = normalizeMbti(payload && payload.mbti)
@@ -587,8 +587,8 @@ export default {
 			if (!profile.user_id && userId) {
 				profile.user_id = userId
 			}
-			if (!profile.wx_openid && wxOpenid) {
-				profile.wx_openid = wxOpenid
+			if (!profile.wx_userId && wxOpenid) {
+				profile.wx_userId = wxOpenid
 			}
 			if (!profile.name && name) {
 				profile.name = name
@@ -608,7 +608,7 @@ export default {
 				record_id: normalizeText(profile.record_id),
 				person_id: toNumber(profile.person_id),
 				user_id: normalizeText(profile.user_id),
-				wx_openid: normalizeOpenid(profile.wx_openid),
+				wx_userId: normalizeUserId(profile.wx_userId),
 				name: normalizeText(profile.name),
 				nickname: normalizeText(profile.nickname),
 				mbti: normalizeMbti(profile.mbti)
@@ -639,12 +639,12 @@ export default {
 		normalizeRow(item) {
 			var creatorKey = this.buildIdentityKey(
 				item && item.creator_record_id,
-				item && item.creator_wx_openid,
+				item && item.creator_wx_userId,
 				item && item.creator_person_id
 			)
 			var targetKey = this.buildIdentityKey(
 				item && item.target_record_id,
-				item && item.target_wx_openid,
+				item && item.target_wx_userId,
 				item && item.target_person_id
 			)
 			return {
@@ -653,13 +653,13 @@ export default {
 				creator_record_id: normalizeText(item && item.creator_record_id),
 				creator_person_id: toNumber(item && item.creator_person_id),
 				creator_user_id: normalizeText(item && item.creator_user_id),
-				creator_wx_openid: normalizeOpenid(item && item.creator_wx_openid),
+				creator_wx_userId: normalizeUserId(item && item.creator_wx_userId),
 				creator_name: normalizeText(item && item.creator_name),
 				creator_nickname: normalizeText(item && item.creator_nickname),
 				target_record_id: normalizeText(item && item.target_record_id),
 				target_person_id: toNumber(item && item.target_person_id),
 				target_user_id: normalizeText(item && item.target_user_id),
-				target_wx_openid: normalizeOpenid(item && item.target_wx_openid),
+				target_wx_userId: normalizeUserId(item && item.target_wx_userId),
 				target_name: normalizeText(item && item.target_name),
 				target_nickname: normalizeText(item && item.target_nickname),
 				target_mbti: normalizeMbti(item && item.target_mbti),
@@ -707,7 +707,7 @@ export default {
 						record_id: item.creator_record_id,
 						person_id: item.creator_person_id,
 						user_id: item.creator_user_id,
-						wx_openid: item.creator_wx_openid,
+						wx_userId: item.creator_wx_userId,
 						name: item.creator_name,
 						nickname: item.creator_nickname
 					})
@@ -715,7 +715,7 @@ export default {
 						record_id: item.target_record_id,
 						person_id: item.target_person_id,
 						user_id: item.target_user_id,
-						wx_openid: item.target_wx_openid,
+						wx_userId: item.target_wx_userId,
 						name: item.target_name,
 						nickname: item.target_nickname,
 						mbti: item.target_mbti

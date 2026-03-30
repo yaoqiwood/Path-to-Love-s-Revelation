@@ -85,18 +85,18 @@
 				nameInput: '',
 				selectedName: '',
 				selectedRecord: null,
-				matchedOpenidRecord: null,
-				loginOpenIds: [],
+				matchedProfileRecord: null,
+				loginUserIds: [],
 				password: '',
 				showNameOptions: false,
 				showProfilePopup: false,
 				saving: false,
 				lastErrorMessage: '',
 				lastErrorAt: 0,
-				autoRoutedByOpenid: false,
+				autoRoutedByProfile: false,
 				hasPromptedRetest: false,
 				currentUser: null,
-				restoredByOpenid: false,
+				restoredByProfile: false,
 				helperPageReviewMode: true,
 				inviteCodeTapCount: 0,
 				lastInviteCodeTapAt: 0,
@@ -110,7 +110,7 @@
 		async onLoad() {
 			await this.loadCurrentUser()
 			await this.loadSystemConfig()
-			await this.initOpenidProfileState()
+			await this.initProfileState()
 		},
 		computed: {
 			filteredNames() {
@@ -177,22 +177,22 @@
 				}
 			},
 			getCandidateOpenIds(user = {}) {
-				const wxOpenid = user && user.wx_openid
-				if (!wxOpenid) {
+				const userId = user && user.user_id
+				if (!userId) {
 					return []
 				}
-				if (typeof wxOpenid === 'string') {
-					const value = wxOpenid.trim()
+				if (typeof userId === 'string') {
+					const value = userId.trim()
 					return value ? [value] : []
 				}
-				if (typeof wxOpenid !== 'object') {
+				if (typeof userId !== 'object') {
 					return []
 				}
 
 				const preferredKeys = ['mp-weixin', 'mp_weixin', 'mp', 'weixin']
 				const values = preferredKeys
-					.map((key) => wxOpenid[key])
-					.concat(Object.values(wxOpenid || {}))
+					.map((key) => userId[key])
+					.concat(Object.values(userId || {}))
 					.map((item) => (typeof item === 'string' ? item.trim() : ''))
 					.filter(Boolean)
 
@@ -213,10 +213,10 @@
 					passcode: record.passcode || '',
 					personal_photo: record.personal_photo || '',
 					user_id: record.user_id || '',
-					wx_openid: record.wx_openid || '',
-					wx_unionid: record.wx_unionid || '',
-					wx_nickname: record.wx_nickname || '',
-					wx_avatar: record.wx_avatar || ''
+					user_id: record.user_id || '',
+					user_id: record.user_id || '',
+					nickname: record.nickname || '',
+					personal_photo: record.personal_photo || ''
 				}
 			},
 			hasMbtiResult(record = {}) {
@@ -226,7 +226,7 @@
 			},
 			hasNicknameAndAvatar(record = {}) {
 				const nickname = String(record.nickname || '').trim()
-				const avatar = String(record.wx_avatar || record.personal_photo || '').trim()
+				const avatar = String(record.personal_photo || record.personal_photo || '').trim()
 				return !!(nickname && avatar)
 			},
 			hasNameAndPasscode(record = {}) {
@@ -259,12 +259,12 @@
 					success: (res) => {
 						if (res.confirm) {
 							const fastOpenid =
-								this.loginOpenIds[0] || this.getLoginOpenId(this.currentUser || {})
+								this.loginUserIds[0] || this.getLoginOpenId(this.currentUser || {})
 							uni.reLaunch({
 								url:
 									`/pages/feed/entry?name=${encodeURIComponent(record.name || '')}` +
 									`&personnelId=${encodeURIComponent(record._id || '')}` +
-									`&wxOpenid=${encodeURIComponent(fastOpenid || '')}`
+									`&userId=${encodeURIComponent(fastOpenid || '')}`
 							})
 							return
 						}
@@ -278,12 +278,12 @@
 				})
 			},
 			routeToTestByRecord(record = {}) {
-				if (!record || !record._id || this.autoRoutedByOpenid) {
+				if (!record || !record._id || this.autoRoutedByProfile) {
 					return false
 				}
 				this.savePersonnelProfileToStorage(this.buildPersonnelProfilePayload(record))
-				this.autoRoutedByOpenid = true
-				const fastOpenid = this.loginOpenIds[0] || this.getLoginOpenId(this.currentUser || {})
+				this.autoRoutedByProfile = true
+				const fastOpenid = this.loginUserIds[0] || this.getLoginOpenId(this.currentUser || {})
 				uni.showToast({
 					title: '检测到已绑定资料，正在进入测试',
 					icon: 'none',
@@ -294,7 +294,7 @@
 						url:
 							`/pages/feed/entry?name=${encodeURIComponent(record.name || '')}` +
 							`&personnelId=${encodeURIComponent(record._id || '')}` +
-							`&wxOpenid=${encodeURIComponent(fastOpenid || '')}`
+							`&userId=${encodeURIComponent(fastOpenid || '')}`
 					})
 				}, 260)
 				return true
@@ -308,15 +308,15 @@
 						...currentUserInfoUser,
 						...cachedUser,
 						_id: currentUserInfo.uid || cachedUser._id || '',
-						wx_openid:
-							cachedUser.wx_openid ||
-							currentUserInfoUser.wx_openid ||
-							currentUserInfo.wx_openid ||
+						user_id:
+							cachedUser.user_id ||
+							currentUserInfoUser.user_id ||
+							currentUserInfo.user_id ||
 							'',
-						wx_unionid:
-							cachedUser.wx_unionid ||
-							currentUserInfoUser.wx_unionid ||
-							currentUserInfo.wx_unionid ||
+						user_id:
+							cachedUser.user_id ||
+							currentUserInfoUser.user_id ||
+							currentUserInfo.user_id ||
 							''
 					}
 					this.currentUser = user
@@ -332,37 +332,37 @@
 					console.error('[access-form] loadCurrentUser failed', error)
 				}
 			},
-			async fetchLoginOpenIdsFromServer() {
+			async fetchLoginUserIdsFromServer() {
 				try {
 					const uid =
 						(this.currentUser && this.currentUser._id) || (getCurrentUserInfo() || {}).uid || ''
-					const result = await personnelUser.getCurrentLoginWxOpenid({
+					const result = await personnelUser.getCurrentLoginUserIds({
 						uid
 					})
-					console.log('[access-form] getCurrentLoginWxOpenid result', result)
+					console.log('[access-form] getCurrentLoginUserIds result', result)
 					return (result && result.openIds) || []
 				} catch (error) {
-					console.error('[access-form] getCurrentLoginWxOpenid failed', error)
+					console.error('[access-form] getCurrentLoginUserIds failed', error)
 					return []
 				}
 			},
 			applyProfileFormBySources(record = null) {
 				const user = this.currentUser || {}
 				const recordNickname = String((record && record.nickname) || '').trim()
-				const recordAvatar = String((record && (record.wx_avatar || record.personal_photo)) || '').trim()
+				const recordAvatar = String((record && (record.personal_photo || record.personal_photo)) || '').trim()
 				const userAvatar =
 					(user.avatar_file && user.avatar_file.url) || user.avatar_file || user.avatar || ''
 
 				this.profileForm.nickname = recordNickname || user.nickname || ''
 				this.profileForm.avatar = recordAvatar || userAvatar || ''
 			},
-			async findPersonnelRecordByOpenIds(openIds = []) {
+			async findPersonnelRecordByUserIds(openIds = []) {
 				if (!openIds.length) {
 					return null
 				}
 				for (let i = 0; i < openIds.length; i++) {
-					const result = await personnelUser.getByWxOpenid({
-						wxOpenid: openIds[i]
+					const result = await personnelUser.getByUserId({
+						userId: openIds[i]
 					})
 					if (result && result.record && result.record._id) {
 						return result.record
@@ -370,15 +370,15 @@
 				}
 				return null
 			},
-			async initOpenidProfileState() {
+			async initProfileState() {
 				try {
 					let openIds = this.getCandidateOpenIds(this.currentUser)
 					if (!openIds.length) {
-						openIds = await this.fetchLoginOpenIdsFromServer()
+						openIds = await this.fetchLoginUserIdsFromServer()
 					}
-					this.loginOpenIds = openIds
-					const record = await this.findPersonnelRecordByOpenIds(openIds)
-					this.matchedOpenidRecord = record
+					this.loginUserIds = openIds
+					const record = await this.findPersonnelRecordByUserIds(openIds)
+					this.matchedProfileRecord = record
 					this.applyProfileFormBySources(record)
 					if (record && record._id && record.name) {
 						this.nameInput = record.name
@@ -402,7 +402,7 @@
 						return
 					}
 				} catch (error) {
-					console.error('initOpenidProfileState failed', error)
+					console.error('initProfileState failed', error)
 					this.applyProfileFormBySources(null)
 					this.syncProfilePopupState()
 				}
@@ -410,26 +410,26 @@
 			syncProfilePopupState() {
 				this.showProfilePopup = !(this.profileForm.nickname && this.profileForm.avatar)
 			},
-			async tryRestoreProfileByOpenid() {
+			async tryRestoreProfileByUserId() {
 				try {
 					let openIds = this.getCandidateOpenIds(this.currentUser)
 					if (!openIds.length) {
-						openIds = await this.fetchLoginOpenIdsFromServer()
+						openIds = await this.fetchLoginUserIdsFromServer()
 					}
-					console.log('[access-form] tryRestoreProfileByOpenid openIds', openIds)
+					console.log('[access-form] tryRestoreProfileByUserId openIds', openIds)
 					if (!openIds.length) {
-						console.log('[access-form] no openid found, skip restore')
+						console.log('[access-form] no profile found, skip restore')
 						return false
 					}
 
 					let record = null
 					for (let i = 0; i < openIds.length; i++) {
-						console.log('[access-form] querying personnel by openid', openIds[i])
-						const result = await personnelUser.getByWxOpenid({
-							wxOpenid: openIds[i]
+						console.log('[access-form] querying personnel by profile', openIds[i])
+						const result = await personnelUser.getByUserId({
+							userId: openIds[i]
 						})
-						console.log('[access-form] getByWxOpenid result', {
-							wxOpenid: openIds[i],
+						console.log('[access-form] getByUserId result', {
+							userId: openIds[i],
 							result
 						})
 						if (result && result.record && result.record._id) {
@@ -438,7 +438,7 @@
 						}
 					}
 					if (!record || !record._id) {
-						console.log('[access-form] no personnel record matched openid')
+						console.log('[access-form] no personnel record matched profile')
 						return false
 					}
 					if (this.shouldAutoRouteToTest(record)) {
@@ -458,7 +458,7 @@
 						icon: 'none',
 						duration: 1800
 					})
-					this.restoredByOpenid = true
+					this.restoredByProfile = true
 					setTimeout(() => {
 						uni.reLaunch({
 							url: '/pages/index/index'
@@ -466,7 +466,7 @@
 					}, 500)
 					return true
 				} catch (error) {
-					console.error('tryRestoreProfileByOpenid failed', error)
+					console.error('tryRestoreProfileByUserId failed', error)
 					return false
 				}
 			},
@@ -500,14 +500,14 @@
 					this.showToastOnce('请上传头像')
 					return
 				}
-				let matchedRecord = this.matchedOpenidRecord
+				let matchedRecord = this.matchedProfileRecord
 				try {
-					if ((!matchedRecord || !matchedRecord._id) && this.loginOpenIds.length) {
-						matchedRecord = await this.findPersonnelRecordByOpenIds(this.loginOpenIds)
-						this.matchedOpenidRecord = matchedRecord
+					if ((!matchedRecord || !matchedRecord._id) && this.loginUserIds.length) {
+						matchedRecord = await this.findPersonnelRecordByUserIds(this.loginUserIds)
+						this.matchedProfileRecord = matchedRecord
 					}
 				} catch (error) {
-					console.error('confirmProfile query by openid failed', error)
+					console.error('confirmProfile query by profile failed', error)
 				}
 				if (matchedRecord && matchedRecord._id) {
 					if (this.saving) {
@@ -523,17 +523,17 @@
 						const avatarFileId = await this.uploadAvatarIfNeeded()
 						const user = this.currentUser || {}
 						const loginOpenId =
-							this.loginOpenIds[0] ||
+							this.loginUserIds[0] ||
 							this.getLoginOpenId(user) ||
-							String(matchedRecord.wx_openid || '').trim()
+							String(matchedRecord.user_id || '').trim()
 						const updateResult = await personnelUser.update({
 							id: matchedRecord._id,
 							data: {
 								nickname: nickname,
-								wx_openid: loginOpenId,
-								wx_unionid: user.wx_unionid || matchedRecord.wx_unionid || '',
-								wx_nickname: nickname,
-								wx_avatar: avatarFileId
+								user_id: loginOpenId,
+								user_id: user.user_id || matchedRecord.user_id || '',
+								nickname: nickname,
+								personal_photo: avatarFileId
 							}
 						})
 						const persistedRecord = {
@@ -551,12 +551,12 @@
 								(updateResult && updateResult.passcode) || matchedRecord.passcode || '',
 							nickname: nickname,
 							personal_photo: matchedRecord.personal_photo || '',
-							wx_openid: loginOpenId,
-							wx_unionid: user.wx_unionid || matchedRecord.wx_unionid || '',
-							wx_nickname: nickname,
-							wx_avatar: avatarFileId
+							user_id: loginOpenId,
+							user_id: user.user_id || matchedRecord.user_id || '',
+							nickname: nickname,
+							personal_photo: avatarFileId
 						}
-						this.matchedOpenidRecord = persistedRecord
+						this.matchedProfileRecord = persistedRecord
 						this.savePersonnelProfileToStorage(this.buildPersonnelProfilePayload(persistedRecord))
 						this.showProfilePopup = false
 						if (this.hasMbtiResult(persistedRecord)) {
@@ -579,7 +579,7 @@
 								url:
 									`/pages/feed/entry?name=${encodeURIComponent(persistedRecord.name || '')}` +
 									`&personnelId=${encodeURIComponent(persistedRecord._id || '')}` +
-									`&wxOpenid=${encodeURIComponent(loginOpenId || '')}`
+									`&userId=${encodeURIComponent(loginOpenId || '')}`
 							})
 						}, 350)
 					} catch (error) {
@@ -596,7 +596,7 @@
 						this.buildPersonnelProfilePayload({
 							...matchedRecord,
 							nickname: this.profileForm.nickname.trim(),
-							wx_avatar: this.profileForm.avatar
+							personal_photo: this.profileForm.avatar
 						})
 					)
 					uni.showToast({
@@ -604,12 +604,12 @@
 						icon: 'none'
 					})
 					setTimeout(() => {
-						const fastOpenid = this.loginOpenIds[0] || this.getLoginOpenId(this.currentUser || {})
+						const fastOpenid = this.loginUserIds[0] || this.getLoginOpenId(this.currentUser || {})
 						uni.navigateTo({
 							url:
 								`/pages/feed/entry?name=${encodeURIComponent(matchedRecord.name || '')}` +
 								`&personnelId=${encodeURIComponent(matchedRecord._id || '')}` +
-								`&wxOpenid=${encodeURIComponent(fastOpenid || '')}`
+								`&userId=${encodeURIComponent(fastOpenid || '')}`
 						})
 					}, 350)
 					return
@@ -755,8 +755,8 @@
 					})
 					return
 				}
-				if (this.hasBoundMbtiRecord(this.matchedOpenidRecord || {})) {
-					this.promptRetestForBoundRecord(this.matchedOpenidRecord || {})
+				if (this.hasBoundMbtiRecord(this.matchedProfileRecord || {})) {
+					this.promptRetestForBoundRecord(this.matchedProfileRecord || {})
 					return
 				}
 				const inviteCode = this.password.trim()
@@ -782,17 +782,17 @@
 
 					const avatarFileId = await this.uploadAvatarIfNeeded()
 					const user = this.currentUser || {}
-					const loginOpenId = this.loginOpenIds[0] || this.getLoginOpenId(user)
+					const loginOpenId = this.loginUserIds[0] || this.getLoginOpenId(user)
 					const result = await personnelUser.upsertByUser({
 						userId: uid,
 						data: {
 							nickname: this.profileForm.nickname.trim(),
 							passcode: inviteCode,
 							user_id: uid,
-							wx_openid: loginOpenId,
-							wx_unionid: user.wx_unionid || '',
-							wx_nickname: this.profileForm.nickname.trim(),
-							wx_avatar: avatarFileId
+							user_id: loginOpenId,
+							user_id: user.user_id || '',
+							nickname: this.profileForm.nickname.trim(),
+							personal_photo: avatarFileId
 						}
 					})
 					if (result && result.ok === false) {
@@ -813,37 +813,37 @@
 						return
 					}
 					const persistedRecord = {
-						...(this.matchedOpenidRecord || {}),
+						...(this.matchedProfileRecord || {}),
 						_id: (result && result.id) || '',
 						person_id: result && typeof result.person_id !== 'undefined' ? result.person_id : '',
 						user_role:
 							result && typeof result.user_role !== 'undefined'
 								? Number(result.user_role) || 0
 								: Number(
-										(this.matchedOpenidRecord && this.matchedOpenidRecord.user_role) || 0
+										(this.matchedProfileRecord && this.matchedProfileRecord.user_role) || 0
 								  ) || 0,
 						name:
 							(result && result.name) ||
-							(this.matchedOpenidRecord && this.matchedOpenidRecord.name) ||
+							(this.matchedProfileRecord && this.matchedProfileRecord.name) ||
 							'',
 						nickname: this.profileForm.nickname.trim(),
 						passcode: (result && result.passcode) || inviteCode,
 						mbti:
 							(result && result.mbti) ||
-							(this.matchedOpenidRecord && this.matchedOpenidRecord.mbti) ||
+							(this.matchedProfileRecord && this.matchedProfileRecord.mbti) ||
 							'',
 						personal_photo:
 							(result && result.personal_photo) ||
-							(this.matchedOpenidRecord && this.matchedOpenidRecord.personal_photo) ||
+							(this.matchedProfileRecord && this.matchedProfileRecord.personal_photo) ||
 							'',
 						user_id: uid,
-						wx_openid: (result && result.wx_openid) || loginOpenId || '',
-						wx_unionid: user.wx_unionid || '',
-						wx_nickname: this.profileForm.nickname.trim(),
-						wx_avatar: (result && result.wx_avatar) || avatarFileId || ''
+						user_id: (result && result.user_id) || loginOpenId || '',
+						user_id: user.user_id || '',
+						nickname: this.profileForm.nickname.trim(),
+						personal_photo: (result && result.personal_photo) || avatarFileId || ''
 					}
 
-					this.matchedOpenidRecord = persistedRecord
+					this.matchedProfileRecord = persistedRecord
 					this.savePersonnelProfileToStorage(this.buildPersonnelProfilePayload(persistedRecord))
 					if (this.hasMbtiResult(persistedRecord)) {
 						this.promptRetestForBoundRecord(persistedRecord)
@@ -875,16 +875,16 @@
 					})
 					return
 				}
-				if (this.hasBoundMbtiRecord(this.matchedOpenidRecord || {})) {
-					this.promptRetestForBoundRecord(this.matchedOpenidRecord || {})
+				if (this.hasBoundMbtiRecord(this.matchedProfileRecord || {})) {
+					this.promptRetestForBoundRecord(this.matchedProfileRecord || {})
 					return
 				}
 
-				const targetRecord = this.matchedOpenidRecord || this.selectedRecord || {}
+				const targetRecord = this.matchedProfileRecord || this.selectedRecord || {}
 				const targetName = String(targetRecord.name || this.selectedName || this.nameInput || '').trim()
 				const targetPersonnelId = String(targetRecord._id || '').trim()
 				const targetWxOpenid = String(
-					this.loginOpenIds[0] || this.getLoginOpenId(this.currentUser || {}) || ''
+					this.loginUserIds[0] || this.getLoginOpenId(this.currentUser || {}) || ''
 				).trim()
 
 				let url = '/pages/feed/entry'
@@ -896,7 +896,7 @@
 					query.push(`personnelId=${encodeURIComponent(targetPersonnelId)}`)
 				}
 				if (targetWxOpenid) {
-					query.push(`wxOpenid=${encodeURIComponent(targetWxOpenid)}`)
+					query.push(`userId=${encodeURIComponent(targetWxOpenid)}`)
 				}
 				if (query.length) {
 					url += `?${query.join('&')}`

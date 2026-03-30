@@ -96,10 +96,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE101',
       user_role: 0,
       personal_photo: PERSONA_ASSET_MAP.INFP,
-      wx_openid: 'mock-openid-101',
-      wx_unionid: 'mock-unionid-101',
-      wx_nickname: '知夏',
-      wx_avatar: PERSONA_ASSET_MAP.INFP,
       user_id: '',
       private_message_quota: 2,
       heart_message_quota: 3,
@@ -131,10 +127,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE102',
       user_role: 2,
       personal_photo: PERSONA_ASSET_MAP.ENFP,
-      wx_openid: 'mock-openid-102',
-      wx_unionid: 'mock-unionid-102',
-      wx_nickname: '以安',
-      wx_avatar: PERSONA_ASSET_MAP.ENFP,
       user_id: 'mock-user-102',
       private_message_quota: 4,
       heart_message_quota: 5,
@@ -166,10 +158,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE103',
       user_role: 1,
       personal_photo: PERSONA_ASSET_MAP.INFJ,
-      wx_openid: 'mock-openid-103',
-      wx_unionid: 'mock-unionid-103',
-      wx_nickname: '未央',
-      wx_avatar: PERSONA_ASSET_MAP.INFJ,
       user_id: 'mock-user-103',
       private_message_quota: 3,
       heart_message_quota: 4,
@@ -201,10 +189,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE104',
       user_role: 3,
       personal_photo: PERSONA_ASSET_MAP.ENFJ,
-      wx_openid: 'mock-openid-104',
-      wx_unionid: 'mock-unionid-104',
-      wx_nickname: '星野',
-      wx_avatar: PERSONA_ASSET_MAP.ENFJ,
       user_id: 'mock-user-104',
       private_message_quota: 6,
       heart_message_quota: 6,
@@ -236,10 +220,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE105',
       user_role: 0,
       personal_photo: PERSONA_ASSET_MAP.INTP,
-      wx_openid: 'mock-openid-105',
-      wx_unionid: 'mock-unionid-105',
-      wx_nickname: '清岚',
-      wx_avatar: PERSONA_ASSET_MAP.INTP,
       user_id: '',
       private_message_quota: 2,
       heart_message_quota: 3,
@@ -271,10 +251,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE106',
       user_role: 2,
       personal_photo: PERSONA_ASSET_MAP.ENTP,
-      wx_openid: 'mock-openid-106',
-      wx_unionid: 'mock-unionid-106',
-      wx_nickname: '景和',
-      wx_avatar: PERSONA_ASSET_MAP.ENTP,
       user_id: 'mock-user-106',
       private_message_quota: 5,
       heart_message_quota: 4,
@@ -306,10 +282,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE107',
       user_role: 0,
       personal_photo: PERSONA_ASSET_MAP.ISFP,
-      wx_openid: 'mock-openid-107',
-      wx_unionid: 'mock-unionid-107',
-      wx_nickname: '南枝',
-      wx_avatar: PERSONA_ASSET_MAP.ISFP,
       user_id: '',
       private_message_quota: 1,
       heart_message_quota: 2,
@@ -341,10 +313,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE108',
       user_role: 0,
       personal_photo: PERSONA_ASSET_MAP.ESFP,
-      wx_openid: 'mock-openid-108',
-      wx_unionid: 'mock-unionid-108',
-      wx_nickname: '晨风',
-      wx_avatar: PERSONA_ASSET_MAP.ESFP,
       user_id: '',
       private_message_quota: 2,
       heart_message_quota: 3,
@@ -376,10 +344,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE109',
       user_role: 0,
       personal_photo: PERSONA_ASSET_MAP.ISTJ,
-      wx_openid: 'mock-openid-109',
-      wx_unionid: 'mock-unionid-109',
-      wx_nickname: '知白',
-      wx_avatar: PERSONA_ASSET_MAP.ISTJ,
       user_id: '',
       private_message_quota: 0,
       heart_message_quota: 2,
@@ -411,10 +375,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE110',
       user_role: 1,
       personal_photo: PERSONA_ASSET_MAP.ESTJ,
-      wx_openid: 'mock-openid-110',
-      wx_unionid: 'mock-unionid-110',
-      wx_nickname: '沐阳',
-      wx_avatar: PERSONA_ASSET_MAP.ESTJ,
       user_id: 'mock-user-110',
       private_message_quota: 3,
       heart_message_quota: 3,
@@ -446,10 +406,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE111',
       user_role: 0,
       personal_photo: PERSONA_ASSET_MAP.INTJ,
-      wx_openid: 'mock-openid-111',
-      wx_unionid: 'mock-unionid-111',
-      wx_nickname: '白屿',
-      wx_avatar: PERSONA_ASSET_MAP.INTJ,
       user_id: '',
       private_message_quota: 1,
       heart_message_quota: 2,
@@ -481,10 +437,6 @@ function buildSeedPersonnel() {
       passcode: 'LOVE112',
       user_role: 0,
       personal_photo: PERSONA_ASSET_MAP.ESFJ,
-      wx_openid: 'mock-openid-112',
-      wx_unionid: 'mock-unionid-112',
-      wx_nickname: '晚棠',
-      wx_avatar: PERSONA_ASSET_MAP.ESFJ,
       user_id: '',
       private_message_quota: 2,
       heart_message_quota: 3,
@@ -628,16 +580,6 @@ function updatePersonnelRecord(id, patch) {
   return getPersonnelById(id)
 }
 
-function resolveWechatId(record = {}) {
-  if (normalizeText(record.wechat_id)) {
-    return normalizeText(record.wechat_id)
-  }
-  if (toNumber(record.person_id)) {
-    return `mock-wechat-${toNumber(record.person_id)}`
-  }
-  return normalizeText(record.wx_openid)
-}
-
 function buildLoginProfileRecord(record = {}) {
   return {
     _id: record._id || '',
@@ -647,7 +589,6 @@ function buildLoginProfileRecord(record = {}) {
     passcode: normalizeText(record.passcode),
     review_status: normalizeText(record.review_status) || 'pending',
     user_role: toNumber(record.user_role),
-    wechat_id: resolveWechatId(record),
     submitted_at: record.submitted_at || '',
     updated_at: record.updated_at || ''
   }
@@ -675,8 +616,6 @@ function filterPersonnel(list, keyword) {
       item.name,
       item.mobile,
       item.mbti,
-      item.wechat_id,
-      item.wx_openid,
       item.passcode
     ]
       .map((value) => normalizeKeyword(value))
@@ -764,7 +703,7 @@ function buildContactSummary(targetRecord, selfRecord, allMessages) {
     nickname: targetRecord.nickname,
     gender: targetRecord.gender,
     mbti: targetRecord.mbti,
-    personal_photo: targetRecord.personal_photo || targetRecord.wx_avatar || '',
+    personal_photo: targetRecord.personal_photo || '',
     latest_message: latestMessage?.content || '',
     latest_message_at: latestMessage?.created_at || '',
     can_send: canSend
@@ -994,43 +933,6 @@ export const personnelUserService = {
     )
   },
 
-  async getCurrentLoginWxOpenid({ uid } = {}) {
-    return withMockFallback(
-      async () =>
-        unwrapResponse(
-          await http.get(apiUrls.personnel.currentLoginOpenIds(), {
-            params: {
-              uid
-            }
-          })
-        ),
-      async () => {
-        const match = getPersonnelList().find((item) => item.user_id === normalizeText(uid))
-        const wechatId = resolveWechatId(match)
-        return {
-          openIds: wechatId ? [wechatId] : []
-        }
-      }
-    )
-  },
-
-  async getByWxOpenid({ wxOpenid } = {}) {
-    return withMockFallback(
-      async () =>
-        unwrapResponse(
-          await http.get(apiUrls.personnel.byWxOpenid(), {
-            params: {
-              wxOpenid
-            }
-          })
-        ),
-      async () => ({
-        record:
-          getPersonnelList().find((item) => resolveWechatId(item) === normalizeText(wxOpenid)) || null
-      })
-    )
-  },
-
   async listLoginProfiles({ keyword = '', reviewStatus = 'all', limit = 20 } = {}) {
     return withMockFallback(
       async () =>
@@ -1070,29 +972,6 @@ export const personnelUserService = {
         return {
           matched: !!record,
           record: record ? buildLoginProfileRecord(record) : null
-        }
-      }
-    )
-  },
-
-  async bindLoginWechatId({ id, wechatId = '' } = {}) {
-    return withMockFallback(
-      async () =>
-        unwrapResponse(
-          await http.patch(apiUrls.personnel.bindLoginWechatId(id), {
-            wechatId
-          })
-        ),
-      async () => {
-        const normalizedWechatId = normalizeText(wechatId)
-        const nextRecord = updatePersonnelRecord(normalizeText(id), {
-          wechat_id: normalizedWechatId
-        })
-
-        return {
-          id: nextRecord?._id || normalizeText(id),
-          wechat_id: normalizedWechatId,
-          record: nextRecord ? buildLoginProfileRecord(nextRecord) : null
         }
       }
     )
@@ -1178,11 +1057,6 @@ export const personnelUserService = {
           passcode: `LOVE${generatedPersonId}`,
           user_role: 0,
           personal_photo: '',
-          wechat_id: '',
-          wx_openid: '',
-          wx_unionid: '',
-          wx_nickname: '',
-          wx_avatar: '',
           user_id: '',
           private_message_quota: 0,
           heart_message_quota: 3,
@@ -1322,8 +1196,6 @@ export const personnelUserService = {
           user_role: target.user_role,
           mbti: target.mbti,
           personal_photo: target.personal_photo,
-          wx_openid: target.wx_openid,
-          wx_avatar: target.wx_avatar
         }
       }
     )

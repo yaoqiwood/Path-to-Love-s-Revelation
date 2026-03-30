@@ -917,7 +917,7 @@
 				var reviewerName = ''
 				try {
 					var profile = uni.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
-					reviewerName = (profile && (profile.nickname || profile.name || profile.wx_nickname)) || ''
+					reviewerName = (profile && (profile.nickname || profile.name)) || ''
 				} catch (error) {}
 
 				this.reviewingId = item._id

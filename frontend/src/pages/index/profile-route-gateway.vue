@@ -18,9 +18,7 @@
 </template>
 
 <script>
-import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
 import { app } from '@/platform/app-bridge'
-import { getCurrentUserInfo } from '@/platform/app-runtime'
 
 const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
 
@@ -43,164 +41,9 @@ export default {
 				return null
 			}
 		},
-		savePersonnelProfileToStorage(payload) {
-			try {
-				app.setStorageSync(PERSONNEL_PROFILE_STORAGE_KEY, {
-					...payload,
-					cached_at: Date.now()
-				})
-			} catch (error) {
-				console.error('savePersonnelProfileToStorage failed', error)
-			}
-		},
-		clearPersonnelProfileStorage() {
-			try {
-				app.removeStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
-			} catch (error) {
-				console.error('clearPersonnelProfileStorage failed', error)
-			}
-		},
-		buildPersonnelProfilePayload(record = {}) {
-			return {
-				...record,
-				id: record._id || '',
-				personnel_id: record._id || '',
-				person_id: typeof record.person_id !== 'undefined' ? record.person_id : '',
-				user_role: Number(record.user_role) || 0,
-				name: record.name || '',
-				nickname: record.nickname || '',
-				passcode: record.passcode || '',
-				personal_photo: record.personal_photo || '',
-				user_id: record.user_id || '',
-				wx_openid: record.wx_openid || '',
-				wx_unionid: record.wx_unionid || '',
-				wx_nickname: record.wx_nickname || '',
-				wx_avatar: record.wx_avatar || ''
-			}
-		},
-		buildDefaultProfile(user = {}, openIds = []) {
-			const wxOpenid = openIds[0] || this.getCandidateOpenIds(user)[0] || ''
-			return this.buildPersonnelProfilePayload({
-				_id: '',
-				person_id: '',
-				user_role: 0,
-				name: '',
-				nickname: user.nickname || '',
-				passcode: '',
-				personal_photo:
-					(user.avatar_file && user.avatar_file.url) || user.avatar_file || user.avatar || '',
-				user_id: user._id || '',
-				wx_openid: wxOpenid,
-				wx_unionid: user.wx_unionid || '',
-				wx_nickname: user.nickname || '',
-				wx_avatar:
-					(user.avatar_file && user.avatar_file.url) || user.avatar_file || user.avatar || ''
-			})
-		},
-		getCandidateOpenIds(user = {}) {
-			const wxOpenid = user && user.wx_openid
-			if (!wxOpenid) {
-				return []
-			}
-			if (typeof wxOpenid === 'string') {
-				const value = wxOpenid.trim()
-				return value ? [value] : []
-			}
-			if (typeof wxOpenid !== 'object') {
-				return []
-			}
-
-			const preferredKeys = ['mp-weixin', 'mp_weixin', 'mp', 'weixin']
-			const values = preferredKeys
-				.map((key) => wxOpenid[key])
-				.concat(Object.values(wxOpenid || {}))
-				.map((item) => (typeof item === 'string' ? item.trim() : ''))
-				.filter(Boolean)
-
-			return Array.from(new Set(values))
-		},
-		getMergedCurrentUser() {
-			try {
-				const currentUserInfo = getCurrentUserInfo() || {}
-				const currentUserInfoUser = currentUserInfo.userInfo || {}
-				const cachedUser = app.getStorageSync('uni-id-pages-userInfo') || {}
-				return {
-					...currentUserInfoUser,
-					...cachedUser,
-					_id: currentUserInfo.uid || cachedUser._id || '',
-					wx_openid:
-						cachedUser.wx_openid ||
-						currentUserInfoUser.wx_openid ||
-						currentUserInfo.wx_openid ||
-						'',
-					wx_unionid:
-						cachedUser.wx_unionid ||
-						currentUserInfoUser.wx_unionid ||
-						currentUserInfo.wx_unionid ||
-						''
-				}
-			} catch (error) {
-				console.error('getMergedCurrentUser failed', error)
-				return {}
-			}
-		},
-		async fetchLoginOpenIdsFromServer(uid = '') {
-			if (!uid) {
-				return []
-			}
-			try {
-				const result = await personnelUser.getCurrentLoginWxOpenid({
-					uid
-				})
-				return (result && result.openIds) || []
-			} catch (error) {
-				console.error('fetchLoginOpenIdsFromServer failed', error)
-				return []
-			}
-		},
-		async loadSystemConfig() {
-			try {
-				await personnelUser.getSystemConfig({
-					configCode: 'default'
-				})
-			} catch (error) {
-				console.error('loadSystemConfig failed', error)
-			}
-		},
 		isUserRole(roleValue) {
 			const role = Number(roleValue)
 			return role === 1 || role === 2 || role === 3
-		},
-		async getProfileFromDatabase() {
-			let openIds = []
-			const currentUser = this.getMergedCurrentUser()
-			const currentUserInfo = getCurrentUserInfo() || {}
-			openIds = this.getCandidateOpenIds(currentUser)
-			if (!openIds.length) {
-				this.loadingText = 'Loading login profile...'
-				openIds = await this.fetchLoginOpenIdsFromServer(currentUser._id || currentUserInfo.uid || '')
-			}
-			if (!openIds.length) {
-				return null
-			}
-
-			for (let i = 0; i < openIds.length; i += 1) {
-				const result = await personnelUser.getByWxOpenid({
-					wxOpenid: openIds[i]
-				})
-				if (result && result.record && result.record._id) {
-					return {
-						record: result.record,
-						openIds,
-						currentUser
-					}
-				}
-			}
-			return {
-				record: null,
-				openIds,
-				currentUser
-			}
 		},
 		resolveTargetUrl(profile) {
 			if (profile && this.isUserRole(profile.user_role)) {
@@ -221,30 +64,8 @@ export default {
 			}
 		},
 		async routeByLoginProfile() {
-			let profile = null
-			let fallbackProfile = null
-
-			try {
-				await this.loadSystemConfig()
-				this.loadingText = 'Matching your profile in the database...'
-				const profileResult = await this.getProfileFromDatabase()
-				profile = profileResult && profileResult.record
-				if (profile && profile._id) {
-					this.savePersonnelProfileToStorage(this.buildPersonnelProfilePayload(profile))
-				} else {
-					fallbackProfile = this.buildDefaultProfile(
-						(profileResult && profileResult.currentUser) || {},
-						(profileResult && profileResult.openIds) || []
-					)
-					this.savePersonnelProfileToStorage(fallbackProfile)
-				}
-			} catch (error) {
-				console.error('routeByLoginProfile failed', error)
-				this.clearPersonnelProfileStorage()
-				profile = null
-			}
-
-			const targetUrl = this.resolveTargetUrl(profile || fallbackProfile)
+			const profile = this.getPersonnelProfileFromStorage()
+			const targetUrl = this.resolveTargetUrl(profile)
 			this.updateLoadingText(targetUrl)
 
 			setTimeout(() => {
@@ -379,4 +200,3 @@ export default {
 	}
 }
 </style>
-

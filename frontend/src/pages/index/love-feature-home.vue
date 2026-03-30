@@ -20,7 +20,7 @@
           <span class="profile-label">编号</span>
           <strong>#{{ profile.person_id || '--' }}</strong>
         </div>
-        <div class="profile-pill">
+        <div class="profile-pill profile-pill-wide">
           <span class="profile-label">状态</span>
           <strong>{{ mbtiStatus }}</strong>
         </div>
@@ -89,9 +89,6 @@ function goMbtiTest() {
   }
   if (profile.personnel_id || profile.id) {
     query.push(`personnelId=${encodeURIComponent(profile.personnel_id || profile.id)}`)
-  }
-  if (profile.wechat_id || profile.wx_openid) {
-    query.push(`wxOpenid=${encodeURIComponent(profile.wechat_id || profile.wx_openid)}`)
   }
 
   router.push(query.length ? `/pages/feed/entry?${query.join('&')}` : '/pages/feed/entry')
@@ -195,56 +192,107 @@ function goHeartCoordinate() {
 
 .profile-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 28px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+  align-items: center;
 }
 
 .profile-pill {
-  padding: 16px 18px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 18px 30px rgba(117, 88, 63, 0.08);
-  backdrop-filter: blur(12px);
+  min-height: 0;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: 0 10px 20px rgba(117, 88, 63, 0.06);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .profile-label {
-  display: block;
   color: #92756a;
   font-size: 12px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .profile-pill strong {
-  display: block;
-  margin-top: 8px;
   color: #322521;
-  font-size: 20px;
+  font-size: clamp(15px, 1.8vw, 18px);
+  line-height: 1.2;
+  text-align: right;
+}
+
+.profile-pill-wide {
+  grid-column: 1 / -1;
 }
 
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 26px;
+  gap: 20px;
+  margin-top: 28px;
+  align-items: stretch;
 }
 
 .feature-card {
-  min-height: 290px;
-  padding: 24px 22px;
-  border-radius: 30px;
+  position: relative;
+  min-height: 320px;
+  padding: 26px 24px 24px;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.52);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 248, 242, 0.72)),
-    linear-gradient(135deg, rgba(255, 240, 229, 0.76), rgba(255, 255, 255, 0.5));
-  box-shadow: 0 24px 42px rgba(117, 88, 63, 0.1);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 247, 239, 0.74)),
+    linear-gradient(135deg, rgba(255, 238, 227, 0.8), rgba(255, 255, 255, 0.52));
+  box-shadow:
+    0 24px 44px rgba(117, 88, 63, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 96px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 0;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 183, 142, 0.82), rgba(117, 94, 160, 0.72));
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 30px 52px rgba(117, 88, 63, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
 .feature-card-primary {
   background:
     linear-gradient(180deg, rgba(48, 42, 72, 0.95), rgba(84, 70, 126, 0.92)),
     linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02));
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .feature-card-accent {
@@ -256,9 +304,11 @@ function goHeartCoordinate() {
 .card-kicker {
   margin: 0;
   color: rgba(111, 92, 84, 0.82);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.22em;
+  position: relative;
+  z-index: 1;
 }
 
 .feature-card-primary .card-kicker,
@@ -268,17 +318,22 @@ function goHeartCoordinate() {
 }
 
 .card-title {
-  margin: 16px 0 0;
+  margin: 18px 0 0;
   color: #2f231f;
-  font-size: 32px;
-  line-height: 1.08;
+  font-size: clamp(30px, 3vw, 36px);
+  line-height: 1.06;
+  position: relative;
+  z-index: 1;
 }
 
 .card-copy {
   margin: 14px 0 0;
   color: #6d5d57;
   font-size: 15px;
-  line-height: 1.9;
+  line-height: 1.85;
+  word-break: break-word;
+  position: relative;
+  z-index: 1;
 }
 
 .card-btn {
@@ -292,6 +347,8 @@ function goHeartCoordinate() {
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  position: relative;
+  z-index: 1;
   transition:
     transform 0.22s ease,
     box-shadow 0.22s ease,
@@ -309,13 +366,35 @@ function goHeartCoordinate() {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1200px) {
   .feature-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(248px, 280px);
+    overflow-x: auto;
+    padding-bottom: 6px;
+    padding-right: 6px;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .feature-grid::-webkit-scrollbar {
+    display: none;
   }
 
   .feature-card {
-    min-height: 248px;
+    min-height: 286px;
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 960px) {
+  .profile-strip {
+    gap: 10px;
+  }
+
+  .profile-pill {
+    padding: 11px 14px;
   }
 }
 
@@ -326,7 +405,46 @@ function goHeartCoordinate() {
   }
 
   .profile-strip {
-    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .profile-pill {
+    padding: 10px 12px;
+    border-radius: 16px;
+    gap: 8px;
+  }
+
+  .profile-label {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .profile-pill strong {
+    font-size: 14px;
+  }
+
+  .feature-grid {
+    grid-auto-columns: minmax(226px, 248px);
+    gap: 16px;
+  }
+
+  .feature-card {
+    min-height: 272px;
+    padding: 22px 20px 20px;
+    border-radius: 28px;
+  }
+
+  .card-title {
+    font-size: 32px;
+  }
+
+  .card-copy {
+    font-size: 14px;
+    line-height: 1.72;
+  }
+
+  .card-btn {
+    min-height: 50px;
   }
 }
 </style>
