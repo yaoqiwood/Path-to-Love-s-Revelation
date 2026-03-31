@@ -3,6 +3,10 @@
 		<div class="hero">
 			<div class="hero-backdrop hero-backdrop-left"></div>
 			<div class="hero-backdrop hero-backdrop-right"></div>
+			<div class="top-back-btn" @click="goBack">
+				<!-- <text class="back-arrow">‹</text> -->
+				<text class="back-label">返回</text>
+			</div>
 
 			<div class="hero-copy">
 				<text class="eyebrow">LOVE MBTI LAB</text>
@@ -245,22 +249,26 @@
 
 	const stageEncouragementTemplates = [
 		{
-			balanced: (stage) => `${stage.encouragement} 这一段还保留着一些摇摆感，继续按直觉选，后面的轮廓会自然拉开。`,
+			balanced: (stage) =>
+				`${stage.encouragement} 这一段还保留着一些摇摆感，继续按直觉选，后面的轮廓会自然拉开。`,
 			leaning: (stage, strongestAxis) =>
 				`${stage.encouragement} 你在“${strongestAxis.label}”上已经开始偏向一侧，接下来可以看看这种感觉会不会继续加深。`
 		},
 		{
-			balanced: (stage) => `${stage.encouragement} 目前几组维度咬得很紧，这反而说明你的选择很真实，不用刻意放大某一种样子。`,
+			balanced: (stage) =>
+				`${stage.encouragement} 目前几组维度咬得很紧，这反而说明你的选择很真实，不用刻意放大某一种样子。`,
 			leaning: (stage, strongestAxis) =>
 				`${stage.encouragement} 到了这里，“${strongestAxis.label}”已经成为比较稳定的一条线索，后面的题目会帮你把它再确认一次。`
 		},
 		{
-			balanced: (stage) => `${stage.encouragement} 现在的你更像是在几个方向之间细细权衡，最后一段往往最能把这种细微差别说清楚。`,
+			balanced: (stage) =>
+				`${stage.encouragement} 现在的你更像是在几个方向之间细细权衡，最后一段往往最能把这种细微差别说清楚。`,
 			leaning: (stage, strongestAxis) =>
 				`${stage.encouragement} 这一阶段里，“${strongestAxis.label}”的偏好已经不只是偶然冒头了，最后几题会决定它是短暂信号还是核心特征。`
 		},
 		{
-			balanced: (stage) => `${stage.encouragement} 整体来看你不是单一类型的直线答案，而是带着几分平衡感，这会让最终结果更立体。`,
+			balanced: (stage) =>
+				`${stage.encouragement} 整体来看你不是单一类型的直线答案，而是带着几分平衡感，这会让最终结果更立体。`,
 			leaning: (stage, strongestAxis) =>
 				`${stage.encouragement} 回看整段作答，“${strongestAxis.label}”始终是最清楚的一条主线，最终结果大概率也会保留这份底色。`
 		}
@@ -661,9 +669,7 @@
 		stageQuota
 	}) {
 		const topDimensions = getSortedDimensions(stageCounts).slice(0, 2)
-		const topText = topDimensions
-			.map((item) => `${item.key}(${item.count})`)
-			.join('、')
+		const topText = topDimensions.map((item) => `${item.key}(${item.count})`).join('、')
 		const strongestAxis = getStrongestAxisTrend(stageCounts)
 		const stageIndex = Math.max(0, pendingStageNumber.value - 1)
 		let axisText = ''
@@ -871,6 +877,14 @@
 			})
 		}
 	}
+
+	async function goBack() {
+		try {
+			await router.back()
+		} catch (error) {
+			await goHome()
+		}
+	}
 </script>
 
 <style scoped lang="less">
@@ -959,6 +973,60 @@
 		z-index: 1;
 	}
 
+	.top-back-btn {
+		position: absolute;
+		top: calc(16px + var(--safe-top, 0px));
+		left: clamp(12px, 2.8vw, 24px);
+		z-index: 3;
+		min-width: 74px;
+		min-height: 36px;
+		padding: 0 14px 0 11px;
+		border-radius: 999px;
+		border: 1px solid rgba(109, 91, 86, 0.16);
+		background: rgba(255, 255, 255, 0.92);
+		box-shadow: 0 8px 18px rgba(61, 45, 38, 0.12);
+		backdrop-filter: blur(4px);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		white-space: nowrap;
+		cursor: pointer;
+		overflow: hidden;
+	}
+
+	.top-back-btn text {
+		font-size: 15px;
+		font-weight: 600;
+		color: #4b3a34;
+	}
+
+	.back-arrow {
+		position: absolute;
+		left: 10px;
+		top: 50%;
+		transform: translateY(-50%);
+		font-size: 18px;
+		line-height: 1;
+	}
+
+	.back-label {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		width: 100%;
+		text-align: center;
+		padding: 0 16px;
+		box-sizing: border-box;
+		font-size: 15px;
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	.hero-copy {
+		margin-top: 16px;
+	}
+
 	.eyebrow,
 	.card-eyebrow {
 		color: #8f6247;
@@ -993,8 +1061,7 @@
 		border: 1px solid var(--card-border);
 		border-radius: 30px;
 		background:
-			linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 247, 240, 0.76)),
-			var(--card-bg);
+			linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 247, 240, 0.76)), var(--card-bg);
 		box-shadow:
 			0 24px 48px rgba(117, 88, 63, 0.1),
 			inset 0 1px 0 rgba(255, 255, 255, 0.64);
@@ -1341,3 +1408,4 @@
 		}
 	}
 </style>
+
