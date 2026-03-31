@@ -1,6 +1,7 @@
 import { http, unwrapResponse } from '@/api/http'
 import { withMockFallback } from '@/api/mockService'
 import { apiUrls } from '@/api/urls'
+import { getAuthStorageValue, AUTH_STORAGE_KEYS } from '@/platform/auth-storage'
 
 const STORAGE_KEYS = {
   personnel: 'mock-db-personnel',
@@ -173,6 +174,31 @@ function normalizeKeyword(value) {
 function toNumber(value) {
   const result = Number(value)
   return Number.isFinite(result) ? result : 0
+}
+
+function normalizeGender(value) {
+  const text = normalizeLower(value)
+  if (!text) {
+    return ''
+  }
+
+  if (text === 'male' || text === 'm' || text === '1' || text === '男' || text === '男生' || text === 'man') {
+    return 'male'
+  }
+
+  if (
+    text === 'female' ||
+    text === 'f' ||
+    text === '0' ||
+    text === '2' ||
+    text === '女' ||
+    text === '女生' ||
+    text === 'woman'
+  ) {
+    return 'female'
+  }
+
+  return ''
 }
 
 function buildSeedPersonnel() {
@@ -619,7 +645,7 @@ function buildSeedHeartMessages() {
 
 function getPersonnelList() {
   const cachedList = safeReadStorage(STORAGE_KEYS.personnel, [])
-  if (cachedList.length) {
+  if (Array.isArray(cachedList) && cachedList.length) {
     return cachedList
   }
 
@@ -690,7 +716,7 @@ function ensureInboxMockSeedMessages(list = []) {
 
 function getHeartMessageList() {
   const cachedList = safeReadStorage(STORAGE_KEYS.heartMessages, [])
-  if (cachedList.length) {
+  if (Array.isArray(cachedList) && cachedList.length) {
     const patchedCached = ensureInboxMockSeedMessages(cachedList)
     if (patchedCached.changed) {
       safeWriteStorage(STORAGE_KEYS.heartMessages, patchedCached.list)
@@ -755,19 +781,46 @@ function buildPriorityCandidateRecord(entry, index, gender) {
   }
 }
 
-function getPriorityCandidateList(gender = 'female') {
-  const normalizedGender = gender === 'male' ? 'male' : 'female'
-  const sourceList = PRIORITY_CANDIDATE_NAME_MAP[normalizedGender] || []
-  return sourceList.map((entry, index) => buildPriorityCandidateRecord(entry, index, normalizedGender))
+function isPriorityBoardCandidateForUser(candidate, selfRecord = {}) {
+  const candidateId = normalizeText(candidate && candidate._id)
+  const selfId = normalizeText(selfRecord && selfRecord._id)
+  if (!candidateId || candidateId === selfId) {
+    return false
+  }
+
+  if (toNumber(candidate && candidate.user_role) !== 0) {
+    return false
+  }
+
+  const selfGender = normalizeGender(selfRecord && selfRecord.gender)
+  const candidateGender = normalizeGender(candidate && candidate.gender)
+  if (!selfGender || !candidateGender) {
+    return true
+  }
+
+  return selfGender !== candidateGender
+}
+
+function getPriorityCandidateList(selfRecord = {}) {
+  return getActivePersonnel()
+    .filter((item) => isPriorityBoardCandidateForUser(item, selfRecord))
+    .map((item) => ({
+      ...item,
+      _id: normalizeText(item._id)
+    }))
 }
 
 function getPriorityBoardTargetGender(selfRecord = {}) {
-  return getOppositeGender(normalizeGender(selfRecord && selfRecord.gender)) || 'female'
+  return getOppositeGender(normalizeGender(selfRecord && selfRecord.gender)) || ''
 }
 
-function normalizePriorityBoardIds(ids, candidateGender) {
+function normalizePriorityBoardCandidateGender(candidateGender = '') {
+  return candidateGender === 'male' || candidateGender === 'female' ? candidateGender : ''
+}
+
+function normalizePriorityBoardIds(ids, selfRecord = {}) {
   const candidateIdSet = new Set(
-    getPriorityCandidateList(candidateGender).map((item) => normalizeText(item._id))
+    getPriorityCandidateList(selfRecord).map((item) => normalizeText(item._id))
   )
   const seenIdSet = new Set()
 
@@ -790,10 +843,11 @@ function normalizePriorityBoardStatus(status, selectedCount) {
 }
 
 function createDefaultPriorityBoardRecord(personnelId, candidateGender) {
+  const normalizedCandidateGender = normalizePriorityBoardCandidateGender(candidateGender)
   return {
     _id: buildPriorityBoardStorageId(personnelId),
     personnel_id: normalizeText(personnelId),
-    candidate_gender: candidateGender === 'male' ? 'male' : 'female',
+    candidate_gender: normalizedCandidateGender,
     status: 'draft',
     selected_ids: [],
     created_at: nowText(),
@@ -802,9 +856,11 @@ function createDefaultPriorityBoardRecord(personnelId, candidateGender) {
   }
 }
 
-function getPriorityBoardRecord(personnelId, candidateGender) {
+function getPriorityBoardRecord(personnelId, selfRecord = {}) {
   const normalizedPersonnelId = normalizeText(personnelId)
-  const normalizedCandidateGender = candidateGender === 'male' ? 'male' : 'female'
+  const normalizedCandidateGender = normalizePriorityBoardCandidateGender(
+    getPriorityBoardTargetGender(selfRecord)
+  )
   const boardList = getPriorityBoardList()
   const currentIndex = boardList.findIndex(
     (item) => normalizeText(item && item.personnel_id) === normalizedPersonnelId
@@ -815,10 +871,7 @@ function getPriorityBoardRecord(personnelId, candidateGender) {
   }
 
   const existingRecord = boardList[currentIndex] || {}
-  const normalizedIds = normalizePriorityBoardIds(
-    existingRecord.selected_ids,
-    normalizedCandidateGender
-  )
+  const normalizedIds = normalizePriorityBoardIds(existingRecord.selected_ids, selfRecord)
   const normalizedStatus = normalizePriorityBoardStatus(existingRecord.status, normalizedIds.length)
   const nextRecord = {
     ...createDefaultPriorityBoardRecord(normalizedPersonnelId, normalizedCandidateGender),
@@ -846,20 +899,22 @@ function getPriorityBoardRecord(personnelId, candidateGender) {
   return nextRecord
 }
 
-function upsertPriorityBoardRecord(personnelId, patch = {}, candidateGender) {
+function upsertPriorityBoardRecord(personnelId, patch = {}, selfRecord = {}) {
   const normalizedPersonnelId = normalizeText(personnelId)
-  const normalizedCandidateGender = candidateGender === 'male' ? 'male' : 'female'
+  const normalizedCandidateGender = normalizePriorityBoardCandidateGender(
+    getPriorityBoardTargetGender(selfRecord)
+  )
   const boardList = getPriorityBoardList()
   const currentIndex = boardList.findIndex(
     (item) => normalizeText(item && item.personnel_id) === normalizedPersonnelId
   )
   const baseRecord =
     currentIndex >= 0
-      ? getPriorityBoardRecord(normalizedPersonnelId, normalizedCandidateGender)
+      ? getPriorityBoardRecord(normalizedPersonnelId, selfRecord)
       : createDefaultPriorityBoardRecord(normalizedPersonnelId, normalizedCandidateGender)
   const nextSelectedIds = normalizePriorityBoardIds(
     typeof patch.selected_ids === 'undefined' ? baseRecord.selected_ids : patch.selected_ids,
-    normalizedCandidateGender
+    selfRecord
   )
   const nextStatus = normalizePriorityBoardStatus(
     typeof patch.status === 'undefined' ? baseRecord.status : patch.status,
@@ -887,8 +942,7 @@ function upsertPriorityBoardRecord(personnelId, patch = {}, candidateGender) {
 }
 
 function buildPriorityBoardResponse(personnelId) {
-  const normalizedPersonnelId = normalizeText(personnelId)
-  const selfRecord = getPersonnelById(normalizedPersonnelId)
+  const { personnelId: normalizedPersonnelId, selfRecord } = resolveCurrentPersonnelRecord(personnelId)
   if (!selfRecord) {
     const emptyBoard = createDefaultPriorityBoardRecord(normalizedPersonnelId, 'female')
     return {
@@ -911,12 +965,12 @@ function buildPriorityBoardResponse(personnelId) {
   }
 
   const targetGender = getPriorityBoardTargetGender(selfRecord)
-  const candidates = getPriorityCandidateList(targetGender)
+  const candidates = getPriorityCandidateList(selfRecord)
   const candidateMap = candidates.reduce((accumulator, item) => {
     accumulator[item._id] = item
     return accumulator
   }, {})
-  const boardRecord = getPriorityBoardRecord(normalizedPersonnelId, targetGender)
+  const boardRecord = getPriorityBoardRecord(normalizedPersonnelId, selfRecord)
   const selected = boardRecord.selected_ids
     .map((item) => candidateMap[normalizeText(item)])
     .filter(Boolean)
@@ -944,13 +998,11 @@ function buildPriorityBoardResponse(personnelId) {
 }
 
 function savePriorityBoardDraft(personnelId, orderedIds) {
-  const normalizedPersonnelId = normalizeText(personnelId)
-  const selfRecord = getPersonnelById(normalizedPersonnelId)
+  const { personnelId: normalizedPersonnelId, selfRecord } = resolveCurrentPersonnelRecord(personnelId)
   if (!selfRecord) {
     throw new Error('未找到当前用户档案')
   }
 
-  const targetGender = getPriorityBoardTargetGender(selfRecord)
   upsertPriorityBoardRecord(
     normalizedPersonnelId,
     {
@@ -958,21 +1010,19 @@ function savePriorityBoardDraft(personnelId, orderedIds) {
       status: 'draft',
       submitted_at: ''
     },
-    targetGender
+    selfRecord
   )
 
   return buildPriorityBoardResponse(normalizedPersonnelId)
 }
 
 function submitPriorityBoard(personnelId, orderedIds) {
-  const normalizedPersonnelId = normalizeText(personnelId)
-  const selfRecord = getPersonnelById(normalizedPersonnelId)
+  const { personnelId: normalizedPersonnelId, selfRecord } = resolveCurrentPersonnelRecord(personnelId)
   if (!selfRecord) {
     throw new Error('未找到当前用户档案')
   }
 
-  const targetGender = getPriorityBoardTargetGender(selfRecord)
-  const normalizedIds = normalizePriorityBoardIds(orderedIds, targetGender)
+  const normalizedIds = normalizePriorityBoardIds(orderedIds, selfRecord)
   if (normalizedIds.length !== PRIORITY_BOARD_LIMIT) {
     throw new Error('请先选满 10 位心动对象并完成排序')
   }
@@ -984,7 +1034,7 @@ function submitPriorityBoard(personnelId, orderedIds) {
       status: 'submitted',
       submitted_at: nowText()
     },
-    targetGender
+    selfRecord
   )
 
   return buildPriorityBoardResponse(normalizedPersonnelId)
@@ -1008,6 +1058,40 @@ function getActivePersonnel(includeDeleted = false) {
 
 function getPersonnelById(id) {
   return getPersonnelList().find((item) => item._id === normalizeText(id)) || null
+}
+
+function resolveCurrentPersonnelId(fallbackPersonnelId = '') {
+  const profile = getAuthStorageValue(AUTH_STORAGE_KEYS.profile)
+  const profileId = normalizeText(
+    profile && (profile.personnel_id || profile._id || profile.id)
+  )
+  if (profileId) {
+    return profileId
+  }
+
+  const session = getAuthStorageValue(AUTH_STORAGE_KEYS.session)
+  const sessionUserId = normalizeText(
+    (session &&
+      (session.uid || (session.userInfo && (session.userInfo._id || session.userInfo.id)))) || ''
+  )
+  if (sessionUserId) {
+    const byUserId = getPersonnelList().find(
+      (item) => normalizeText(item && item.user_id) === sessionUserId
+    )
+    if (byUserId && byUserId._id) {
+      return normalizeText(byUserId._id)
+    }
+  }
+
+  return normalizeText(fallbackPersonnelId)
+}
+
+function resolveCurrentPersonnelRecord(fallbackPersonnelId = '') {
+  const resolvedPersonnelId = resolveCurrentPersonnelId(fallbackPersonnelId)
+  return {
+    personnelId: resolvedPersonnelId,
+    selfRecord: getPersonnelById(resolvedPersonnelId)
+  }
 }
 
 function updatePersonnelRecord(id, patch) {
@@ -1357,14 +1441,28 @@ function buildIntentStats(list) {
   }
 }
 
+function getLocalUserHeartPriorityBoard({ personnelId } = {}) {
+  return buildPriorityBoardResponse(normalizeText(personnelId))
+}
+
+function saveLocalUserHeartPriorityBoard({ personnelId, orderedIds = [] } = {}) {
+  return savePriorityBoardDraft(normalizeText(personnelId), orderedIds)
+}
+
+function submitLocalUserHeartPriorityBoard({ personnelId, orderedIds = [] } = {}) {
+  return submitPriorityBoard(normalizeText(personnelId), orderedIds)
+}
+
 export {
   getPersonnelList,
   getHeartMessageList,
   getSystemConfigValue,
   getPersonnelById,
-  updatePersonnelRecord
+  updatePersonnelRecord,
+  getLocalUserHeartPriorityBoard,
+  saveLocalUserHeartPriorityBoard,
+  submitLocalUserHeartPriorityBoard
 }
-
 export const personnelUserService = {
   async getSystemConfig(params = {}) {
     return withMockFallback(
@@ -2089,3 +2187,6 @@ export const personnelUserService = {
     )
   }
 }
+
+
+

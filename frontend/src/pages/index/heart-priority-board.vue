@@ -72,13 +72,19 @@
 							v-for="slot in placeholderSlots"
 							:key="'placeholder-' + slot"
 							class="ranking-item ranking-placeholder"
-							@click="openCandidatePicker(slot)"
 						>
 							<div class="ranking-index">{{ selectedList.length + slot }}</div>
 							<div class="ranking-main">
 								<h4>{{ TEXT.placeholderTitle }}</h4>
-								<p class="ranking-meta">{{ TEXT.placeholderCopy }}</p>
+								<!-- <p class="ranking-meta">{{ TEXT.placeholderCopy }}</p> -->
 							</div>
+							<button
+								class="placeholder-add-btn"
+								type="button"
+								@click.stop="openCandidatePicker(slot)"
+							>
+								+
+							</button>
 						</article>
 					</div>
 
@@ -147,7 +153,10 @@
 									:class="state.picker.selectedId === candidate._id ? 'is-active' : ''"
 									@click="selectCandidateForPicker(candidate._id)"
 								>
-									<td>{{ candidate.nickname || candidate.name || '--' }}</td>
+									<td>
+										{{ candidate.name || candidate.nickname || '--' }}
+										{{ formatGenderSymbol(candidate.gender) }}
+									</td>
 									<td>{{ candidate.age || '--' }}</td>
 									<td>{{ candidate.city || '--' }}</td>
 									<td>{{ candidate.profession || '--' }}</td>
@@ -180,7 +189,12 @@
 	import { computed, reactive } from 'vue'
 	import { onLoad } from '@dcloudio/uni-app'
 	import { useRouter } from 'vue-router'
-	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import {
+		getLocalUserHeartPriorityBoard,
+		getPersonnelList,
+		saveLocalUserHeartPriorityBoard,
+		submitLocalUserHeartPriorityBoard
+	} from '@/api/modules/personnel-user'
 	import { app } from '@/platform/app-bridge'
 
 	const PROFILE_KEY = 'mbtiPersonnelProfile'
@@ -193,7 +207,7 @@
 		moveUp: '上移',
 		moveDown: '下移',
 		saveDraft: '保存草稿',
-		submitBoard: '提交优先榜',
+		submitBoard: '提交',
 		saving: '正在保存...',
 		submitting: '正在提交...',
 		resetBoard: '清空本次排名',
@@ -211,7 +225,7 @@
 		pickerEmpty: '当前没有可加入的异性候选人。',
 		pickerBack: '返回',
 		pickerConfirm: '确认加入',
-		colName: '昵称',
+		colName: '姓名',
 		colAge: '年龄',
 		colCity: '城市',
 		colProfession: '职业',
@@ -225,6 +239,7 @@
 	const state = reactive({
 		loading: true,
 		saving: false,
+		profile: null,
 		personnelId: '',
 		self: null,
 		board: {
@@ -234,6 +249,7 @@
 			submitted_at: '',
 			updated_at: ''
 		},
+		personnelPool: [],
 		candidates: [],
 		orderedIds: [],
 		savedOrderedIds: [],
@@ -285,25 +301,14 @@
 	)
 
 	const availableOppositeCandidates = computed(() => {
-		const selectedIdSet = new Set(state.orderedIds)
-		const allAvailable = state.candidates.filter((item) => {
+		const sourceList = state.candidates.length
+			? state.candidates
+			: buildOppositeCandidates(normalizePersonnelPool(getPersonnelList()), state.self)
+		const selectedIdSet = new Set(state.orderedIds.map((item) => String(item)))
+		return sourceList.filter((item) => {
 			const id = getCandidateId(item)
 			return !!id && !selectedIdSet.has(id)
 		})
-
-		const preferredCandidateGender = getPreferredCandidateGender()
-		if (!preferredCandidateGender) {
-			return allAvailable
-		}
-
-		const filtered = allAvailable.filter((item) => {
-			const candidateGender = normalizeGender(
-				item.gender || item.sex || item.user_gender || item.person_gender || ''
-			)
-			return !candidateGender || candidateGender === preferredCandidateGender
-		})
-
-		return filtered.length ? filtered : allAvailable
 	})
 
 	async function bootstrap() {
@@ -323,6 +328,7 @@
 			return
 		}
 
+		state.profile = profile
 		state.personnelId = personnelId
 		await loadBoard()
 	}
@@ -337,23 +343,17 @@
 	}
 
 	async function loadBoard() {
-		if (!personnelUser || !state.personnelId) {
+		if (!state.personnelId) {
 			return
 		}
 
 		state.loading = true
 		try {
-			let result = await personnelUser.getUserHeartPriorityBoard({
+			state.personnelPool = normalizePersonnelPool(getPersonnelList())
+			state.self = resolveSelfRecord(state.personnelId, state.profile, state.personnelPool)
+			const result = getLocalUserHeartPriorityBoard({
 				personnelId: state.personnelId
 			})
-			const rawCandidates =
-				(result && (result.candidates || result.candidate_list || result.list)) || []
-			if (!Array.isArray(rawCandidates) || !rawCandidates.length) {
-				result = await personnelUser.getUserHeartPriorityBoard({
-					personnelId: state.personnelId,
-					__forceMock: true
-				})
-			}
 			applyBoardResult(result)
 		} catch (error) {
 			app.showToast({
@@ -366,7 +366,11 @@
 	}
 
 	function applyBoardResult(result) {
-		state.self = (result && result.self) || null
+		state.self = resolveSelfRecord(
+			state.personnelId,
+			(result && result.self) || state.profile,
+			state.personnelPool
+		)
 		state.board = Object.assign(
 			{
 				limit: 10,
@@ -377,14 +381,20 @@
 			},
 			(result && result.board) || {}
 		)
-		const rawCandidates =
-			(result && (result.candidates || result.candidate_list || result.list)) || []
-		state.candidates = normalizeCandidates(rawCandidates)
+		state.candidates = buildOppositeCandidates(state.personnelPool, state.self)
 		state.orderedIds = Array.isArray(state.board.selected_ids)
 			? state.board.selected_ids.map((item) => String(item))
 			: []
 		state.savedOrderedIds = [...state.orderedIds]
 		closeCandidatePicker()
+	}
+
+	function resolveSelfRecord(personnelId, fallbackSelf, personnelPool) {
+		const normalizedPersonnelId = String(personnelId || '')
+		const fromPool = (Array.isArray(personnelPool) ? personnelPool : []).find(
+			(item) => getCandidateId(item) === normalizedPersonnelId
+		)
+		return fromPool || fallbackSelf || null
 	}
 
 	function moveCandidate(index, delta) {
@@ -459,7 +469,7 @@
 
 		state.saving = true
 		try {
-			const result = await personnelUser.saveUserHeartPriorityBoard({
+			const result = saveLocalUserHeartPriorityBoard({
 				personnelId: state.personnelId,
 				orderedIds: state.orderedIds
 			})
@@ -491,7 +501,7 @@
 
 		state.saving = true
 		try {
-			const result = await personnelUser.submitUserHeartPriorityBoard({
+			const result = submitLocalUserHeartPriorityBoard({
 				personnelId: state.personnelId,
 				orderedIds: state.orderedIds
 			})
@@ -515,27 +525,6 @@
 		router.push('/pages/index/home')
 	}
 
-	function getPreferredCandidateGender() {
-		const targetGender = normalizeGender(
-			(state.self &&
-				(state.self.priority_target_gender ||
-					state.self.target_gender ||
-					state.self.candidate_gender)) ||
-				''
-		)
-		if (targetGender) {
-			return targetGender
-		}
-
-		const selfGender = normalizeGender(
-			(state.self && (state.self.gender || state.self.sex || state.self.user_gender)) || ''
-		)
-		if (!selfGender) {
-			return ''
-		}
-		return selfGender === 'male' ? 'female' : 'male'
-	}
-
 	function getCandidateId(candidate) {
 		if (!candidate || typeof candidate !== 'object') {
 			return ''
@@ -550,26 +539,65 @@
 		)
 	}
 
-	function normalizeCandidates(source) {
+	function normalizePersonnelPool(source) {
 		if (!Array.isArray(source)) {
 			return []
 		}
-		return source
-			.map((item) => {
-				if (!item || typeof item !== 'object') {
-					return null
-				}
+		return source.filter(Boolean)
+	}
+
+	function buildOppositeCandidates(personnelPool, selfRecord) {
+		const selfId = getCandidateId(selfRecord)
+		const selfGender = normalizeGender(
+			(selfRecord && (selfRecord.gender || selfRecord.sex || selfRecord.user_gender)) || ''
+		)
+		const list = Array.isArray(personnelPool) ? personnelPool : []
+
+		return list
+			.filter((item) => {
 				const id = getCandidateId(item)
-				if (!id) {
-					return null
+				if (!id || id === selfId) {
+					return false
 				}
-				return { ...item, _id: id }
+
+				if (!selfGender) {
+					return true
+				}
+
+				const candidateGender = normalizeGender(
+					item.gender || item.sex || item.user_gender || item.person_gender || ''
+				)
+				return !!candidateGender && candidateGender !== selfGender
 			})
-			.filter(Boolean)
+			.map((item) => ({
+				...item,
+				_id: getCandidateId(item),
+				name: item.name || '',
+				nickname: item.nickname || item.name || '',
+				age: item.age || '',
+				mbti: item.mbti || '',
+				city: item.city || item.native_place || item.address || '',
+				profession: item.profession || '',
+				gender: item.gender || '',
+				personal_photo: item.personal_photo || ''
+			}))
+	}
+
+	function formatGenderSymbol(value) {
+		const normalized = normalizeGender(value)
+		if (normalized === 'male') {
+			return ' ♂'
+		}
+		if (normalized === 'female') {
+			return ' ♀'
+		}
+		return ''
 	}
 
 	function normalizeGender(value) {
-		const text = String(value || '').trim().toLowerCase()
+		const text = String(value || '')
+			.trim()
+			.toLowerCase()
 		if (!text) {
 			return ''
 		}
@@ -1179,13 +1207,36 @@
 	.ranking-placeholder {
 		background: rgba(255, 255, 255, 0.55);
 		border-style: dashed;
-		cursor: pointer;
-		transition: border-color 0.2s ease, background-color 0.2s ease;
+		transition:
+			border-color 0.2s ease,
+			background-color 0.2s ease;
 	}
 
 	.ranking-placeholder:hover {
 		border-color: rgba(45, 56, 81, 0.34);
 		background: rgba(236, 243, 255, 0.78);
+	}
+
+	.placeholder-add-btn {
+		width: 34px;
+		min-width: 34px;
+		height: 34px;
+		border: 1px solid rgba(45, 56, 81, 0.26);
+		border-radius: 50%;
+		background: rgba(45, 56, 81, 0.06);
+		color: var(--accent-deep);
+		font-size: 24px;
+		line-height: 1;
+		font-weight: 500;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		flex-shrink: 0;
+	}
+
+	.placeholder-add-btn:hover {
+		background: rgba(45, 56, 81, 0.12);
 	}
 
 	.ranking-index {
@@ -1295,11 +1346,42 @@
 	}
 
 	.picker-table-wrap {
-		max-height: min(52vh, 460px);
+		height: min(52vh, 460px);
 		overflow-x: auto;
-		overflow-y: scroll;
+		overflow-y: auto;
 		border-radius: 14px;
 		border: 1px solid rgba(112, 84, 66, 0.14);
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+
+		&::-webkit-scrollbar {
+			width: 0;
+			height: 0;
+		}
+
+		&:hover,
+		&:active {
+			scrollbar-width: thin;
+			scrollbar-color: rgba(112, 84, 66, 0.32) rgba(112, 84, 66, 0.08);
+		}
+
+		&:hover::-webkit-scrollbar,
+		&:active::-webkit-scrollbar {
+			width: 8px;
+			height: 8px;
+		}
+
+		&:hover::-webkit-scrollbar-track,
+		&:active::-webkit-scrollbar-track {
+			background: rgba(112, 84, 66, 0.08);
+			border-radius: 4px;
+		}
+
+		&:hover::-webkit-scrollbar-thumb,
+		&:active::-webkit-scrollbar-thumb {
+			background: rgba(112, 84, 66, 0.32);
+			border-radius: 4px;
+		}
 	}
 
 	.picker-table {
@@ -1314,6 +1396,13 @@
 		text-align: left;
 		font-size: 13px;
 		border-bottom: 1px solid rgba(112, 84, 66, 0.08);
+		white-space: nowrap;
+	}
+
+	.picker-table td:first-child {
+		max-width: 150px;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.picker-table th {
@@ -1392,6 +1481,11 @@
 			justify-content: flex-start;
 		}
 
+		.ranking-item.ranking-placeholder {
+			flex-direction: row;
+			align-items: center;
+		}
+
 		.back-nav-btn {
 			width: auto;
 		}
@@ -1410,3 +1504,4 @@
 		}
 	}
 </style>
+
