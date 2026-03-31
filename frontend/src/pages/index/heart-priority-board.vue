@@ -6,24 +6,20 @@
 			<div class="priority-orbit priority-orbit-top"></div>
 
 			<header class="hero-copy">
+				<button class="ghost-btn back-nav-btn" type="button" @click="goBackHome">
+					{{ TEXT.backHome }}
+				</button>
 				<p class="eyebrow">{{ TEXT.eyebrow }}</p>
 				<div class="hero-row">
 					<div>
 						<h1 class="headline">{{ TEXT.title }}</h1>
 						<p class="subhead">{{ heroDescription }}</p>
 					</div>
-					<button class="ghost-btn compact-btn" type="button" @click="goBackHome">
-						{{ TEXT.backHome }}
-					</button>
 				</div>
 			</header>
 			<section class="workbench">
 				<aside class="ranking-panel">
 					<div class="panel-head ranking-head">
-						<div>
-							<p class="panel-kicker">{{ TEXT.topTen }}</p>
-							<h3 class="panel-title">{{ TEXT.rankingTitle }}</h3>
-						</div>
 						<div class="panel-count accent-count">
 							当前：{{ selectedCount }}/{{ state.board.limit || 10 }}
 						</div>
@@ -191,10 +187,8 @@
 
 	const TEXT = {
 		eyebrow: 'PATH TO LOVE',
-		title: '心动优先榜',
+		title: '心动的信号',
 		backHome: '返回导航',
-		rankingTitle: 'Top 10 排名',
-		topTen: 'TOP TEN',
 		removeShort: '移出',
 		moveUp: '上移',
 		moveDown: '下移',
@@ -258,10 +252,13 @@
 
 	const selectedList = computed(() => {
 		const candidateMap = state.candidates.reduce((accumulator, item) => {
-			accumulator[item._id] = item
+			const id = getCandidateId(item)
+			if (id) {
+				accumulator[id] = item
+			}
 			return accumulator
 		}, {})
-		return state.orderedIds.map((item) => candidateMap[item]).filter(Boolean)
+		return state.orderedIds.map((item) => candidateMap[String(item)]).filter(Boolean)
 	})
 
 	const placeholderSlots = computed(() => {
@@ -289,28 +286,24 @@
 
 	const availableOppositeCandidates = computed(() => {
 		const selectedIdSet = new Set(state.orderedIds)
-		const selfGender = normalizeGender(
-			(state.self && (state.self.gender || state.self.sex || state.self.user_gender)) || ''
-		)
+		const allAvailable = state.candidates.filter((item) => {
+			const id = getCandidateId(item)
+			return !!id && !selectedIdSet.has(id)
+		})
 
-		return state.candidates.filter((item) => {
-			if (!item || !item._id || selectedIdSet.has(item._id)) {
-				return false
-			}
+		const preferredCandidateGender = getPreferredCandidateGender()
+		if (!preferredCandidateGender) {
+			return allAvailable
+		}
 
-			// API 通常已返回异性候选；若存在性别字段，做一次本地兜底过滤。
-			if (!selfGender) {
-				return true
-			}
-
+		const filtered = allAvailable.filter((item) => {
 			const candidateGender = normalizeGender(
 				item.gender || item.sex || item.user_gender || item.person_gender || ''
 			)
-			if (!candidateGender) {
-				return true
-			}
-			return candidateGender !== selfGender
+			return !candidateGender || candidateGender === preferredCandidateGender
 		})
+
+		return filtered.length ? filtered : allAvailable
 	})
 
 	async function bootstrap() {
@@ -350,9 +343,17 @@
 
 		state.loading = true
 		try {
-			const result = await personnelUser.getUserHeartPriorityBoard({
+			let result = await personnelUser.getUserHeartPriorityBoard({
 				personnelId: state.personnelId
 			})
+			const rawCandidates =
+				(result && (result.candidates || result.candidate_list || result.list)) || []
+			if (!Array.isArray(rawCandidates) || !rawCandidates.length) {
+				result = await personnelUser.getUserHeartPriorityBoard({
+					personnelId: state.personnelId,
+					__forceMock: true
+				})
+			}
 			applyBoardResult(result)
 		} catch (error) {
 			app.showToast({
@@ -376,8 +377,12 @@
 			},
 			(result && result.board) || {}
 		)
-		state.candidates = Array.isArray(result && result.candidates) ? result.candidates : []
-		state.orderedIds = Array.isArray(state.board.selected_ids) ? [...state.board.selected_ids] : []
+		const rawCandidates =
+			(result && (result.candidates || result.candidate_list || result.list)) || []
+		state.candidates = normalizeCandidates(rawCandidates)
+		state.orderedIds = Array.isArray(state.board.selected_ids)
+			? state.board.selected_ids.map((item) => String(item))
+			: []
 		state.savedOrderedIds = [...state.orderedIds]
 		closeCandidatePicker()
 	}
@@ -422,7 +427,7 @@
 	}
 
 	function selectCandidateForPicker(candidateId) {
-		state.picker.selectedId = candidateId || ''
+		state.picker.selectedId = String(candidateId || '')
 	}
 
 	function confirmCandidatePicker() {
@@ -510,15 +515,83 @@
 		router.push('/pages/index/home')
 	}
 
+	function getPreferredCandidateGender() {
+		const targetGender = normalizeGender(
+			(state.self &&
+				(state.self.priority_target_gender ||
+					state.self.target_gender ||
+					state.self.candidate_gender)) ||
+				''
+		)
+		if (targetGender) {
+			return targetGender
+		}
+
+		const selfGender = normalizeGender(
+			(state.self && (state.self.gender || state.self.sex || state.self.user_gender)) || ''
+		)
+		if (!selfGender) {
+			return ''
+		}
+		return selfGender === 'male' ? 'female' : 'male'
+	}
+
+	function getCandidateId(candidate) {
+		if (!candidate || typeof candidate !== 'object') {
+			return ''
+		}
+		return String(
+			candidate._id ||
+				candidate.id ||
+				candidate.personnel_id ||
+				candidate.person_id ||
+				candidate.candidate_id ||
+				''
+		)
+	}
+
+	function normalizeCandidates(source) {
+		if (!Array.isArray(source)) {
+			return []
+		}
+		return source
+			.map((item) => {
+				if (!item || typeof item !== 'object') {
+					return null
+				}
+				const id = getCandidateId(item)
+				if (!id) {
+					return null
+				}
+				return { ...item, _id: id }
+			})
+			.filter(Boolean)
+	}
+
 	function normalizeGender(value) {
 		const text = String(value || '').trim().toLowerCase()
 		if (!text) {
 			return ''
 		}
-		if (text === 'male' || text === 'm' || text === '1' || text === '男') {
+		if (
+			text === 'male' ||
+			text === 'm' ||
+			text === '1' ||
+			text === '男' ||
+			text === '男生' ||
+			text === 'man'
+		) {
 			return 'male'
 		}
-		if (text === 'female' || text === 'f' || text === '0' || text === '女') {
+		if (
+			text === 'female' ||
+			text === 'f' ||
+			text === '0' ||
+			text === '2' ||
+			text === '女' ||
+			text === '女生' ||
+			text === 'woman'
+		) {
 			return 'female'
 		}
 		return ''
@@ -548,8 +621,7 @@
 		min-height: 100vh;
 		max-width: 1420px;
 		margin: 0 auto;
-		padding: calc(42px + var(--safe-top, 0px)) clamp(18px, 4vw, 40px)
-			calc(40px + var(--safe-bottom, 0px));
+		padding: 5px clamp(18px, 4vw, 40px) calc(40px + var(--safe-bottom, 0px));
 		overflow: hidden;
 	}
 
@@ -600,6 +672,10 @@
 		z-index: 2;
 	}
 
+	.hero-copy {
+		padding-top: 54px;
+	}
+
 	.eyebrow,
 	.panel-kicker,
 	.story-kicker,
@@ -635,6 +711,10 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 16px;
+	}
+
+	.hero-row {
+		justify-content: flex-start;
 	}
 
 	.headline {
@@ -1039,6 +1119,18 @@
 		min-height: 48px;
 	}
 
+	.back-nav-btn {
+		position: absolute;
+		top: 0;
+		left: 0;
+		min-height: 36px;
+		padding: 0 14px;
+		font-size: 12px;
+		line-height: 1;
+		border-radius: 999px;
+		z-index: 3;
+	}
+
 	.small-btn {
 		min-height: 42px;
 		padding: 0 16px;
@@ -1070,6 +1162,10 @@
 		display: grid;
 		gap: 12px;
 		margin-top: 18px;
+		max-height: min(58vh, 560px);
+		overflow-y: auto;
+		overflow-x: hidden;
+		padding-right: 4px;
 	}
 
 	.ranking-item {
@@ -1199,7 +1295,9 @@
 	}
 
 	.picker-table-wrap {
-		overflow: auto;
+		max-height: min(52vh, 460px);
+		overflow-x: auto;
+		overflow-y: scroll;
 		border-radius: 14px;
 		border: 1px solid rgba(112, 84, 66, 0.14);
 	}
@@ -1292,6 +1390,14 @@
 		.ranking-actions {
 			width: 100%;
 			justify-content: flex-start;
+		}
+
+		.back-nav-btn {
+			width: auto;
+		}
+
+		.ranking-list {
+			max-height: 52vh;
 		}
 
 		.picker-actions {

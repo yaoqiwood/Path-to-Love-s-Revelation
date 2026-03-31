@@ -1986,9 +1986,25 @@ export const personnelUserService = {
     )
   },
 
-  async getUserHeartPriorityBoard({ personnelId } = {}) {
+  async getUserHeartPriorityBoard({ personnelId, __forceMock = false } = {}) {
+    if (__forceMock) {
+      return buildPriorityBoardResponse(normalizeText(personnelId))
+    }
+
     return withMockFallback(
-      async () => unwrapResponse(await http.get(apiUrls.personnel.heartPriorityBoard(personnelId))),
+      async () => {
+        const response = unwrapResponse(
+          await http.get(apiUrls.personnel.heartPriorityBoard(personnelId))
+        )
+        const candidates =
+          (response && (response.candidates || response.candidate_list || response.list)) || []
+
+        // 接口成功但未返回候选数据时，自动回退 mock，避免前端列表为空。
+        if (!Array.isArray(candidates) || !candidates.length) {
+          return buildPriorityBoardResponse(normalizeText(personnelId))
+        }
+        return response
+      },
       async () => buildPriorityBoardResponse(normalizeText(personnelId))
     )
   },
