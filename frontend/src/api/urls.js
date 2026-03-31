@@ -27,7 +27,10 @@ export const apiUrls = {
     heartHome: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-home`),
     heartInbox: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-inbox`),
     heartState: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-state`),
-    heartMessages: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-messages`)
+    heartMessages: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-messages`),
+    heartPriorityBoard: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-priority-board`),
+    submitHeartPriorityBoard: (personnelId) =>
+      withPrefix(`/personnel/${personnelId}/heart-priority-board/submit`)
   },
   heartMessages: {
     candidates: () => withPrefix('/heart-messages/candidates'),

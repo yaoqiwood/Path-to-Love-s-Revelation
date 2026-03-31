@@ -5,7 +5,8 @@ import { apiUrls } from '@/api/urls'
 const STORAGE_KEYS = {
   personnel: 'mock-db-personnel',
   heartMessages: 'mock-db-heart-messages',
-  systemConfig: 'mock-db-system-config'
+  systemConfig: 'mock-db-system-config',
+  priorityBoards: 'mock-db-priority-boards'
 }
 
 const DEFAULT_SYSTEM_CONFIG = {
@@ -28,6 +29,109 @@ const PERSONA_ASSET_MAP = {
   ESFJ: '/static/mbti-personas/esfj.svg'
 }
 
+const PRIORITY_BOARD_LIMIT = 10
+
+const PRIORITY_CANDIDATE_NAME_MAP = {
+  female: [
+    ['Lina Hart', 'Lina'],
+    ['Mira Snow', 'Mira'],
+    ['Nora Reed', 'Nora'],
+    ['Ivy Lane', 'Ivy'],
+    ['June Vale', 'June'],
+    ['Ella Bloom', 'Ella'],
+    ['Ruby Shore', 'Ruby'],
+    ['Clara West', 'Clara'],
+    ['Tessa Quinn', 'Tessa'],
+    ['Vera Moss', 'Vera'],
+    ['Naomi Wells', 'Naomi'],
+    ['Sophie Ray', 'Sophie'],
+    ['Ariel Ford', 'Ariel'],
+    ['Celia Moon', 'Celia'],
+    ['Mabel Stone', 'Mabel'],
+    ['Daisy Hunt', 'Daisy'],
+    ['Hazel Brooks', 'Hazel'],
+    ['Iris Cole', 'Iris'],
+    ['Leah Hart', 'Leah'],
+    ['Nina Drew', 'Nina'],
+    ['Olive Page', 'Olive'],
+    ['Piper Scott', 'Piper'],
+    ['Stella Finch', 'Stella'],
+    ['Wendy Frost', 'Wendy']
+  ],
+  male: [
+    ['Evan Reed', 'Evan'],
+    ['Noah Grant', 'Noah'],
+    ['Luca Stone', 'Luca'],
+    ['Owen Hart', 'Owen'],
+    ['Miles Quinn', 'Miles'],
+    ['Eli Ford', 'Eli'],
+    ['Logan West', 'Logan'],
+    ['Ian Brooks', 'Ian'],
+    ['Aiden Cole', 'Aiden'],
+    ['Caleb Frost', 'Caleb'],
+    ['Julian Page', 'Julian'],
+    ['Theo Scott', 'Theo'],
+    ['Ryan Vale', 'Ryan'],
+    ['Mason Drew', 'Mason'],
+    ['Leo Hunt', 'Leo'],
+    ['Asher Lane', 'Asher'],
+    ['Nolan Wells', 'Nolan'],
+    ['Carter Moss', 'Carter'],
+    ['Felix Ray', 'Felix'],
+    ['Ethan Moon', 'Ethan'],
+    ['Silas Bloom', 'Silas'],
+    ['Roman Shore', 'Roman'],
+    ['Levi Snow', 'Levi'],
+    ['Jonah Finch', 'Jonah']
+  ]
+}
+
+const PRIORITY_CANDIDATE_STYLE_MAP = {
+  female: {
+    mbtis: ['INFP', 'INFJ', 'INTJ', 'ISFP', 'ENFP', 'ESFJ', 'INTP', 'ENFJ', 'INFP', 'ISTJ', 'ESFP', 'ENTP'],
+    cities: ['Shanghai', 'Suzhou', 'Wuhan', 'Fuzhou', 'Beijing', 'Hefei', 'Hangzhou', 'Nanjing', 'Xiamen', 'Chengdu', 'Qingdao', 'Ningbo'],
+    professions: ['Brand Planner', 'Counseling Assistant', 'Algorithm Engineer', 'Illustrator', 'Product Manager', 'Teacher', 'Spatial Designer', 'Documentary Editor', 'Music Therapist', 'Nonprofit Coordinator', 'Copywriter', 'Student Advisor'],
+    churches: ['City Church', 'Grace Spring Church', 'Youth Fellowship', 'Morning Light Fellowship', 'Walk Together Fellowship', 'New Town Fellowship', 'Brookside Church', 'Hope Fellowship', 'Coastline Church', 'Good Friends Group', 'Olive Branch Fellowship', 'True Way Church'],
+    intros: [
+      'She values steady replies and likes to know someone in a calm, consistent rhythm.',
+      'She can turn an ordinary dinner into a meaningful conversation and is honest about feelings.',
+      'She does not rush a relationship but remembers small details people casually mention.',
+      'She likes warmth with boundaries, and comfort matters more than pure excitement.',
+      'She hopes two people can grow together while still leaving each other room to breathe.',
+      'She is drawn to clarity, sincerity, and reliability rather than hot-and-cold signals.'
+    ],
+    tagSets: [
+      ['slow burn', 'good listener', 'responds well'],
+      ['clear boundary', 'steady', 'not flaky'],
+      ['gentle', 'detail aware', 'patient'],
+      ['honest', 'communicative', 'relational'],
+      ['easygoing', 'empathetic', 'low drama'],
+      ['long-term', 'thoughtful', 'sustainable']
+    ]
+  },
+  male: {
+    mbtis: ['ENFP', 'ENTP', 'ESFP', 'ESTJ', 'ENFJ', 'ISTJ', 'INTJ', 'INFP', 'ENTP', 'ESFJ', 'ENFP', 'INTP'],
+    cities: ['Hangzhou', 'Chengdu', 'Xiamen', 'Ningbo', 'Nanjing', 'Qingdao', 'Shanghai', 'Suzhou', 'Beijing', 'Wuhan', 'Shenzhen', 'Chongqing'],
+    professions: ['Event Curator', 'Photographer', 'Sports Therapist', 'Operations Lead', 'Youth Ministry Coordinator', 'Project Manager', 'Architectural Designer', 'Podcast Producer', 'Startup Partner', 'Product Operations', 'Brand Director', 'Music Teacher'],
+    churches: ['Grace Fellowship', 'Living Water Church', 'Coastline Church', 'Harbor Church', 'Gospel Hall', 'North Shore Fellowship', 'Morning Light Fellowship', 'Wilderness Group', 'Valley Church', 'Grace Friends Fellowship', 'Green Field Fellowship', 'Spring Source Church'],
+    intros: [
+      'He likes creating easygoing chemistry and can also step up when a relationship needs direction.',
+      'He enjoys novelty, but what really holds his attention is steadiness and truthfulness.',
+      'He is willing to show interest clearly and back it up with action.',
+      'He is not into flashy routines and trusts slow-built reliability more than big gestures.',
+      'He is drawn to substantial conversations and wants both warmth and direction.',
+      'He appreciates honesty, clarity, and responsive communication over ambiguity.'
+    ],
+    tagSets: [
+      ['expressive', 'keeps convo going', 'high energy'],
+      ['reliable', 'shows up', 'acts on words'],
+      ['communicative', 'has boundaries', 'not performative'],
+      ['steady pace', 'follows through', 'patient'],
+      ['warm', 'attentive', 'good atmosphere'],
+      ['direct', 'long-term', 'responsible']
+    ]
+  }
+}
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }
@@ -602,6 +706,288 @@ function getHeartMessageList() {
 
 function saveHeartMessageList(list) {
   safeWriteStorage(STORAGE_KEYS.heartMessages, list)
+}
+
+function getPriorityBoardList() {
+  return safeReadStorage(STORAGE_KEYS.priorityBoards, [])
+}
+
+function savePriorityBoardList(list) {
+  safeWriteStorage(STORAGE_KEYS.priorityBoards, list)
+}
+
+function buildPriorityBoardStorageId(personnelId) {
+  return `priority-board-${normalizeText(personnelId) || 'anonymous'}`
+}
+
+function getOppositeGender(gender) {
+  if (gender === 'female') {
+    return 'male'
+  }
+  if (gender === 'male') {
+    return 'female'
+  }
+  return ''
+}
+
+function buildPriorityCandidateRecord(entry, index, gender) {
+  const candidateStyleMap =
+    PRIORITY_CANDIDATE_STYLE_MAP[gender] || PRIORITY_CANDIDATE_STYLE_MAP.female
+  const [name, nickname] = Array.isArray(entry) ? entry : ['', '']
+  const styleIndex = index % candidateStyleMap.mbtis.length
+  const mbti = candidateStyleMap.mbtis[styleIndex] || 'INFP'
+  const ageBase = gender === 'female' ? 23 : 24
+  const tags = candidateStyleMap.tagSets[index % candidateStyleMap.tagSets.length] || []
+
+  return {
+    _id: `priority-${gender}-${String(index + 1).padStart(2, '0')}`,
+    name: normalizeText(name),
+    nickname: normalizeText(nickname),
+    gender,
+    age: ageBase + (index % 6),
+    mbti,
+    city: candidateStyleMap.cities[styleIndex] || '',
+    profession: candidateStyleMap.professions[styleIndex] || '',
+    church: candidateStyleMap.churches[styleIndex] || '',
+    intro: candidateStyleMap.intros[index % candidateStyleMap.intros.length] || '',
+    tags: tags.map((item) => normalizeText(item)).filter(Boolean),
+    personal_photo: PERSONA_ASSET_MAP[mbti] || ''
+  }
+}
+
+function getPriorityCandidateList(gender = 'female') {
+  const normalizedGender = gender === 'male' ? 'male' : 'female'
+  const sourceList = PRIORITY_CANDIDATE_NAME_MAP[normalizedGender] || []
+  return sourceList.map((entry, index) => buildPriorityCandidateRecord(entry, index, normalizedGender))
+}
+
+function getPriorityBoardTargetGender(selfRecord = {}) {
+  return getOppositeGender(normalizeGender(selfRecord && selfRecord.gender)) || 'female'
+}
+
+function normalizePriorityBoardIds(ids, candidateGender) {
+  const candidateIdSet = new Set(
+    getPriorityCandidateList(candidateGender).map((item) => normalizeText(item._id))
+  )
+  const seenIdSet = new Set()
+
+  return (Array.isArray(ids) ? ids : [])
+    .map((item) => normalizeText(item))
+    .filter((item) => {
+      if (!item || seenIdSet.has(item) || !candidateIdSet.has(item)) {
+        return false
+      }
+      seenIdSet.add(item)
+      return true
+    })
+    .slice(0, PRIORITY_BOARD_LIMIT)
+}
+
+function normalizePriorityBoardStatus(status, selectedCount) {
+  return normalizeText(status) === 'submitted' && selectedCount === PRIORITY_BOARD_LIMIT
+    ? 'submitted'
+    : 'draft'
+}
+
+function createDefaultPriorityBoardRecord(personnelId, candidateGender) {
+  return {
+    _id: buildPriorityBoardStorageId(personnelId),
+    personnel_id: normalizeText(personnelId),
+    candidate_gender: candidateGender === 'male' ? 'male' : 'female',
+    status: 'draft',
+    selected_ids: [],
+    created_at: nowText(),
+    updated_at: nowText(),
+    submitted_at: ''
+  }
+}
+
+function getPriorityBoardRecord(personnelId, candidateGender) {
+  const normalizedPersonnelId = normalizeText(personnelId)
+  const normalizedCandidateGender = candidateGender === 'male' ? 'male' : 'female'
+  const boardList = getPriorityBoardList()
+  const currentIndex = boardList.findIndex(
+    (item) => normalizeText(item && item.personnel_id) === normalizedPersonnelId
+  )
+
+  if (currentIndex < 0) {
+    return createDefaultPriorityBoardRecord(normalizedPersonnelId, normalizedCandidateGender)
+  }
+
+  const existingRecord = boardList[currentIndex] || {}
+  const normalizedIds = normalizePriorityBoardIds(
+    existingRecord.selected_ids,
+    normalizedCandidateGender
+  )
+  const normalizedStatus = normalizePriorityBoardStatus(existingRecord.status, normalizedIds.length)
+  const nextRecord = {
+    ...createDefaultPriorityBoardRecord(normalizedPersonnelId, normalizedCandidateGender),
+    ...existingRecord,
+    personnel_id: normalizedPersonnelId,
+    candidate_gender: normalizedCandidateGender,
+    selected_ids: normalizedIds,
+    status: normalizedStatus
+  }
+
+  if (
+    normalizeText(existingRecord.candidate_gender) !== normalizedCandidateGender ||
+    JSON.stringify(existingRecord.selected_ids || []) !== JSON.stringify(normalizedIds) ||
+    normalizeText(existingRecord.status) !== normalizedStatus
+  ) {
+    boardList.splice(currentIndex, 1, {
+      ...nextRecord,
+      updated_at: nowText(),
+      submitted_at: normalizedStatus === 'submitted' ? existingRecord.submitted_at || nowText() : ''
+    })
+    savePriorityBoardList(boardList)
+    return boardList[currentIndex]
+  }
+
+  return nextRecord
+}
+
+function upsertPriorityBoardRecord(personnelId, patch = {}, candidateGender) {
+  const normalizedPersonnelId = normalizeText(personnelId)
+  const normalizedCandidateGender = candidateGender === 'male' ? 'male' : 'female'
+  const boardList = getPriorityBoardList()
+  const currentIndex = boardList.findIndex(
+    (item) => normalizeText(item && item.personnel_id) === normalizedPersonnelId
+  )
+  const baseRecord =
+    currentIndex >= 0
+      ? getPriorityBoardRecord(normalizedPersonnelId, normalizedCandidateGender)
+      : createDefaultPriorityBoardRecord(normalizedPersonnelId, normalizedCandidateGender)
+  const nextSelectedIds = normalizePriorityBoardIds(
+    typeof patch.selected_ids === 'undefined' ? baseRecord.selected_ids : patch.selected_ids,
+    normalizedCandidateGender
+  )
+  const nextStatus = normalizePriorityBoardStatus(
+    typeof patch.status === 'undefined' ? baseRecord.status : patch.status,
+    nextSelectedIds.length
+  )
+  const nextRecord = {
+    ...baseRecord,
+    ...patch,
+    personnel_id: normalizedPersonnelId,
+    candidate_gender: normalizedCandidateGender,
+    selected_ids: nextSelectedIds,
+    status: nextStatus,
+    updated_at: nowText(),
+    submitted_at: nextStatus === 'submitted' ? normalizeText(patch.submitted_at || baseRecord.submitted_at || nowText()) : ''
+  }
+
+  if (currentIndex >= 0) {
+    boardList.splice(currentIndex, 1, nextRecord)
+  } else {
+    boardList.unshift(nextRecord)
+  }
+
+  savePriorityBoardList(boardList)
+  return nextRecord
+}
+
+function buildPriorityBoardResponse(personnelId) {
+  const normalizedPersonnelId = normalizeText(personnelId)
+  const selfRecord = getPersonnelById(normalizedPersonnelId)
+  if (!selfRecord) {
+    const emptyBoard = createDefaultPriorityBoardRecord(normalizedPersonnelId, 'female')
+    return {
+      self: null,
+      board: {
+        ...emptyBoard,
+        limit: PRIORITY_BOARD_LIMIT,
+        selected_count: 0,
+        available_slots: PRIORITY_BOARD_LIMIT
+      },
+      candidates: [],
+      selected: [],
+      summary: {
+        targetGender: 'female',
+        totalCandidates: 0,
+        selectedCount: 0,
+        progressPercent: 0
+      }
+    }
+  }
+
+  const targetGender = getPriorityBoardTargetGender(selfRecord)
+  const candidates = getPriorityCandidateList(targetGender)
+  const candidateMap = candidates.reduce((accumulator, item) => {
+    accumulator[item._id] = item
+    return accumulator
+  }, {})
+  const boardRecord = getPriorityBoardRecord(normalizedPersonnelId, targetGender)
+  const selected = boardRecord.selected_ids
+    .map((item) => candidateMap[normalizeText(item)])
+    .filter(Boolean)
+
+  return {
+    self: {
+      ...selfRecord,
+      priority_target_gender: targetGender
+    },
+    board: {
+      ...boardRecord,
+      limit: PRIORITY_BOARD_LIMIT,
+      selected_count: selected.length,
+      available_slots: Math.max(0, PRIORITY_BOARD_LIMIT - selected.length)
+    },
+    candidates,
+    selected,
+    summary: {
+      targetGender,
+      totalCandidates: candidates.length,
+      selectedCount: selected.length,
+      progressPercent: Math.round((selected.length / PRIORITY_BOARD_LIMIT) * 100)
+    }
+  }
+}
+
+function savePriorityBoardDraft(personnelId, orderedIds) {
+  const normalizedPersonnelId = normalizeText(personnelId)
+  const selfRecord = getPersonnelById(normalizedPersonnelId)
+  if (!selfRecord) {
+    throw new Error('未找到当前用户档案')
+  }
+
+  const targetGender = getPriorityBoardTargetGender(selfRecord)
+  upsertPriorityBoardRecord(
+    normalizedPersonnelId,
+    {
+      selected_ids: orderedIds,
+      status: 'draft',
+      submitted_at: ''
+    },
+    targetGender
+  )
+
+  return buildPriorityBoardResponse(normalizedPersonnelId)
+}
+
+function submitPriorityBoard(personnelId, orderedIds) {
+  const normalizedPersonnelId = normalizeText(personnelId)
+  const selfRecord = getPersonnelById(normalizedPersonnelId)
+  if (!selfRecord) {
+    throw new Error('未找到当前用户档案')
+  }
+
+  const targetGender = getPriorityBoardTargetGender(selfRecord)
+  const normalizedIds = normalizePriorityBoardIds(orderedIds, targetGender)
+  if (normalizedIds.length !== PRIORITY_BOARD_LIMIT) {
+    throw new Error('请先选满 10 位心动对象并完成排序')
+  }
+
+  upsertPriorityBoardRecord(
+    normalizedPersonnelId,
+    {
+      selected_ids: normalizedIds,
+      status: 'submitted',
+      submitted_at: nowText()
+    },
+    targetGender
+  )
+
+  return buildPriorityBoardResponse(normalizedPersonnelId)
 }
 
 function getSystemConfigValue() {
@@ -1597,6 +1983,37 @@ export const personnelUserService = {
           id: nextMessage._id
         }
       }
+    )
+  },
+
+  async getUserHeartPriorityBoard({ personnelId } = {}) {
+    return withMockFallback(
+      async () => unwrapResponse(await http.get(apiUrls.personnel.heartPriorityBoard(personnelId))),
+      async () => buildPriorityBoardResponse(normalizeText(personnelId))
+    )
+  },
+
+  async saveUserHeartPriorityBoard({ personnelId, orderedIds = [] } = {}) {
+    return withMockFallback(
+      async () =>
+        unwrapResponse(
+          await http.put(apiUrls.personnel.heartPriorityBoard(personnelId), {
+            orderedIds
+          })
+        ),
+      async () => savePriorityBoardDraft(normalizeText(personnelId), orderedIds)
+    )
+  },
+
+  async submitUserHeartPriorityBoard({ personnelId, orderedIds = [] } = {}) {
+    return withMockFallback(
+      async () =>
+        unwrapResponse(
+          await http.post(apiUrls.personnel.submitHeartPriorityBoard(personnelId), {
+            orderedIds
+          })
+        ),
+      async () => submitPriorityBoard(normalizeText(personnelId), orderedIds)
     )
   },
 
