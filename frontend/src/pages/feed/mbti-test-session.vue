@@ -132,16 +132,17 @@
 </template>
 
 <script setup>
-	import { computed, nextTick, reactive, ref } from 'vue'
-	import { useRouter } from 'vue-router'
-	import { onLoad } from '@dcloudio/uni-app'
+	import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+	import { useRoute, useRouter } from 'vue-router'
 	import questionsSource from '@/data/mbti-88-questions.json'
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import { app } from '@/platform/app-bridge'
 	import { getCurrentUserInfo } from '@/platform/app-runtime'
 
 	const questions = questionsSource.questions || []
 	const totalQuestions = questions.length
 	const stageSize = totalQuestions / 4
+	const route = useRoute()
 	const router = useRouter()
 
 	const stageList = [
@@ -352,15 +353,16 @@
 		P: 0
 	})
 
-	onLoad(async (options) => {
-		if (options && options.name) {
-			userName.value = decodeURIComponent(options.name)
+	onMounted(async () => {
+		const query = route.query || {}
+		if (query && query.name) {
+			userName.value = decodeURIComponent(String(query.name))
 		}
-		if (options && options.personnelId) {
-			personnelId.value = decodeURIComponent(options.personnelId)
+		if (query && query.personnelId) {
+			personnelId.value = decodeURIComponent(String(query.personnelId))
 		}
-		if (options && options.wxOpenid) {
-			wxOpenid.value = decodeURIComponent(options.wxOpenid)
+		if (query && query.wxOpenid) {
+			wxOpenid.value = decodeURIComponent(String(query.wxOpenid))
 		}
 		await loadSystemConfig()
 		if (!wxOpenid.value) {
@@ -777,12 +779,11 @@
 		try {
 			const scrollOnce = (duration = 0) =>
 				new Promise((resolve) => {
-					uni.pageScrollTo({
+					app.pageScrollTo({
 						scrollTop: 0,
-						duration,
-						success: resolve,
-						fail: resolve
+						duration
 					})
+					resolve()
 				})
 			const wait = (delay) =>
 				new Promise((resolve) => {
@@ -836,7 +837,7 @@
 			return
 		}
 		isSavingResult.value = true
-		uni.showLoading({
+		app.showLoading({
 			title: '保存结果中',
 			mask: true
 		})
@@ -856,14 +857,14 @@
 				mbti: resultType.value
 			})
 		} catch (error) {
-			uni.showToast({
+			app.showToast({
 				title: (error && error.message) || '结果保存失败',
 				icon: 'none',
 				duration: 3000
 			})
 		} finally {
 			isSavingResult.value = false
-			uni.hideLoading()
+			app.hideLoading()
 		}
 	}
 
@@ -872,7 +873,7 @@
 			await router.push('/pages/index/home')
 		} catch (error) {
 			console.error('router push to home failed', error)
-			uni.reLaunch({
+			app.reLaunch({
 				url: '/pages/index/home'
 			})
 		}
@@ -1408,4 +1409,3 @@
 		}
 	}
 </style>
-

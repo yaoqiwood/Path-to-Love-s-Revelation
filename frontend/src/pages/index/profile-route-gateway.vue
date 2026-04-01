@@ -31,7 +31,7 @@ export default {
 			loadingText: 'Checking login status...'
 		}
 	},
-	async onLoad() {
+	async mounted() {
 		await this.routeByLoginProfile()
 	},
 	methods: {

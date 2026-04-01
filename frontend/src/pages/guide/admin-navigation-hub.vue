@@ -84,7 +84,7 @@
 				return this.featureList.filter((item) => this.hasFeatureAccess(item))
 			}
 		},
-		onLoad() {
+		mounted() {
 			this.currentUserRole = this.getCurrentUserRole()
 		},
 		methods: {

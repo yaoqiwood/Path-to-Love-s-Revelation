@@ -186,8 +186,7 @@
 </template>
 
 <script setup>
-	import { computed, reactive } from 'vue'
-	import { onLoad } from '@dcloudio/uni-app'
+	import { computed, onMounted, reactive } from 'vue'
 	import { useRouter } from 'vue-router'
 	import {
 		getLocalUserHeartPriorityBoard,
@@ -260,7 +259,7 @@
 		}
 	})
 
-	onLoad(async () => {
+	onMounted(async () => {
 		await bootstrap()
 	})
 
@@ -1504,4 +1503,3 @@
 		}
 	}
 </style>
-

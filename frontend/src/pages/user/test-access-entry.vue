@@ -75,6 +75,7 @@
 
 <script>
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import { app } from '@/platform/app-bridge'
 	import { getCurrentUserInfo, uploadAppFile } from '@/platform/app-runtime'
 	const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
 
@@ -107,7 +108,7 @@
 				}
 			}
 		},
-		async onLoad() {
+		async mounted() {
 			await this.loadCurrentUser()
 			await this.loadSystemConfig()
 			await this.initProfileState()
@@ -168,7 +169,7 @@
 			},
 			savePersonnelProfileToStorage(payload) {
 				try {
-					uni.setStorageSync(PERSONNEL_PROFILE_STORAGE_KEY, {
+					app.setStorageSync(PERSONNEL_PROFILE_STORAGE_KEY, {
 						...payload,
 						cached_at: Date.now()
 					})
@@ -251,7 +252,7 @@
 
 				this.hasPromptedRetest = true
 				this.savePersonnelProfileToStorage(this.buildPersonnelProfilePayload(record))
-				uni.showModal({
+				app.showModal({
 					title: '提示',
 					content: '当前已经检测到您已有MBTI信息，是否重测？',
 					confirmText: '是',
@@ -260,7 +261,7 @@
 						if (res.confirm) {
 							const fastOpenid =
 								this.loginUserIds[0] || this.getLoginOpenId(this.currentUser || {})
-							uni.reLaunch({
+							app.reLaunch({
 								url:
 									`/pages/feed/entry?name=${encodeURIComponent(record.name || '')}` +
 									`&personnelId=${encodeURIComponent(record._id || '')}` +
@@ -268,7 +269,7 @@
 							})
 							return
 						}
-						uni.reLaunch({
+						app.reLaunch({
 							url: '/pages/index/index'
 						})
 					},
@@ -284,13 +285,13 @@
 				this.savePersonnelProfileToStorage(this.buildPersonnelProfilePayload(record))
 				this.autoRoutedByProfile = true
 				const fastOpenid = this.loginUserIds[0] || this.getLoginOpenId(this.currentUser || {})
-				uni.showToast({
+				app.showToast({
 					title: '检测到已绑定资料，正在进入测试',
 					icon: 'none',
 					duration: 1200
 				})
 				setTimeout(() => {
-					uni.reLaunch({
+					app.reLaunch({
 						url:
 							`/pages/feed/entry?name=${encodeURIComponent(record.name || '')}` +
 							`&personnelId=${encodeURIComponent(record._id || '')}` +
@@ -444,14 +445,14 @@
 
 					console.log('[access-form] matched personnel record, relaunch to index', record)
 					this.savePersonnelProfileToStorage(this.buildPersonnelProfilePayload(record))
-					uni.showToast({
+					app.showToast({
 						title: '已有MBTI测试记录，正在进入首页',
 						icon: 'none',
 						duration: 1800
 					})
 					this.restoredByProfile = true
 					setTimeout(() => {
-						uni.reLaunch({
+						app.reLaunch({
 							url: '/pages/index/index'
 						})
 					}, 500)
@@ -467,18 +468,23 @@
 					this.profileForm.avatar = avatarUrl
 				}
 			},
-			chooseAvatarImage() {
-				uni.chooseImage({
-					count: 1,
-					sizeType: ['compressed'],
-					sourceType: ['album', 'camera'],
-					success: (res) => {
-						const filePath = res.tempFilePaths && res.tempFilePaths[0]
-						if (filePath) {
-							this.profileForm.avatar = filePath
-						}
-					} 
-				})
+			async chooseAvatarImage() {
+				try {
+					const res = await app.chooseImage({
+						count: 1,
+						sizeType: ['compressed'],
+						sourceType: ['album', 'camera']
+					})
+					const filePath = res.tempFilePaths && res.tempFilePaths[0]
+					if (filePath) {
+						this.profileForm.avatar = filePath
+					}
+				} catch (error) {
+					if (error && error.errMsg && error.errMsg.indexOf('cancel') > -1) {
+						return
+					}
+					this.showErrorModal((error && error.message) || '头像选择失败')
+				}
 			},
 			async confirmProfile() {
 				if (!this.profileForm.nickname.trim()) {
@@ -505,7 +511,7 @@
 						return
 					}
 					this.saving = true
-					uni.showLoading({
+					app.showLoading({
 						title: '保存中',
 						mask: true
 					})
@@ -555,18 +561,18 @@
 							return
 						}
 						if (!this.hasNameAndPasscode(persistedRecord)) {
-							uni.showToast({
+							app.showToast({
 								title: '资料已同步',
 								icon: 'none'
 							})
 							return
 						}
-						uni.showToast({
+						app.showToast({
 							title: '资料已同步，正在进入测试',
 							icon: 'none'
 						})
 						setTimeout(() => {
-							uni.navigateTo({
+							app.navigateTo({
 								url:
 									`/pages/feed/entry?name=${encodeURIComponent(persistedRecord.name || '')}` +
 									`&personnelId=${encodeURIComponent(persistedRecord._id || '')}` +
@@ -578,7 +584,7 @@
 						this.showErrorModal((error && error.message) || '资料同步失败')
 					} finally {
 						this.saving = false
-						uni.hideLoading()
+						app.hideLoading()
 					}
 					return
 				}
@@ -590,13 +596,13 @@
 							personal_photo: this.profileForm.avatar
 						})
 					)
-					uni.showToast({
+					app.showToast({
 						title: '已识别已绑定账号，正在进入测试',
 						icon: 'none'
 					})
 					setTimeout(() => {
 						const fastOpenid = this.loginUserIds[0] || this.getLoginOpenId(this.currentUser || {})
-						uni.navigateTo({
+						app.navigateTo({
 							url:
 								`/pages/feed/entry?name=${encodeURIComponent(matchedRecord.name || '')}` +
 								`&personnelId=${encodeURIComponent(matchedRecord._id || '')}` +
@@ -704,7 +710,7 @@
 				if (!content || this.shouldSkipFeedback(content)) {
 					return
 				}
-				uni.showToast({
+				app.showToast({
 					title: content,
 					icon: 'none'
 				})
@@ -714,7 +720,7 @@
 				if (this.shouldSkipFeedback(content)) {
 					return
 				}
-				uni.showModal({
+				app.showModal({
 					content: content,
 					showCancel: false
 				})
@@ -740,7 +746,7 @@
 			},
 			async submitForm() {
 				if (this.shouldShowProfilePopup) {
-					uni.showToast({
+					app.showToast({
 						title: '请先填写昵称和头像',
 						icon: 'none'
 					})
@@ -760,7 +766,7 @@
 				}
 
 				this.saving = true
-				uni.showLoading({
+				app.showLoading({
 					title: '保存中',
 					mask: true
 				})
@@ -840,7 +846,7 @@
 						this.promptRetestForBoundRecord(persistedRecord)
 						return
 					}
-					uni.showToast({
+					app.showToast({
 						title: '绑定成功，正在进入测试',
 						icon: 'none'
 					})
@@ -855,12 +861,12 @@
 					this.showErrorModal((error && error.message) || '保存失败')
 				} finally {
 					this.saving = false
-					uni.hideLoading()
+					app.hideLoading()
 				}
 			},
 			enterTestDirectly() {
 				if (this.shouldShowProfilePopup) {
-					uni.showToast({
+					app.showToast({
 						title: '请先填写昵称和头像',
 						icon: 'none'
 					})
@@ -893,12 +899,12 @@
 					url += `?${query.join('&')}`
 				}
 
-				uni.navigateTo({
+				app.navigateTo({
 					url
 				})
 			},
 			goHome() {
-				uni.navigateTo({
+				app.navigateTo({
 					url: '/pages/index/login-home'
 				})
 			}

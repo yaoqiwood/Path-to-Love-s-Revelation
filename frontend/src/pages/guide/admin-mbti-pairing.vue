@@ -229,6 +229,8 @@
 <script>
 	import relationshipSource from '@/data/mbti_16x16_relationships_full.json'
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import { app } from '@/platform/app-bridge'
+	import { goBackOrReplace } from '@/utils/navigation'
 
 var PAIR_GROUP_CACHE_KEY = 'MBTI_PAIR_GROUP_CACHE_V1'
 var PAIR_GROUP_CACHE_VERSION = 1
@@ -444,13 +446,13 @@ var PAIR_GROUP_CACHE_VERSION = 1
 				this.syncPagination(list.length)
 			}
 		},
-		onLoad() {
+		mounted() {
 			this.restorePairGroupsFromCache()
 		},
 		methods: {
 			restorePairGroupsFromCache() {
 				try {
-					var cachedPayload = uni.getStorageSync(PAIR_GROUP_CACHE_KEY)
+					var cachedPayload = app.getStorageSync(PAIR_GROUP_CACHE_KEY)
 					if (
 						!cachedPayload ||
 						typeof cachedPayload !== 'object' ||
@@ -475,7 +477,7 @@ var PAIR_GROUP_CACHE_VERSION = 1
 			},
 			savePairGroupsToCache(payload) {
 				try {
-					uni.setStorageSync(PAIR_GROUP_CACHE_KEY, {
+					app.setStorageSync(PAIR_GROUP_CACHE_KEY, {
 						version: PAIR_GROUP_CACHE_VERSION,
 						updatedAt: Date.now(),
 						totalMembers: Number(payload.totalMembers || 0),
@@ -488,14 +490,7 @@ var PAIR_GROUP_CACHE_VERSION = 1
 				}
 			},
 			goBack() {
-				var pageStack = getCurrentPages()
-				if (pageStack.length > 1) {
-					uni.navigateBack({ delta: 1 })
-					return
-				}
-				uni.reLaunch({
-					url: '/pkg/guide/hub'
-				})
+				goBackOrReplace('/pkg/guide/hub')
 			},
 			normalizeMbti(value) {
 				return normalizeMbtiValue(value)
@@ -574,7 +569,7 @@ var PAIR_GROUP_CACHE_VERSION = 1
 								.join('\n')
 					)
 				}
-				uni.showModal({
+				app.showModal({
 					title: group.name || '匹配原因',
 					content: contentList.join('\n\n') || '当前暂无匹配原因说明',
 					showCancel: false,
@@ -1100,7 +1095,7 @@ var PAIR_GROUP_CACHE_VERSION = 1
 					this.applyPairGroupsResult(resultPayload)
 					this.savePairGroupsToCache(resultPayload)
 				} catch (error) {
-					uni.showModal({
+					app.showModal({
 						content: error.message || '查询失败，请稍后重试',
 						showCancel: false
 					})

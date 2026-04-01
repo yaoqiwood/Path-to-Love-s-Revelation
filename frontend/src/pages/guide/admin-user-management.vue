@@ -189,6 +189,8 @@
 
 <script>
 import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+import { app } from '@/platform/app-bridge'
+import { goBackOrReplace } from '@/utils/navigation'
 const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
 
 export default {
@@ -234,7 +236,7 @@ export default {
 			return this.candidateList.slice(start, start + pageSize)
 		}
 	},
-	onLoad() {
+	mounted() {
 		this.currentUserRole = this.getCurrentUserRole()
 		if (!this.ensurePageAccess()) {
 			return
@@ -245,7 +247,7 @@ export default {
 	methods: {
 		getCurrentUserRole() {
 			try {
-				const profile = uni.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
+				const profile = app.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
 				return Number(profile && profile.user_role) || 0
 			} catch (error) {
 				console.error('getCurrentUserRole failed', error)
@@ -256,7 +258,7 @@ export default {
 			if (Number(this.currentUserRole) === 3) {
 				return true
 			}
-			uni.showModal({
+			app.showModal({
 				title: '权限不足',
 				content: '只有 user_role 为 3 的高级用户可以查看用户管理页面。',
 				showCancel: false,
@@ -267,12 +269,7 @@ export default {
 			return false
 		},
 		goBack() {
-			const pageStack = getCurrentPages()
-			if (pageStack.length > 1) {
-				uni.navigateBack({ delta: 1 })
-				return
-			}
-			uni.reLaunch({ url: '/pkg/guide/hub' })
+			goBackOrReplace('/pkg/guide/hub')
 		},
 		async loadUserList() {
 			if (!this.accessChecked) {
@@ -294,7 +291,7 @@ export default {
 				}
 			} catch (error) {
 				console.error('loadUserList failed', error)
-				uni.showToast({
+				app.showToast({
 					title: error.message || '用户加载失败',
 					icon: 'none'
 				})
@@ -321,7 +318,7 @@ export default {
 				this.candidatePagination.page = 1
 			} catch (error) {
 				console.error('loadCandidateList failed', error)
-				uni.showToast({
+				app.showToast({
 					title: error.message || '候选人加载失败',
 					icon: 'none'
 				})
@@ -359,11 +356,11 @@ export default {
 			this.actionLoading = true
 			try {
 				await personnelUser.updateUserRole({ id: item._id, userRole: 2 })
-				uni.showToast({ title: '已设为用户', icon: 'success' })
+				app.showToast({ title: '已设为用户', icon: 'success' })
 				await Promise.all([this.loadUserList(), this.loadCandidateList()])
 			} catch (error) {
 				console.error('promoteToUser failed', error)
-				uni.showToast({
+				app.showToast({
 					title: error.message || '设置失败',
 					icon: 'none'
 				})
@@ -378,7 +375,7 @@ export default {
 			if (!item || !item._id || Number(item.user_role) !== 2 || this.actionLoading || !personnelUser) {
 				return
 			}
-			uni.showModal({
+			app.showModal({
 				title: '确认降级',
 				content: `确认将 ${item.nickname || item.name || '该用户'} 降级为普通测试者吗？`,
 				success: async (res) => {
@@ -388,11 +385,11 @@ export default {
 					this.actionLoading = true
 					try {
 						await personnelUser.updateUserRole({ id: item._id, userRole: 0 })
-						uni.showToast({ title: '已降级为普通', icon: 'success' })
+						app.showToast({ title: '已降级为普通', icon: 'success' })
 						await Promise.all([this.loadUserList(), this.loadCandidateList()])
 					} catch (error) {
 						console.error('demoteUser failed', error)
-						uni.showToast({
+						app.showToast({
 							title: error.message || '降级失败',
 							icon: 'none'
 						})
@@ -447,10 +444,10 @@ export default {
 			return `${year}-${month}-${day} ${hours}:${minutes}`
 		},
 		goPersonnelManagement() {
-			uni.navigateTo({ url: '/pkg/guide/roster' })
+			app.navigateTo({ url: '/pkg/guide/roster' })
 		},
 		showUnavailable() {
-			uni.showToast({ title: '云对象不可用', icon: 'none' })
+			app.showToast({ title: '云对象不可用', icon: 'none' })
 		}
 	}
 }

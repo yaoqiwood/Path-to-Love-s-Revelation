@@ -83,6 +83,9 @@
 			</div>
 		</div>
 		<div v-if="!showFormOnly" class="hero-card">
+			<div class="hero-topbar">
+				<button class="ghost-btn back-btn" @click="goBackToHub">返回导航</button>
+			</div>
 			<div class="hero-copy">
 				<text class="hero-kicker">MBTI PERSONNEL USER</text>
 				<text class="hero-title">后台人员信息录入</text>
@@ -370,7 +373,9 @@
 
 <script>
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import { app } from '@/platform/app-bridge'
 	import { uploadAppFile } from '@/platform/app-runtime'
+	import { goBackOrReplace } from '@/utils/navigation'
 
 	const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
 
@@ -513,7 +518,7 @@
 				return Number(this.pagination.page || 1) >= this.totalPages
 			}
 		},
-		onLoad: function () {
+		mounted: function () {
 			if (!this.ensurePageAccess()) {
 				return
 			}
@@ -522,7 +527,7 @@
 		methods: {
 			getCurrentUserRole: function () {
 				try {
-					var profile = uni.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
+					var profile = app.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
 					return Number(profile && profile.user_role) || 0
 				} catch (error) {
 					console.error('getCurrentUserRole failed', error)
@@ -533,51 +538,26 @@
 				if (this.getCurrentUserRole() >= 1) {
 					return true
 				}
-				uni.showModal({
+				app.showModal({
 					title: '权限不足',
 					content: '只有 user_role 为 1、2、3 的用户可以进入人员管理页面。',
 					showCancel: false,
 					success: function () {
-						var pageStack = getCurrentPages()
-						if (pageStack.length > 1) {
-							uni.navigateBack({ delta: 1 })
-							return
-						}
-						uni.reLaunch({
-							url: '/pages/mbti-home/home'
-						})
+						goBackOrReplace('/pages/mbti-home/home')
 					}
 				})
 				return false
 			},
 			chooseImportFile: function () {
-				return new Promise(function (resolve, reject) {
-					var chooseFile = null
-					if (typeof uni.chooseFile === 'function') {
-						chooseFile = uni.chooseFile
-					} else if (typeof wx !== 'undefined' && typeof wx.chooseMessageFile === 'function') {
-						chooseFile = wx.chooseMessageFile
+				return app.chooseFile({
+					count: 1,
+					extension: ['xlsx', 'xls', 'csv']
+				}).then(function (res) {
+					var file = (res.tempFiles && res.tempFiles[0]) || null
+					if (!file) {
+						throw new Error('未选择到有效文件')
 					}
-					if (!chooseFile) {
-						reject(new Error('当前环境不支持文件选择'))
-						return
-					}
-					chooseFile({
-						count: 1,
-						type: 'file',
-						extension: ['xlsx', 'xls', 'csv'],
-						success: function (res) {
-							var file = (res.tempFiles && res.tempFiles[0]) || null
-							if (!file) {
-								reject(new Error('未选择到有效文件'))
-								return
-							}
-							resolve(file)
-						},
-						fail: function (error) {
-							reject(error)
-						}
-					})
+					return file
 				})
 			},
 			importSignupSheet: async function () {
@@ -596,7 +576,7 @@
 						throw new Error('未获取到导入文件路径')
 					}
 					this.importing = true
-					uni.showLoading({
+					app.showLoading({
 						title: '导入中',
 						mask: true
 					})
@@ -612,7 +592,7 @@
 					this.loadList({
 						page: 1
 					})
-					uni.showModal({
+					app.showModal({
 						title: '导入完成',
 						content:
 							'成功导入 ' +
@@ -634,13 +614,13 @@
 					if (error && error.errMsg && error.errMsg.indexOf('cancel') > -1) {
 						return
 					}
-					uni.showModal({
+					app.showModal({
 						content: error.message || '报名表格导入失败',
 						showCancel: false
 					})
 				} finally {
 					this.importing = false
-					uni.hideLoading()
+					app.hideLoading()
 				}
 			},
 			searchList: function () {
@@ -687,7 +667,7 @@
 						total: res.total || 0
 					}
 				} catch (error) {
-					uni.showModal({
+					app.showModal({
 						content: error.message || '列表加载失败',
 						showCancel: false
 					})
@@ -775,62 +755,11 @@
 					reviewer: item.reviewer || '',
 					remark: item.remark || ''
 				}
-				uni.pageScrollTo({
+				app.pageScrollTo({
 					scrollTop: 0,
 					duration: 200
 				})
 			},
-			/*
-			resetAllPasscodes: async function () {
-				if (!personnelUser) {
-					this.showUnavailable()
-					return
-				}
-				if (this.resettingPasscodes) {
-					return
-				}
-				var modalRes = await new Promise(function (resolve) {
-					uni.showModal({
-						title: '提示',
-						content: '将为所有未删除人员重新生成随机四位数口令，是否继续？',
-						success: function (res) {
-							resolve(res)
-						},
-						fail: function () {
-							resolve({ confirm: false })
-						}
-					})
-				})
-				if (!modalRes.confirm) {
-					return
-				}
-
-				this.resettingPasscodes = true
-				uni.showLoading({
-					title: '生成中',
-					mask: true
-				})
-				try {
-					var res = await personnelUser.resetAllPasscodes()
-					await this.loadList({
-						page: this.pagination.page
-					})
-					uni.showModal({
-						title: '生成完成',
-						content: '已为 ' + (res.updatedCount || 0) + ' 人生成新的四位数口令',
-						showCancel: false
-					})
-				} catch (error) {
-					uni.showModal({
-						content: error.message || '批量生成口令失败',
-						showCancel: false
-					})
-				} finally {
-					this.resettingPasscodes = false
-					uni.hideLoading()
-				}
-			},
-			*/
 			removeRecord: async function (item) {
 				if (!personnelUser) {
 					this.showUnavailable()
@@ -840,7 +769,7 @@
 					return
 				}
 				var modalRes = await new Promise(function (resolve) {
-					uni.showModal({
+					app.showModal({
 						title: '提示',
 						content: '确认删除该人员吗？',
 						success: function (res) {
@@ -856,7 +785,7 @@
 				}
 
 				this.deletingId = item._id
-				uni.showLoading({
+				app.showLoading({
 					title: '删除中',
 					mask: true
 				})
@@ -864,7 +793,7 @@
 					await personnelUser.softDelete({
 						id: item._id
 					})
-					uni.showToast({
+					app.showToast({
 						title: '删除成功',
 						icon: 'success'
 					})
@@ -876,13 +805,13 @@
 						page: nextPage
 					})
 				} catch (error) {
-					uni.showModal({
+					app.showModal({
 						content: error.message || '删除失败',
 						showCancel: false
 					})
 				} finally {
 					this.deletingId = ''
-					uni.hideLoading()
+					app.hideLoading()
 				}
 			},
 			toggleApprove: async function (item) {
@@ -896,7 +825,7 @@
 
 				var nextStatus = item.review_status === 'approved' ? 'pending' : 'approved'
 				var modalRes = await new Promise(function (resolve) {
-					uni.showModal({
+					app.showModal({
 						title: nextStatus === 'approved' ? '确认审核通过' : '确认取消通过',
 						content:
 							nextStatus === 'approved'
@@ -916,12 +845,12 @@
 
 				var reviewerName = ''
 				try {
-					var profile = uni.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
+					var profile = app.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
 					reviewerName = (profile && (profile.nickname || profile.name)) || ''
 				} catch (error) {}
 
 				this.reviewingId = item._id
-				uni.showLoading({
+				app.showLoading({
 					title: nextStatus === 'approved' ? '审核中' : '取消中',
 					mask: true
 				})
@@ -933,7 +862,7 @@
 							reviewer: nextStatus === 'approved' ? reviewerName : ''
 						}
 					})
-					uni.showToast({
+					app.showToast({
 						title: nextStatus === 'approved' ? '已审核通过' : '已取消通过',
 						icon: 'success'
 					})
@@ -941,13 +870,13 @@
 						page: this.pagination.page
 					})
 				} catch (error) {
-					uni.showModal({
+					app.showModal({
 						content: error.message || '审核操作失败',
 						showCancel: false
 					})
 				} finally {
 					this.reviewingId = ''
-					uni.hideLoading()
+					app.hideLoading()
 				}
 			},
 			setAsCoworker: async function (item) {
@@ -960,7 +889,7 @@
 				}
 
 				var modalRes = await new Promise(function (resolve) {
-					uni.showModal({
+					app.showModal({
 						title: '确认设定为同工',
 						content: '确认将该人员角色设置为同工吗？',
 						success: function (res) {
@@ -976,7 +905,7 @@
 				}
 
 				this.roleUpdatingId = item._id
-				uni.showLoading({
+				app.showLoading({
 					title: '更新角色中',
 					mask: true
 				})
@@ -987,7 +916,7 @@
 							user_role: 1
 						}
 					})
-					uni.showToast({
+					app.showToast({
 						title: '已设为同工',
 						icon: 'success'
 					})
@@ -995,13 +924,13 @@
 						page: this.pagination.page
 					})
 				} catch (error) {
-					uni.showModal({
+					app.showModal({
 						content: error.message || '设定同工失败',
 						showCancel: false
 					})
 				} finally {
 					this.roleUpdatingId = ''
-					uni.hideLoading()
+					app.hideLoading()
 				}
 			},
 			resetForm: function () {
@@ -1067,7 +996,7 @@
 					return
 				}
 				try {
-					var chooseRes = await uni.chooseImage({
+					var chooseRes = await app.chooseImage({
 						count: 1,
 						sizeType: ['compressed'],
 						sourceType: ['album', 'camera']
@@ -1076,7 +1005,7 @@
 					if (!filePath) {
 						return
 					}
-					uni.showLoading({
+					app.showLoading({
 						title: '上传中'
 					})
 					var ext = filePath.split('.').pop() || 'jpg'
@@ -1090,12 +1019,12 @@
 					if (error && error.errMsg && error.errMsg.indexOf('cancel') > -1) {
 						return
 					}
-					uni.showModal({
+					app.showModal({
 						content: error.message || '照片上传失败',
 						showCancel: false
 					})
 				} finally {
-					uni.hideLoading()
+					app.hideLoading()
 				}
 			},
 			clearPhoto: function () {
@@ -1127,7 +1056,7 @@
 				var isEditMode = this.isEditMode
 				var errorMessage = this.validateForm()
 				if (errorMessage) {
-					uni.showToast({
+					app.showToast({
 						title: errorMessage,
 						icon: 'none'
 					})
@@ -1137,7 +1066,7 @@
 					return
 				}
 				this.saving = true
-				uni.showLoading({
+				app.showLoading({
 					title: '保存中',
 					mask: true
 				})
@@ -1175,7 +1104,7 @@
 							data: payload
 						})
 					}
-					uni.showToast({
+					app.showToast({
 						title: isEditMode ? '修改成功' : '提交成功',
 						icon: 'success'
 					})
@@ -1184,29 +1113,32 @@
 						page: isEditMode ? this.pagination.page : 1
 					})
 					if (!isEditMode && saveRes && saveRes.passcode) {
-						uni.showModal({
+						app.showModal({
 							title: '随机口令已生成',
 							content: '该用户的四位数口令为：' + saveRes.passcode,
 							showCancel: false
 						})
 					}
 				} catch (error) {
-					uni.showModal({
+					app.showModal({
 						content: error.message || '保存失败',
 						showCancel: false
 					})
 				} finally {
 					this.saving = false
-					uni.hideLoading()
+					app.hideLoading()
 				}
 			},
 			goLegacyHome: function () {
-				uni.navigateTo({
+				app.navigateTo({
 					url: '/pages/mbti-home/home'
 				})
 			},
+			goBackToHub: function () {
+				goBackOrReplace('/pkg/guide/hub')
+			},
 			showUnavailable: function () {
-				uni.showModal({
+				app.showModal({
 					content: '当前环境未启用人员服务，请稍后重试。',
 					showCancel: false
 				})
@@ -1371,6 +1303,12 @@
 		padding: 32rpx;
 	}
 
+	.hero-topbar {
+		display: flex;
+		align-items: center;
+		margin-bottom: 20rpx;
+	}
+
 	.hero-copy,
 	.card-head,
 	.field,
@@ -1439,6 +1377,12 @@
 	.ghost-btn {
 		background: #efe5d3;
 		color: #6d4e2c;
+	}
+
+	.back-btn {
+		padding: 0 24rpx;
+		margin-right: 0;
+		font-size: 24rpx;
 	}
 
 	.light-btn {

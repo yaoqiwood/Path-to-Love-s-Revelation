@@ -254,6 +254,8 @@ const PANEL_OPTIONS = [
 	}
 ]
 import { personnelUserService } from '@/api/modules/personnel-user'
+import { app } from '@/platform/app-bridge'
+import { goBackOrReplace } from '@/utils/navigation'
 
 let personnelUser = personnelUserService
 
@@ -442,13 +444,13 @@ export default {
 			this.loadRecordList()
 		}
 	},
-	onUnload() {
+	beforeUnmount() {
 		if (this.keywordTimer) {
 			clearTimeout(this.keywordTimer)
 			this.keywordTimer = null
 		}
 	},
-	onLoad() {
+	mounted() {
 		this.currentUserRole = this.getCurrentUserRole()
 		if (!this.ensurePageAccess()) {
 			return
@@ -459,7 +461,7 @@ export default {
 	methods: {
 		getCurrentUserRole() {
 			try {
-				var profile = uni.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
+				var profile = app.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
 				return Number(profile && profile.user_role) || 0
 			} catch (error) {
 				console.error('getCurrentUserRole failed', error)
@@ -470,7 +472,7 @@ export default {
 			if (Number(this.currentUserRole) >= 1) {
 				return true
 			}
-			uni.showModal({
+			app.showModal({
 				title: '权限不足',
 				content: '当前账号暂无查看意向记录页面的权限。',
 				showCancel: false,
@@ -481,12 +483,7 @@ export default {
 			return false
 		},
 		goBack() {
-			var pageStack = getCurrentPages()
-			if (pageStack.length > 1) {
-				uni.navigateBack({ delta: 1 })
-				return
-			}
-			uni.reLaunch({ url: '/pkg/guide/hub' })
+			goBackOrReplace('/pkg/guide/hub')
 		},
 		switchPanel(value) {
 			this.activePanel = value === 'weighted' ? 'weighted' : 'ranking'
@@ -835,7 +832,7 @@ export default {
 				return
 			}
 			if (!personnelUser) {
-				uni.showModal({
+				app.showModal({
 					content: '当前环境不支持云对象调用。',
 					showCancel: false
 				})
@@ -872,7 +869,7 @@ export default {
 					return
 				}
 				console.error('loadRecordList failed', error)
-				uni.showToast({
+				app.showToast({
 					title: error.message || '记录加载失败',
 					icon: 'none'
 				})

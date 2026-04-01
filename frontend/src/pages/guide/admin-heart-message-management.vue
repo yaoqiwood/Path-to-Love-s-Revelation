@@ -264,6 +264,8 @@
 
 <script>
 import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+import { app } from '@/platform/app-bridge'
+import { goBackOrReplace } from '@/utils/navigation'
 
 function createStats() {
 	return {
@@ -377,10 +379,10 @@ export default {
 			this.scheduleCandidateSearch()
 		}
 	},
-	onLoad() {
+	mounted() {
 		this.loadAll()
 	},
-	onUnload() {
+	beforeUnmount() {
 		this.clearCandidateSearchTimer()
 	},
 	methods: {
@@ -388,15 +390,10 @@ export default {
 			await Promise.all([this.loadCandidates(1), this.loadMessages(1)])
 		},
 		goBack() {
-			const pageStack = getCurrentPages()
-			if (pageStack.length > 1) {
-				uni.navigateBack({ delta: 1 })
-				return
-			}
-			uni.reLaunch({ url: '/pkg/guide/hub' })
+			goBackOrReplace('/pkg/guide/hub')
 		},
 		showUnavailable() {
-			uni.showToast({ title: '云对象不可用', icon: 'none' })
+			app.showToast({ title: '云对象不可用', icon: 'none' })
 		},
 		findCandidate(id) {
 			return this.candidateList.find((item) => item._id === id) || null
@@ -451,7 +448,7 @@ export default {
 				})
 				this.quotaInputs = nextInputs
 			} catch (error) {
-				uni.showToast({
+				app.showToast({
 					title: error.message || '参与者加载失败',
 					icon: 'none'
 				})
@@ -480,7 +477,7 @@ export default {
 				}
 				this.stats = Object.assign(createStats(), res && res.stats ? res.stats : {})
 			} catch (error) {
-				uni.showToast({
+				app.showToast({
 					title: error.message || '私信记录加载失败',
 					icon: 'none'
 				})
@@ -542,7 +539,7 @@ export default {
 			}
 			const quotaValue = Number(this.quotaInputs[item._id])
 			if (!Number.isInteger(quotaValue) || quotaValue < 0) {
-				uni.showToast({ title: '请输入有效次数', icon: 'none' })
+				app.showToast({ title: '请输入有效次数', icon: 'none' })
 				return
 			}
 			try {
@@ -551,10 +548,10 @@ export default {
 					quota: quotaValue,
 					mode
 				})
-				uni.showToast({ title: '次数更新成功', icon: 'success' })
+				app.showToast({ title: '次数更新成功', icon: 'success' })
 				await this.loadCandidates(this.candidatePagination.page)
 			} catch (error) {
-				uni.showToast({
+				app.showToast({
 					title: error.message || '次数更新失败',
 					icon: 'none'
 				})
@@ -564,7 +561,7 @@ export default {
 			this.currentId = ''
 			this.form = createForm()
 			this.showForm = true
-			uni.pageScrollTo({ scrollTop: 0, duration: 200 })
+			app.pageScrollTo({ scrollTop: 0, duration: 200 })
 		},
 		openEdit(item) {
 			this.currentId = item._id
@@ -578,7 +575,7 @@ export default {
 				is_anonymous: item.is_anonymous !== false
 			}
 			this.showForm = true
-			uni.pageScrollTo({ scrollTop: 0, duration: 200 })
+			app.pageScrollTo({ scrollTop: 0, duration: 200 })
 		},
 		closeForm() {
 			this.showForm = false
@@ -637,7 +634,7 @@ export default {
 			}
 			const errorMessage = this.validateForm()
 			if (errorMessage) {
-				uni.showToast({ title: errorMessage, icon: 'none' })
+				app.showToast({ title: errorMessage, icon: 'none' })
 				return
 			}
 			if (this.saving) {
@@ -665,7 +662,7 @@ export default {
 						data: payload
 					})
 				}
-				uni.showToast({
+				app.showToast({
 					title: isEditMode ? '私信已更新' : '私信已创建',
 					icon: 'success'
 				})
@@ -673,7 +670,7 @@ export default {
 				await this.loadCandidates()
 				await this.loadMessages(isEditMode ? this.pagination.page : 1)
 			} catch (error) {
-				uni.showToast({
+				app.showToast({
 					title: error.message || '保存失败',
 					icon: 'none'
 				})
@@ -685,7 +682,7 @@ export default {
 			if (!item || !item._id || !personnelUser) {
 				return
 			}
-			uni.showModal({
+			app.showModal({
 				title: '确认删除',
 				content: '删除后记录会被隐藏，但不会自动返还已扣减的私信次数，是否继续？',
 				success: async (res) => {
@@ -694,10 +691,10 @@ export default {
 					}
 					try {
 						await personnelUser.removeHeartMessage({ id: item._id })
-						uni.showToast({ title: '删除成功', icon: 'success' })
+						app.showToast({ title: '删除成功', icon: 'success' })
 						await this.loadMessages(this.pagination.page)
 					} catch (error) {
-						uni.showToast({
+						app.showToast({
 							title: error.message || '删除失败',
 							icon: 'none'
 						})

@@ -351,22 +351,15 @@
 				pushRefreshHandler: null
 			}
 		},
-		async onLoad() {
+		async mounted() {
 			this.activeTab = 'contacts'
 			this.bindPushRefresh()
-			await this.ensureInitialData({ force: true })
-		},
-		async onShow() {
-			const ready = await this.ensureInitialData()
+			const ready = await this.ensureInitialData({ force: true })
 			if (ready && this.showChatPopup && this.activeContact && this.activeContact._id) {
 				this.startRealtime()
 			}
 		},
-		onHide() {
-			this.stopRealtime()
-			this.stopMessageStatePolling()
-		},
-		onUnload() {
+		beforeUnmount() {
 			this.stopRealtime()
 			this.stopMessageStatePolling()
 			this.unbindPushRefresh()
@@ -2119,4 +2112,3 @@
 		}
 	}
 </style>
-
