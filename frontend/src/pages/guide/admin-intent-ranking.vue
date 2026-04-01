@@ -1,7 +1,7 @@
 <template>
 	<div class="page">
 		<div class="toolbar">
-			<button class="ghost-btn" @click="goBack">返回上一页</button>
+			<button class="ghost-btn" @click="goBack">返回导航</button>
 			<button class="solid-btn" @click="loadRecordList">刷新数据</button>
 		</div>
 

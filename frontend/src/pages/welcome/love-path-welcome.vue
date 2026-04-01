@@ -44,8 +44,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
-import { applyMockPreset } from '@/platform/mock-presets'
-
 const router = useRouter()
 
 const orbitTypes = [
@@ -83,7 +81,6 @@ function orbitStyle(index) {
 }
 
 function enterLovePath() {
-  applyMockPreset('guest')
   router.push('/pages/index/login-home')
 }
 </script>

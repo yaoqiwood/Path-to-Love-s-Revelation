@@ -1,5 +1,14 @@
 <template>
 	<section class="login-page">
+		<div v-if="redirectModalVisible" class="message-modal-mask">
+			<div class="message-modal">
+				<p class="message-modal-title">提示</p>
+				<p class="message-modal-copy">
+					检测到用户已登录，{{ redirectCountdown }} 秒后自动跳转......
+				</p>
+			</div>
+		</div>
+
 		<section class="hero">
 			<div class="hero-glow hero-glow-top"></div>
 			<div class="hero-glow hero-glow-bottom"></div>
@@ -22,6 +31,7 @@
 						type="text"
 						maxlength="32"
 						autocomplete="off"
+						:disabled="isRedirecting"
 						placeholder="请输入口令"
 						@input="handlePasscodeInput"
 					/>
@@ -58,14 +68,16 @@
 </template>
 
 <script setup>
-	import { computed, onMounted, ref } from 'vue'
+	import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 	import { useRouter } from 'vue-router'
 
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
 	import { applyMockPersonnelLogin } from '@/platform/mock-presets'
 	import {
+		getLoginProfileUserRole,
 		LOGIN_PROFILE_HOME_PATHS,
 		getLoginProfileFromCookie,
+		hasLoginProfileCookie,
 		resolveHomePathByLoginProfile
 	} from '@/utils/login-cookie'
 
@@ -80,14 +92,19 @@
 	const matchedRecord = ref(null)
 	const isLookingUp = ref(false)
 	const isSubmitting = ref(false)
+	const isRedirecting = ref(false)
+	const redirectModalVisible = ref(false)
+	const redirectCountdown = ref(3)
 	const helperText = ref('请输入口令进行匹配。')
 
 	let lookupToken = 0
+	let redirectTimeoutId = 0
+	let redirectIntervalId = 0
 
 	const hasPasscode = computed(() => !!passcode.value)
 	const shouldShowHint = computed(() => hasPasscode.value)
 	const showNoMatch = computed(
-		() => hasPasscode.value && !isLookingUp.value && !matchedRecord.value
+		() => hasPasscode.value && !isLookingUp.value && !matchedRecord.value && !isRedirecting.value
 	)
 	const reviewStatusLabel = computed(() => {
 		const reviewStatus = matchedRecord.value?.review_status || ''
@@ -95,7 +112,7 @@
 	})
 	const primaryButtonText = computed(() => (matchedRecord.value ? '确认进入' : '确认'))
 	const isPrimaryDisabled = computed(() => {
-		if (isLookingUp.value || isSubmitting.value) {
+		if (isLookingUp.value || isSubmitting.value || isRedirecting.value) {
 			return true
 		}
 
@@ -113,6 +130,10 @@
 
 	async function redirectByStoredProfile() {
 		const verifiedProfile = await verifyStoredProfile(getLoginProfileFromCookie())
+		if (!hasLoginProfileCookie(verifiedProfile) || getLoginProfileUserRole(verifiedProfile) == null) {
+			return
+		}
+
 		const targetPath = resolveHomePathByLoginProfile(verifiedProfile, {
 			fallbackPath: ''
 		})
@@ -121,7 +142,35 @@
 			return
 		}
 
+		isRedirecting.value = true
+		redirectModalVisible.value = true
+		redirectCountdown.value = 3
+		helperText.value = '检测到用户已登录，3 秒后自动跳转......'
+
+		redirectIntervalId = window.setInterval(() => {
+			if (redirectCountdown.value > 1) {
+				redirectCountdown.value -= 1
+			}
+		}, 1000)
+
+		await new Promise((resolve) => {
+			redirectTimeoutId = window.setTimeout(resolve, 3000)
+		})
+
+		clearRedirectTimers()
 		await router.replace(targetPath)
+	}
+
+	function clearRedirectTimers() {
+		if (redirectTimeoutId) {
+			window.clearTimeout(redirectTimeoutId)
+			redirectTimeoutId = 0
+		}
+
+		if (redirectIntervalId) {
+			window.clearInterval(redirectIntervalId)
+			redirectIntervalId = 0
+		}
 	}
 
 	function normalizePasscode(value) {
@@ -225,15 +274,55 @@
 		router.push('/welcome')
 	}
 
-	onMounted(() => {
-		redirectByStoredProfile()
+	onMounted(async () => {
+		await redirectByStoredProfile()
+	})
+
+	onBeforeUnmount(() => {
+		clearRedirectTimers()
 	})
 </script>
 
 <style scoped lang="less">
+	.message-modal-mask {
+		position: absolute;
+		inset: 0;
+		z-index: 20;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 24px;
+		background: rgba(38, 28, 23, 0.28);
+		backdrop-filter: blur(10px);
+	}
+
+	.message-modal {
+		width: min(100%, 320px);
+		padding: 28px 24px;
+		border-radius: 28px;
+		background: rgba(255, 255, 255, 0.94);
+		box-shadow: 0 24px 48px rgba(78, 52, 35, 0.18);
+		text-align: center;
+	}
+
+	.message-modal-title {
+		margin: 0;
+		font-size: 20px;
+		font-weight: 700;
+		color: #2f211d;
+	}
+
+	.message-modal-copy {
+		margin: 14px 0 0;
+		font-size: 15px;
+		line-height: 1.8;
+		color: #6d5b56;
+	}
+
 	.login-page {
 		min-height: 100vh;
 		padding: 0;
+		position: relative;
 		background:
 			radial-gradient(circle at top left, rgba(255, 204, 177, 0.48), transparent 30%),
 			radial-gradient(circle at 85% 16%, rgba(170, 221, 255, 0.38), transparent 22%),

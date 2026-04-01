@@ -45,7 +45,7 @@
 		</div>
 
 		<div class="toolbar">
-			<button class="back-btn" @click="goBack">返回上一页</button>
+			<button class="ghost-btn" @click="goBack">返回导航</button>
 		</div>
 
 		<div v-if="accessChecked" class="panel-card user-card">
@@ -487,16 +487,6 @@ export default {
 
 .toolbar {
 	margin-bottom: 20rpx;
-}
-
-.back-btn {
-	height: 68rpx;
-	line-height: 68rpx;
-	padding: 0 28rpx;
-	border-radius: 999rpx;
-	font-size: 24rpx;
-	color: #6d4e2c;
-	background: #efe5d3;
 }
 
 .panel-card,

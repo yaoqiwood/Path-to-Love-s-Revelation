@@ -1,7 +1,7 @@
 <template>
 	<div class="page">
 		<div class="toolbar">
-			<button class="ghost-btn" @click="goBack">返回上一页</button>
+			<button class="ghost-btn" @click="goBack">返回导航</button>
 			<button class="solid-btn" @click="loadAll">刷新数据</button>
 		</div>
 
@@ -756,6 +756,11 @@ export default {
 	align-items: center;
 }
 
+.toolbar .ghost-btn,
+.toolbar .solid-btn {
+	margin-bottom: 20rpx;
+}
+
 .space-between {
 	justify-content: space-between;
 	margin-top: 10rpx;
@@ -1034,6 +1039,34 @@ export default {
 .status-scroll {
 	margin-top: 16rpx;
 	white-space: nowrap;
+	scrollbar-width: none;
+	scrollbar-color: transparent transparent;
+}
+
+.status-scroll:hover,
+.status-scroll:active,
+.status-scroll:focus-within {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(109, 78, 44, 0.42) transparent;
+}
+
+.status-scroll::-webkit-scrollbar {
+	height: 10rpx;
+}
+
+.status-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.status-scroll::-webkit-scrollbar-thumb {
+	background: transparent;
+	border-radius: 999rpx;
+}
+
+.status-scroll:hover::-webkit-scrollbar-thumb,
+.status-scroll:active::-webkit-scrollbar-thumb,
+.status-scroll:focus-within::-webkit-scrollbar-thumb {
+	background: rgba(109, 78, 44, 0.42);
 }
 
 .status-row {
