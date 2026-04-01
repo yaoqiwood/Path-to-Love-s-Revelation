@@ -1,5 +1,6 @@
 {
 	"editor.formatOnSave": true,
+	"git.openRepositoryInParentFolders": "never",
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"editor.fontFamily": "'JetBrainsMono NFM', Consolas, 'Microsoft YaHei UI', 'Microsoft YaHei', monospace",
 	"prettier.requireConfig": true,
