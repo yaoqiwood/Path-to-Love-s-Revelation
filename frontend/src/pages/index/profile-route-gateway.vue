@@ -19,8 +19,11 @@
 
 <script>
 import { app } from '@/platform/app-bridge'
-
-const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
+import {
+	LOGIN_PROFILE_HOME_PATHS,
+	getLoginProfileFromCookie,
+	resolveHomePathByLoginProfile
+} from '@/utils/login-cookie'
 
 export default {
 	data() {
@@ -32,40 +35,17 @@ export default {
 		await this.routeByLoginProfile()
 	},
 	methods: {
-		getPersonnelProfileFromStorage() {
-			try {
-				const profile = app.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
-				return profile && typeof profile === 'object' ? profile : null
-			} catch (error) {
-				console.error('getPersonnelProfileFromStorage failed', error)
-				return null
-			}
-		},
-		isUserRole(roleValue) {
-			const role = Number(roleValue)
-			return role === 1 || role === 2 || role === 3
-		},
-		resolveTargetUrl(profile) {
-			if (profile && this.isUserRole(profile.user_role)) {
-				return '/pkg/guide/hub'
-			}
-			if (profile && profile._id) {
-				return '/pages/index/home'
-			}
-			return '/pages/index/login-home'
-		},
 		updateLoadingText(targetUrl) {
-			if (targetUrl === '/pkg/guide/hub') {
+			if (targetUrl === LOGIN_PROFILE_HOME_PATHS.admin) {
 				this.loadingText = 'User detected, opening dashboard...'
-			} else if (targetUrl === '/pages/index/home') {
+			} else if (targetUrl === LOGIN_PROFILE_HOME_PATHS.user) {
 				this.loadingText = 'Profile matched, opening navigation...'
 			} else {
 				this.loadingText = 'Opening login home...'
 			}
 		},
 		async routeByLoginProfile() {
-			const profile = this.getPersonnelProfileFromStorage()
-			const targetUrl = this.resolveTargetUrl(profile)
+			const targetUrl = resolveHomePathByLoginProfile(getLoginProfileFromCookie())
 			this.updateLoadingText(targetUrl)
 
 			setTimeout(() => {

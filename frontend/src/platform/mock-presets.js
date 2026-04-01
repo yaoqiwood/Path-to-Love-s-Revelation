@@ -7,8 +7,8 @@ import {
 
 const PROFILE_KEY = AUTH_STORAGE_KEYS.profile
 const SESSION_KEY = AUTH_STORAGE_KEYS.session
-const LEGACY_USER_KEY = AUTH_STORAGE_KEYS.legacyUser
 const SYSTEM_CONFIG_KEY = 'mock-db-system-config'
+const LEGACY_USER_KEY = 'uni-id-pages-userInfo'
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
@@ -58,6 +58,18 @@ function removeStoredValue(key) {
   localStorage.removeItem(key)
 }
 
+function clearLegacyUserStorage() {
+  try {
+    localStorage.removeItem(LEGACY_USER_KEY)
+  } catch (error) {
+    // Ignore localStorage cleanup failures for deprecated keys.
+  }
+
+  if (typeof document !== 'undefined') {
+    document.cookie = `${encodeURIComponent(LEGACY_USER_KEY)}=; Path=/; Max-Age=0; SameSite=Lax`
+  }
+}
+
 export function ensureMockBootstrap() {
   if (!localStorage.getItem(SYSTEM_CONFIG_KEY)) {
     writeJson(SYSTEM_CONFIG_KEY, {
@@ -72,7 +84,7 @@ export function ensureMockBootstrap() {
 export function clearMockPreset() {
   removeStoredValue(PROFILE_KEY)
   removeStoredValue(SESSION_KEY)
-  removeStoredValue(LEGACY_USER_KEY)
+  clearLegacyUserStorage()
 }
 
 export function applyMockPreset(preset = 'guest') {
@@ -98,7 +110,7 @@ export function applyMockPreset(preset = 'guest') {
 
   writeJson(PROFILE_KEY, buildStoredProfile(record))
   writeJson(SESSION_KEY, buildSession(record))
-  writeJson(LEGACY_USER_KEY, buildSession(record).userInfo)
+  clearLegacyUserStorage()
 
   return record
 }
@@ -119,7 +131,7 @@ export function applyMockPersonnelLogin(record = {}) {
   const session = buildSession(normalizedRecord)
   writeJson(PROFILE_KEY, buildStoredProfile(normalizedRecord))
   writeJson(SESSION_KEY, session)
-  writeJson(LEGACY_USER_KEY, session.userInfo)
+  clearLegacyUserStorage()
 
   return normalizedRecord
 }

@@ -1,7 +1,6 @@
 export const AUTH_STORAGE_KEYS = {
   profile: 'mbtiPersonnelProfile',
-  session: 'app-auth-session',
-  legacyUser: 'uni-id-pages-userInfo'
+  session: 'app-auth-session'
 }
 
 const COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
@@ -63,11 +62,7 @@ function removeCookie(name) {
 
 export function isAuthStorageKey(key) {
   const normalizedKey = String(key)
-  return (
-    normalizedKey === AUTH_STORAGE_KEYS.profile ||
-    normalizedKey === AUTH_STORAGE_KEYS.session ||
-    normalizedKey === AUTH_STORAGE_KEYS.legacyUser
-  )
+  return normalizedKey === AUTH_STORAGE_KEYS.profile || normalizedKey === AUTH_STORAGE_KEYS.session
 }
 
 export function setAuthStorageValue(key, value) {

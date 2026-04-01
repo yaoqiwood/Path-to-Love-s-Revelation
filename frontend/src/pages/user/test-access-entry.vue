@@ -302,19 +302,11 @@
 			async loadCurrentUser() {
 				try {
 					const currentUserInfo = getCurrentUserInfo()
-					const cachedUser = uni.getStorageSync('uni-id-pages-userInfo') || {}
 					const currentUserInfoUser = currentUserInfo.userInfo || {}
 					const user = {
 						...currentUserInfoUser,
-						...cachedUser,
-						_id: currentUserInfo.uid || cachedUser._id || '',
+						_id: currentUserInfo.uid || currentUserInfoUser._id || '',
 						user_id:
-							cachedUser.user_id ||
-							currentUserInfoUser.user_id ||
-							currentUserInfo.user_id ||
-							'',
-						user_id:
-							cachedUser.user_id ||
 							currentUserInfoUser.user_id ||
 							currentUserInfo.user_id ||
 							''
@@ -325,7 +317,6 @@
 						(user.avatar_file && user.avatar_file.url) || user.avatar_file || user.avatar || ''
 					console.log('[access-form] loadCurrentUser', {
 						currentUserInfo,
-						cachedUser,
 						user
 					})
 				} catch (error) {

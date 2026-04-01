@@ -58,11 +58,16 @@
 </template>
 
 <script setup>
-	import { computed, ref } from 'vue'
+	import { computed, onMounted, ref } from 'vue'
 	import { useRouter } from 'vue-router'
 
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
 	import { applyMockPersonnelLogin } from '@/platform/mock-presets'
+	import {
+		LOGIN_PROFILE_HOME_PATHS,
+		getLoginProfileFromCookie,
+		resolveHomePathByLoginProfile
+	} from '@/utils/login-cookie'
 
 	const router = useRouter()
 	const reviewStatusMap = {
@@ -100,6 +105,24 @@
 
 		return matchedRecord.value.review_status !== 'approved'
 	})
+
+	async function verifyStoredProfile(profile) {
+		// Reserved for future backend verification before redirecting by cached login state.
+		return profile && typeof profile === 'object' ? profile : null
+	}
+
+	async function redirectByStoredProfile() {
+		const verifiedProfile = await verifyStoredProfile(getLoginProfileFromCookie())
+		const targetPath = resolveHomePathByLoginProfile(verifiedProfile, {
+			fallbackPath: ''
+		})
+
+		if (!targetPath || router.currentRoute.value.path === targetPath) {
+			return
+		}
+
+		await router.replace(targetPath)
+	}
 
 	function normalizePasscode(value) {
 		return String(value || '')
@@ -175,7 +198,13 @@
 			applyMockPersonnelLogin({
 				...matchedRecord.value
 			})
-			await router.replace('/pages/index/home')
+			const verifiedProfile = await verifyStoredProfile(
+				getLoginProfileFromCookie() || matchedRecord.value
+			)
+			const targetPath = resolveHomePathByLoginProfile(verifiedProfile, {
+				fallbackPath: LOGIN_PROFILE_HOME_PATHS.user
+			})
+			await router.replace(targetPath)
 		} catch (error) {
 			helperText.value = error?.message || '登录确认失败，请稍后重试。'
 		} finally {
@@ -195,6 +224,10 @@
 	function backToWelcome() {
 		router.push('/welcome')
 	}
+
+	onMounted(() => {
+		redirectByStoredProfile()
+	})
 </script>
 
 <style scoped lang="less">
