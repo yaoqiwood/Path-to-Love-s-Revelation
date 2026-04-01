@@ -10,8 +10,11 @@ if %errorlevel% neq 0 (
 
 echo Environment activated successfully.
 
-echo Setting APP_ENV to production...
-set APP_ENV=production
+if "%~1"=="" (
+    set APP_ENV=development
+) else (
+    set APP_ENV=%~1
+)
 
-echo Starting FastAPI Server in production mode (Uvicorn)...
-uvicorn main:app --host 0.0.0.0 --port 8011 --workers 4
+echo Starting FastAPI Server with APP_ENV=%APP_ENV% ...
+python -m uvicorn main:app --host 0.0.0.0 --port 8011 --workers 1
