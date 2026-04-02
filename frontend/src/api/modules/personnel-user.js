@@ -1749,11 +1749,7 @@ export const personnelUserService = {
 			async () =>
 				unwrapResponse(
 					await http.post(apiUrls.personnel.login(), {
-						passcode,
-						_id: personnelId,
-						person_id: personId,
-						name,
-						nickname
+						passcode
 					})
 				),
 			async () => {

@@ -1,13 +1,10 @@
 const explicitMockValue = String(import.meta.env.VITE_USE_MOCK || '')
   .trim()
   .toLowerCase()
-const apiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim()
 
-export const shouldUseMock =
-  explicitMockValue === 'true' ||
-  explicitMockValue === '1' ||
-  explicitMockValue === 'yes' ||
-  !apiBaseUrl
+const MOCK_ON_VALUES = new Set(['true', '1', 'yes', 'on'])
+
+export const shouldUseMock = MOCK_ON_VALUES.has(explicitMockValue)
 
 function hasMockHandler(mockHandler) {
   return typeof mockHandler !== 'undefined'
@@ -26,21 +23,9 @@ export async function withMockFallback(requestFactory, mockHandler, context = {}
     throw new TypeError('requestFactory must be a function')
   }
 
-  if (!hasMockHandler(mockHandler)) {
+  if (!hasMockHandler(mockHandler) || !shouldUseMock) {
     return requestFactory(context)
   }
 
-  if (shouldUseMock) {
-    return resolveMock(mockHandler, context)
-  }
-
-  try {
-    return await requestFactory(context)
-  } catch (error) {
-    console.warn('Remote request failed, fallback to mock data.', error)
-    return resolveMock(mockHandler, {
-      ...context,
-      error
-    })
-  }
+  return resolveMock(mockHandler, context)
 }

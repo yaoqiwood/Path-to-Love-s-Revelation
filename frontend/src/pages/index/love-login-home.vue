@@ -96,6 +96,7 @@
 	const isLookingUp = ref(false)
 	const isSubmitting = ref(false)
 	const isRedirecting = ref(false)
+	const hasLookupAttempted = ref(false)
 	const redirectModalVisible = ref(false)
 	const redirectCountdown = ref(3)
 	const redirectMessage = ref('检测到用户已登录')
@@ -108,7 +109,12 @@
 	const hasPasscode = computed(() => !!passcode.value)
 	const shouldShowHint = computed(() => hasPasscode.value)
 	const showNoMatch = computed(
-		() => hasPasscode.value && !isLookingUp.value && !matchedRecord.value && !isRedirecting.value
+		() =>
+			hasLookupAttempted.value &&
+			hasPasscode.value &&
+			!isLookingUp.value &&
+			!matchedRecord.value &&
+			!isRedirecting.value
 	)
 	const reviewStatusLabel = computed(() => {
 		const reviewStatus = matchedRecord.value?.review_status || ''
@@ -150,7 +156,8 @@
 		}
 
 		if (isAdminUserRole(userRole)) {
-			await showRoleMismatchModal()
+			// Do not interrupt page initialization for a cached account from another login entry.
+			// Role mismatch feedback should only appear after the user actively tries to log in here.
 			return
 		}
 
@@ -203,6 +210,7 @@
 		const nextValue = normalizePasscode(event?.target?.value)
 		passcode.value = nextValue
 		matchedRecord.value = null
+		hasLookupAttempted.value = false
 
 		if (!nextValue) {
 			helperText.value = '请输入口令进行匹配。'
@@ -219,6 +227,7 @@
 		}
 
 		const currentToken = ++lookupToken
+		hasLookupAttempted.value = true
 		isLookingUp.value = true
 		helperText.value = '正在匹配人员信息...'
 
@@ -231,7 +240,7 @@
 				return
 			}
 
-			matchedRecord.value = result?.record || null
+			matchedRecord.value = result?.matched ? result?.record || null : null
 			if (!matchedRecord.value) {
 				helperText.value = '未找到对应口令，请检查后重新输入。'
 			} else if (isAdminUserRole(matchedRecord.value.user_role)) {
@@ -273,11 +282,7 @@
 
 		try {
 			const result = await personnelUser.loginByPasscode({
-				passcode: passcode.value,
-				personnelId: matchedRecord.value._id,
-				personId: matchedRecord.value.person_id,
-				name: matchedRecord.value.name,
-				nickname: matchedRecord.value.nickname
+				passcode: passcode.value
 			})
 
 			applyPersonnelLoginSession({
