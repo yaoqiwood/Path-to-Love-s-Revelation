@@ -39,6 +39,11 @@ const routes = [
     component: () => import('@/pages/feed/mbti-test-session.vue')
   },
   {
+    path: '/api_tester',
+    alias: '/api-tester',
+    component: () => import('@/pages/tools/api-tester.vue')
+  },
+  {
     path: '/pkg/guide/hub',
     component: () => import('@/pages/guide/admin-navigation-hub.vue')
   },
@@ -69,12 +74,26 @@ const routes = [
   {
     path: '/pages/mbti-home/home',
     redirect: '/pages/index/login-home'
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/pages/system/not-found.vue')
   }
 ]
 
 const LOGIN_PAGE_PATH = '/pages/index/login-home'
 const ADMIN_LOGIN_PAGE_PATH = '/pages/index/admin-login-home'
-const PUBLIC_ROUTE_PATHS = new Set(['/', '/welcome', LOGIN_PAGE_PATH, ADMIN_LOGIN_PAGE_PATH])
+const API_TESTER_PATH = '/api_tester'
+const API_TESTER_ALIAS_PATH = '/api-tester'
+const PUBLIC_ROUTE_PATHS = new Set([
+  '/',
+  '/welcome',
+  LOGIN_PAGE_PATH,
+  ADMIN_LOGIN_PAGE_PATH,
+  API_TESTER_PATH,
+  API_TESTER_ALIAS_PATH
+])
 const LOGIN_PROFILE_COOKIE_KEY = 'mbtiPersonnelProfile'
 
 let authAlertVisible = false
@@ -128,6 +147,10 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const fallbackLoginPath = to.path.startsWith('/pkg/guide/') ? ADMIN_LOGIN_PAGE_PATH : LOGIN_PAGE_PATH
+
+  if (to.name === 'not-found') {
+    return true
+  }
 
   if (PUBLIC_ROUTE_PATHS.has(to.path)) {
     return true

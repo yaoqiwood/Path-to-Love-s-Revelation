@@ -3,7 +3,7 @@
     <div class="app-backdrop app-backdrop-left"></div>
     <div class="app-backdrop app-backdrop-right"></div>
 
-    <main class="phone-shell">
+    <main :class="['phone-shell', { 'is-desktop-expanded': isDesktopExpandedShell }]">
       <RouterView />
     </main>
 
@@ -54,9 +54,14 @@
 </template>
 
 <script setup>
-import { RouterView } from 'vue-router'
+import { computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 
 import { resolveModalAction, uiState } from '@/platform/ui-state'
+
+const route = useRoute()
+const expandedShellRoutes = new Set(['/api_tester', '/api-tester'])
+const isDesktopExpandedShell = computed(() => expandedShellRoutes.has(route.path))
 
 function handleModalAction(confirm) {
   resolveModalAction(confirm)
@@ -114,6 +119,15 @@ function handleModalAction(confirm) {
     0 28px 60px rgba(80, 54, 35, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(20px);
+}
+
+.phone-shell.is-desktop-expanded {
+  max-width: min(1440px, calc(100vw - 28px));
+  min-height: calc(100vh - 40px);
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .toast-stack {
@@ -243,6 +257,11 @@ function handleModalAction(confirm) {
     max-width: none;
     min-height: 100vh;
     border-radius: 0;
+  }
+
+  .phone-shell.is-desktop-expanded {
+    max-width: none;
+    min-height: 100vh;
   }
 }
 </style>

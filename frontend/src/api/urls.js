@@ -8,6 +8,9 @@ export const apiUrls = {
   files: {
     upload: () => withPrefix('/files/upload')
   },
+  users: {
+    login: () => withPrefix('/users/login')
+  },
   personnel: {
     systemConfig: () => withPrefix('/personnel/system-config'),
     loginProfiles: () => withPrefix('/personnel/login-profiles'),
