@@ -5,7 +5,8 @@ export const LOGIN_PROFILE_COOKIE_NAME = AUTH_STORAGE_KEYS.profile
 export const LOGIN_PROFILE_HOME_PATHS = {
   admin: '/pkg/guide/hub',
   user: '/pages/index/home',
-  login: '/pages/index/login-home'
+  login: '/pages/index/login-home',
+  adminLogin: '/pages/index/admin-login-home'
 }
 
 export function getLoginProfileFromCookie() {

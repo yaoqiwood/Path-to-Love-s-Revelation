@@ -23,6 +23,10 @@ const routes = [
     component: () => import('@/pages/index/love-login-home.vue')
   },
   {
+    path: '/pages/index/admin-login-home',
+    component: () => import('@/pages/index/admin-login-home.vue')
+  },
+  {
     path: '/pages/index/heart-priority-board',
     component: () => import('@/pages/index/heart-priority-board.vue')
   },
@@ -69,7 +73,8 @@ const routes = [
 ]
 
 const LOGIN_PAGE_PATH = '/pages/index/login-home'
-const PUBLIC_ROUTE_PATHS = new Set(['/', '/welcome', LOGIN_PAGE_PATH])
+const ADMIN_LOGIN_PAGE_PATH = '/pages/index/admin-login-home'
+const PUBLIC_ROUTE_PATHS = new Set(['/', '/welcome', LOGIN_PAGE_PATH, ADMIN_LOGIN_PAGE_PATH])
 const LOGIN_PROFILE_COOKIE_KEY = 'mbtiPersonnelProfile'
 
 let authAlertVisible = false
@@ -122,6 +127,8 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
+  const fallbackLoginPath = to.path.startsWith('/pkg/guide/') ? ADMIN_LOGIN_PAGE_PATH : LOGIN_PAGE_PATH
+
   if (PUBLIC_ROUTE_PATHS.has(to.path)) {
     return true
   }
@@ -132,7 +139,7 @@ router.beforeEach(async (to) => {
 
   if (authAlertVisible) {
     return {
-      path: LOGIN_PAGE_PATH,
+      path: fallbackLoginPath,
       replace: true
     }
   }
@@ -150,7 +157,7 @@ router.beforeEach(async (to) => {
   }
 
   return {
-    path: LOGIN_PAGE_PATH,
+    path: fallbackLoginPath,
     replace: true
   }
 })

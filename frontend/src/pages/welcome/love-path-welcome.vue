@@ -36,6 +36,9 @@
         <button class="hero-action-btn primary-btn" type="button" @click="enterLovePath">
           进入爱之路
         </button>
+        <button class="hero-action-btn secondary-btn" type="button" @click="enterAdminPath">
+          后台登录
+        </button>
       </div>
     </section>
   </section>
@@ -82,6 +85,10 @@ function orbitStyle(index) {
 
 function enterLovePath() {
   router.push('/pages/index/login-home')
+}
+
+function enterAdminPath() {
+  router.push('/pages/index/admin-login-home')
 }
 </script>
 
@@ -265,6 +272,9 @@ function enterLovePath() {
 
 .hero-actions {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   justify-content: center;
   margin-top: 146px;
 }
@@ -289,6 +299,12 @@ function enterLovePath() {
   background: linear-gradient(135deg, #2f2a47 0%, #5b4c88 55%, #7b5f83 100%);
   color: #fff9f0;
   box-shadow: 0 20px 36px rgba(77, 62, 109, 0.26);
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.76);
+  color: #4e3d37;
+  border: 1px solid rgba(94, 68, 54, 0.12);
 }
 
 .hero-action-btn:hover {
