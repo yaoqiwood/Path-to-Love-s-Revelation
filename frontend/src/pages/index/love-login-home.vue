@@ -74,8 +74,8 @@
 
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
 	import { app } from '@/platform/app-bridge'
-	import { applyMockPersonnelLogin } from '@/platform/mock-presets'
 	import {
+		applyPersonnelLoginSession,
 		getLoginProfileUserRole,
 		isAdminUserRole,
 		LOGIN_PROFILE_HOME_PATHS,
@@ -272,9 +272,20 @@
 		isSubmitting.value = true
 
 		try {
-			applyMockPersonnelLogin({
-				...matchedRecord.value
+			const result = await personnelUser.loginByPasscode({
+				passcode: passcode.value,
+				personnelId: matchedRecord.value._id,
+				personId: matchedRecord.value.person_id,
+				name: matchedRecord.value.name,
+				nickname: matchedRecord.value.nickname
 			})
+
+			applyPersonnelLoginSession({
+				profile: result?.profile || matchedRecord.value,
+				accessToken: result?.access_token || '',
+				tokenType: result?.token_type || 'bearer'
+			})
+
 			await router.replace(LOGIN_PROFILE_HOME_PATHS.user)
 		} catch (error) {
 			helperText.value = error?.message || '登录确认失败，请稍后重试。'

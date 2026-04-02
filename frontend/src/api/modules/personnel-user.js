@@ -1330,6 +1330,8 @@ function buildLoginProfileRecord(record = {}) {
 		passcode: normalizeText(record.passcode),
 		review_status: normalizeText(record.review_status) || 'pending',
 		user_role: toNumber(record.user_role),
+		personal_photo: normalizeText(record.personal_photo),
+		user_id: normalizeText(record.user_id),
 		submitted_at: record.submitted_at || '',
 		updated_at: record.updated_at || ''
 	}
@@ -1731,6 +1733,59 @@ export const personnelUserService = {
 				return {
 					matched: !!record,
 					record: record ? buildLoginProfileRecord(record) : null
+				}
+			}
+		)
+	},
+
+	async loginByPasscode({
+		passcode = '',
+		personnelId = '',
+		personId = 0,
+		name = '',
+		nickname = ''
+	} = {}) {
+		return withMockFallback(
+			async () =>
+				unwrapResponse(
+					await http.post(apiUrls.personnel.login(), {
+						passcode,
+						_id: personnelId,
+						person_id: personId,
+						name,
+						nickname
+					})
+				),
+			async () => {
+				const record = findPersonnelByPasscode(passcode)
+				if (!record) {
+					throw new Error('未找到对应口令，请检查后重新输入。')
+				}
+
+				if (normalizeText(personnelId) && normalizeText(personnelId) !== normalizeText(record._id)) {
+					throw new Error('人员身份确认失败，请重新匹配。')
+				}
+
+				if (toNumber(personId) && toNumber(personId) !== toNumber(record.person_id)) {
+					throw new Error('人员编号校验失败，请重新匹配。')
+				}
+
+				if (normalizeText(name) && normalizeText(name) !== normalizeText(record.name)) {
+					throw new Error('姓名校验失败，请重新匹配。')
+				}
+
+				if (normalizeText(nickname) && normalizeText(nickname) !== normalizeText(record.nickname)) {
+					throw new Error('昵称校验失败，请重新匹配。')
+				}
+
+				if (normalizeText(record.review_status) !== 'approved') {
+					throw new Error('当前人员档案未通过审核')
+				}
+
+				return {
+					access_token: `mock-token-${record.user_id || record._id || 'guest'}`,
+					token_type: 'bearer',
+					profile: buildLoginProfileRecord(record)
 				}
 			}
 		)

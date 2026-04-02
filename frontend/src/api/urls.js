@@ -12,6 +12,7 @@ export const apiUrls = {
     systemConfig: () => withPrefix('/personnel/system-config'),
     loginProfiles: () => withPrefix('/personnel/login-profiles'),
     loginProfile: () => withPrefix('/personnel/login-profile'),
+    login: () => withPrefix('/personnel/login'),
     searchNames: () => withPrefix('/personnel/search-names'),
     list: () => withPrefix('/personnel/list'),
     create: () => withPrefix('/personnel'),
