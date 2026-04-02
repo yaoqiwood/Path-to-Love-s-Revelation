@@ -73,6 +73,7 @@
 	import { useRouter } from 'vue-router'
 
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
+	import { app } from '@/platform/app-bridge'
 	import { applyMockPersonnelLogin } from '@/platform/mock-presets'
 	import {
 		getLoginProfileUserRole,
@@ -131,6 +132,16 @@
 		return profile && typeof profile === 'object' ? profile : null
 	}
 
+	async function showRoleMismatchModal() {
+		helperText.value = roleMismatchText
+		await app.showModal({
+			title: '提示',
+			content: roleMismatchText,
+			showCancel: false,
+			confirmText: '确认'
+		})
+	}
+
 	async function redirectByStoredProfile() {
 		const verifiedProfile = await verifyStoredProfile(getLoginProfileFromCookie())
 		const userRole = getLoginProfileUserRole(verifiedProfile)
@@ -139,7 +150,7 @@
 		}
 
 		if (isAdminUserRole(userRole)) {
-			helperText.value = roleMismatchText
+			await showRoleMismatchModal()
 			return
 		}
 
@@ -224,7 +235,7 @@
 			if (!matchedRecord.value) {
 				helperText.value = '未找到对应口令，请检查后重新输入。'
 			} else if (isAdminUserRole(matchedRecord.value.user_role)) {
-				helperText.value = roleMismatchText
+				await showRoleMismatchModal()
 			} else {
 				helperText.value = '已匹配到人员信息，请确认姓名后继续。'
 			}
@@ -254,7 +265,7 @@
 		}
 
 		if (isAdminUserRole(matchedRecord.value.user_role)) {
-			helperText.value = roleMismatchText
+			await showRoleMismatchModal()
 			return
 		}
 
