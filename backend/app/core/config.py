@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     @property
     def MYSQL_DATABASE_URL(self) -> str:
-        url = f"mysql+aiomysql://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}"
+        url = f"mysql+aiomysql://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}?charset=utf8mb4"
         print(f"MYSQL_DATABASE_URL: {url}")
         return url
 

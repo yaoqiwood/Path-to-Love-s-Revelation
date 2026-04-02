@@ -20,6 +20,7 @@ from app.core.exceptions import (
 from app.api.endpoints import (
     users_router,
     configs_router,
+    personnel_router,
     menus_router,
     roles_router,
     system_logs_router,
@@ -131,6 +132,12 @@ async def add_cors_headers_for_preview(request: Request, call_next):
 
 app.include_router(
     users_router, prefix=f"{settings.API_PREFIX}/users", tags=["用户管理"]
+)
+
+app.include_router(
+    personnel_router,
+    prefix=f"{settings.API_PREFIX}/personnel",
+    tags=["人员档案"],
 )
 
 app.include_router(
