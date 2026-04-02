@@ -148,6 +148,42 @@ class PersonnelResponse(PersonnelSchemaBase):
     remark: str = ""
 
 
+class PersonnelLoginProfile(PersonnelSchemaBase):
+    id: str = Field(serialization_alias="_id")
+    person_id: int
+    nickname: str
+    name: str
+    passcode: str
+    review_status: str
+    user_role: int
+    personal_photo: str
+    user_id: str
+    submitted_at: str
+    updated_at: str
+
+
+class PersonnelLoginProfileResponse(PersonnelSchemaBase):
+    matched: bool
+    record: Optional[PersonnelLoginProfile] = None
+
+
+class PersonnelLoginConfirm(PersonnelSchemaBase):
+    passcode: str
+    personnel_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("_id", "personnel_id", "id"),
+    )
+    person_id: Optional[int] = None
+    name: Optional[str] = None
+    nickname: Optional[str] = None
+
+
+class PersonnelLoginTokenResponse(PersonnelSchemaBase):
+    access_token: str
+    token_type: str = "bearer"
+    profile: PersonnelLoginProfile
+
+
 class PersonnelListStats(PersonnelSchemaBase):
     total: int
     pending: int

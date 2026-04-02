@@ -5,10 +5,15 @@ from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.security import create_access_token
 from app.models.personnel_user import PersonnelUser
 from app.repository import PersonnelUserRepository
 from app.schemas.personnel_schema import (
     PersonnelCreate,
+    PersonnelLoginConfirm,
+    PersonnelLoginProfile,
+    PersonnelLoginProfileResponse,
+    PersonnelLoginTokenResponse,
     PersonnelListResponse,
     PersonnelListStats,
     PersonnelResponse,
@@ -26,6 +31,7 @@ def now_iso_text() -> str:
 
 class PersonnelUserService:
     def __init__(self, db: AsyncSession):
+        self.db = db
         self.repo = PersonnelUserRepository(db)
 
     async def list_personnel(
@@ -57,6 +63,45 @@ class PersonnelUserService:
         if not personnel:
             raise HTTPException(status_code=404, detail="人员档案不存在")
         return PersonnelResponse.model_validate(personnel)
+
+    async def get_login_profile_by_passcode(
+        self, passcode: str
+    ) -> PersonnelLoginProfileResponse:
+        personnel = await self._get_active_personnel_by_passcode(passcode)
+        if not personnel:
+            return PersonnelLoginProfileResponse(matched=False, record=None)
+
+        return PersonnelLoginProfileResponse(
+            matched=True,
+            record=self._build_login_profile(personnel),
+        )
+
+    async def login_by_passcode(
+        self, data: PersonnelLoginConfirm, client_ip: str = ""
+    ) -> PersonnelLoginTokenResponse:
+        personnel = await self._get_active_personnel_by_passcode(data.passcode)
+        if not personnel:
+            raise HTTPException(status_code=404, detail="未找到对应口令的人员档案")
+
+        self._validate_login_identity(personnel, data)
+
+        if personnel.review_status != "approved":
+            raise HTTPException(status_code=403, detail="当前人员档案未通过审核")
+
+        token_subject = (personnel.user_id or "").strip() or personnel.id
+        access_token = create_access_token(
+            data={
+                "sub": str(token_subject),
+                "username": personnel.nickname or personnel.name,
+                "personnel_id": personnel.id,
+            }
+        )
+
+        return PersonnelLoginTokenResponse(
+            access_token=access_token,
+            token_type="bearer",
+            profile=self._build_login_profile(personnel),
+        )
 
     async def create_personnel(self, data: PersonnelCreate) -> PersonnelResponse:
         payload = data.model_dump(exclude_unset=True)
@@ -239,6 +284,36 @@ class PersonnelUserService:
         existing = await self.repo.get_by_passcode(passcode)
         if existing and existing.id != current_id:
             raise HTTPException(status_code=400, detail="邀请码已存在")
+
+    async def _get_active_personnel_by_passcode(
+        self, passcode: str
+    ) -> Optional[PersonnelUser]:
+        normalized_passcode = (passcode or "").strip().upper()
+        if not normalized_passcode:
+            raise HTTPException(status_code=400, detail="口令不能为空")
+
+        personnel = await self.repo.get_by_passcode(normalized_passcode)
+        if not personnel or personnel.is_deleted:
+            return None
+        return personnel
+
+    def _build_login_profile(self, personnel: PersonnelUser) -> PersonnelLoginProfile:
+        return PersonnelLoginProfile.model_validate(personnel)
+
+    def _validate_login_identity(
+        self, personnel: PersonnelUser, data: PersonnelLoginConfirm
+    ) -> None:
+        if data.personnel_id and data.personnel_id != personnel.id:
+            raise HTTPException(status_code=400, detail="人员身份确认失败，请重新匹配")
+
+        if data.person_id is not None and data.person_id != personnel.person_id:
+            raise HTTPException(status_code=400, detail="人员编号校验失败，请重新匹配")
+
+        if data.name and data.name.strip() != (personnel.name or "").strip():
+            raise HTTPException(status_code=400, detail="姓名校验失败，请重新匹配")
+
+        if data.nickname and data.nickname.strip() != (personnel.nickname or "").strip():
+            raise HTTPException(status_code=400, detail="昵称校验失败，请重新匹配")
 
 
 async def get_personnel_user_service(

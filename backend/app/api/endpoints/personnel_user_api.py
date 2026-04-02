@@ -6,6 +6,9 @@ from app.api.deps import CurrentSuperUser, CurrentUser
 from app.core.log_decorator import log_operate
 from app.schemas.personnel_schema import (
     PersonnelCreate,
+    PersonnelLoginConfirm,
+    PersonnelLoginProfileResponse,
+    PersonnelLoginTokenResponse,
     PersonnelListResponse,
     PersonnelResponse,
     PersonnelUpdate,
@@ -13,6 +16,40 @@ from app.schemas.personnel_schema import (
 from app.services import PersonnelUserServiceDep
 
 router = APIRouter()
+
+
+@router.get("/login-profile", response_model=PersonnelLoginProfileResponse)
+async def get_login_profile_by_passcode(
+    service: PersonnelUserServiceDep,
+    passcode: str = Query(..., description="登录口令", examples=["LOVE201"]),
+):
+    """根据口令匹配人员档案，用于前端二次确认"""
+    return await service.get_login_profile_by_passcode(passcode)
+
+
+@router.post("/login", response_model=PersonnelLoginTokenResponse)
+async def login_by_passcode(
+    request: Request,
+    service: PersonnelUserServiceDep,
+    data: PersonnelLoginConfirm = Body(
+        ...,
+        openapi_examples={
+            "confirm": {
+                "summary": "口令确认登录",
+                "value": {
+                    "passcode": "LOVE201",
+                    "_id": "personnel-201",
+                    "person_id": 201,
+                    "name": "王弟兄",
+                    "nickname": "同工小王",
+                },
+            }
+        },
+    ),
+):
+    """根据口令和前端确认的基础信息签发登录 token"""
+    client_ip = request.client.host if request.client else ""
+    return await service.login_by_passcode(data, client_ip=client_ip)
 
 
 @router.get("/list", response_model=PersonnelListResponse)
