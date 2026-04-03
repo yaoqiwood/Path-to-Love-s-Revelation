@@ -2,6 +2,7 @@ import { getAppRouter } from '@/router/holder'
 import { rememberSelectedFile } from '@/platform/file-registry'
 import { hideLoading, openModal, pushToast, showLoading } from '@/platform/ui-state'
 import { getAuthStorageValue, isAuthStorageKey, removeAuthStorageValue, setAuthStorageValue } from '@/platform/auth-storage'
+import { readLocalStorage, removeLocalStorage, writeLocalStorage } from '@/utils/local-storage'
 
 function normalizePath(url = '/') {
   const value = String(url || '').trim()
@@ -14,18 +15,6 @@ function ensureRouter() {
     throw new Error('Router has not been registered yet.')
   }
   return router
-}
-
-function parseStoredValue(rawValue) {
-  if (rawValue == null) {
-    return ''
-  }
-
-  try {
-    return JSON.parse(rawValue)
-  } catch (error) {
-    return rawValue
-  }
 }
 
 function openFileDialog({ accept = '*/*', multiple = false, onResolve, onReject }) {
@@ -187,7 +176,7 @@ export function createUniBridge() {
         return
       }
 
-      localStorage.setItem(normalizedKey, JSON.stringify(value))
+      writeLocalStorage(normalizedKey, value)
     },
     getStorageSync(key) {
       const normalizedKey = String(key)
@@ -195,7 +184,7 @@ export function createUniBridge() {
         return getAuthStorageValue(normalizedKey)
       }
 
-      return parseStoredValue(localStorage.getItem(normalizedKey))
+      return readLocalStorage(normalizedKey)
     },
     removeStorageSync(key) {
       const normalizedKey = String(key)
@@ -204,7 +193,7 @@ export function createUniBridge() {
         return
       }
 
-      localStorage.removeItem(normalizedKey)
+      removeLocalStorage(normalizedKey)
     },
     chooseImage(options = {}) {
       return new Promise((resolve, reject) => {

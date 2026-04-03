@@ -63,23 +63,28 @@
 <script setup>
 import { computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { app } from '@/platform/app-bridge'
-
-const PROFILE_KEY = 'mbtiPersonnelProfile'
+import { getLoginProfileFromStorage } from '@/utils/login-cookie'
 
 const router = useRouter()
 const profile = reactive(getStoredProfile())
 
-const displayName = computed(() => profile.nickname || profile.name || '爱的来宾')
-const mbtiStatus = computed(() => (String(profile.mbti || '').trim() ? profile.mbti : '未完成测试'))
+const displayName = computed(() => {
+  const nickname = String(profile.nickname || '').trim()
+  const name = String(profile.name || '').trim()
+  return nickname || name || '爱的来宾'
+})
+const mbtiStatus = computed(() => {
+  const mbti = String(profile.mbti || '').trim()
+  if (mbti) {
+    return mbti
+  }
+
+  const relationshipStatus = String(profile.relationship_status || '').trim()
+  return relationshipStatus || '未完成测试'
+})
 
 function getStoredProfile() {
-  try {
-    const storedProfile = app.getStorageSync(PROFILE_KEY)
-    return storedProfile && typeof storedProfile === 'object' ? storedProfile : {}
-  } catch (error) {
-    return {}
-  }
+  return getLoginProfileFromStorage() || {}
 }
 
 function goMbtiTest() {

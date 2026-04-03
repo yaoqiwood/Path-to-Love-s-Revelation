@@ -1,5 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { app } from '@/platform/app-bridge'
+import {
+  ADMIN_LOGIN_PATH,
+  USER_LOGIN_PATH,
+  consumePostLoginHandoff,
+  resolveLoginPathByRoutePath,
+  validateStoredToken
+} from '@/utils/auth-guard'
 
 const routes = [
   {
@@ -82,52 +89,15 @@ const routes = [
   }
 ]
 
-const LOGIN_PAGE_PATH = '/pages/index/login-home'
-const ADMIN_LOGIN_PAGE_PATH = '/pages/index/admin-login-home'
-const API_TESTER_PATH = '/api_tester'
-const API_TESTER_ALIAS_PATH = '/api-tester'
 const PUBLIC_ROUTE_PATHS = new Set([
   '/',
   '/welcome',
-  LOGIN_PAGE_PATH,
-  ADMIN_LOGIN_PAGE_PATH,
-  API_TESTER_PATH,
-  API_TESTER_ALIAS_PATH
+  USER_LOGIN_PATH,
+  ADMIN_LOGIN_PATH
 ])
-const LOGIN_PROFILE_COOKIE_KEY = 'mbtiPersonnelProfile'
 
 let authAlertVisible = false
-
-function readCookieRaw(name) {
-  if (typeof document === 'undefined') {
-    return ''
-  }
-
-  const prefix = `${encodeURIComponent(String(name))}=`
-  const segments = String(document.cookie || '').split(';')
-  for (let index = 0; index < segments.length; index += 1) {
-    const item = segments[index].trim()
-    if (item.startsWith(prefix)) {
-      return decodeURIComponent(item.slice(prefix.length))
-    }
-  }
-
-  return ''
-}
-
-function hasLoginProfileCookie() {
-  const rawValue = readCookieRaw(LOGIN_PROFILE_COOKIE_KEY)
-  if (!rawValue) {
-    return false
-  }
-
-  try {
-    const profile = JSON.parse(rawValue)
-    return !!(profile && typeof profile === 'object' && (profile._id || profile.id || profile.personnel_id))
-  } catch (error) {
-    return false
-  }
-}
+let authCheckErrorVisible = false
 
 const router = createRouter({
   history: createWebHistory(),
@@ -146,7 +116,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  const fallbackLoginPath = to.path.startsWith('/pkg/guide/') ? ADMIN_LOGIN_PAGE_PATH : LOGIN_PAGE_PATH
+  const fallbackLoginPath = resolveLoginPathByRoutePath(to.path)
 
   if (to.name === 'not-found') {
     return true
@@ -156,8 +126,33 @@ router.beforeEach(async (to) => {
     return true
   }
 
-  if (hasLoginProfileCookie()) {
+  if (consumePostLoginHandoff(to.path)) {
     return true
+  }
+
+  try {
+    const validatedUser = await validateStoredToken()
+    if (validatedUser) {
+      return true
+    }
+  } catch (error) {
+    if (authCheckErrorVisible) {
+      return false
+    }
+
+    authCheckErrorVisible = true
+    try {
+      await app.showModal({
+        title: '提示',
+        content: error?.message || '登录状态校验失败，请稍后重试。',
+        showCancel: false,
+        confirmText: '确定'
+      })
+    } finally {
+      authCheckErrorVisible = false
+    }
+
+    return false
   }
 
   if (authAlertVisible) {
@@ -171,7 +166,7 @@ router.beforeEach(async (to) => {
   try {
     await app.showModal({
       title: '提示',
-      content: '未检测到用户信息，请先登录。',
+      content: '登录状态已失效，请重新登录。',
       showCancel: false,
       confirmText: '确定'
     })

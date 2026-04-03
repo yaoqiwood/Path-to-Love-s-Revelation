@@ -2,6 +2,7 @@ import { http, unwrapResponse } from '@/api/http'
 import { withMockFallback } from '@/api/mockService'
 import { apiUrls } from '@/api/urls'
 import { getAuthStorageValue, AUTH_STORAGE_KEYS } from '@/platform/auth-storage'
+import { readLocalStorage, writeLocalStorage } from '@/utils/local-storage'
 
 const STORAGE_KEYS = {
 	personnel: 'mock-db-personnel',
@@ -242,21 +243,18 @@ function clone(value) {
 }
 
 function safeReadStorage(key, fallback) {
-	const rawValue = localStorage.getItem(key)
-	if (!rawValue) {
-		return clone(fallback)
-	}
-
-	try {
-		return JSON.parse(rawValue)
-	} catch (error) {
-		console.warn(`Failed to parse storage key ${key}.`, error)
-		return clone(fallback)
-	}
+	return readLocalStorage(key, {
+		fallback,
+		preserveRaw: false,
+		treatEmptyAsMissing: true,
+		onError(error) {
+			console.warn(`Failed to parse storage key ${key}.`, error)
+		}
+	})
 }
 
 function safeWriteStorage(key, value) {
-	localStorage.setItem(key, JSON.stringify(value))
+	writeLocalStorage(key, value)
 }
 
 function nowText() {
@@ -1327,6 +1325,7 @@ function buildLoginProfileRecord(record = {}) {
 		person_id: toNumber(record.person_id),
 		nickname: normalizeText(record.nickname),
 		name: normalizeText(record.name),
+		mbti: normalizeUpper(record.mbti),
 		passcode: normalizeText(record.passcode),
 		review_status: normalizeText(record.review_status) || 'pending',
 		user_role: toNumber(record.user_role),

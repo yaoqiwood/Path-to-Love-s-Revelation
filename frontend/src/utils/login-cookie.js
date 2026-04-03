@@ -5,6 +5,7 @@ import {
 } from '@/platform/auth-storage'
 
 export const LOGIN_PROFILE_COOKIE_NAME = AUTH_STORAGE_KEYS.profile
+export const LOGIN_PROFILE_STORAGE_NAME = AUTH_STORAGE_KEYS.profile
 
 export const LOGIN_PROFILE_HOME_PATHS = {
   admin: '/pkg/guide/hub',
@@ -15,6 +16,11 @@ export const LOGIN_PROFILE_HOME_PATHS = {
 
 export function getLoginProfileFromCookie() {
   const profile = getAuthStorageValue(LOGIN_PROFILE_COOKIE_NAME)
+  return profile && typeof profile === 'object' ? profile : null
+}
+
+export function getLoginProfileFromStorage() {
+  const profile = getAuthStorageValue(LOGIN_PROFILE_STORAGE_NAME)
   return profile && typeof profile === 'object' ? profile : null
 }
 
@@ -45,12 +51,25 @@ function resolveTokenExpiredAt(token) {
 }
 
 function buildStoredProfile(profile = {}) {
+  const age = Number(profile.age)
+  const privateMessageQuota = Number(profile.private_message_quota)
+  const heartMessageQuota = Number(profile.heart_message_quota)
+  const remainingHeartValue = Number(profile.remaining_heart_value)
+
   return {
     ...profile,
     id: profile._id || profile.id || '',
     personnel_id: profile._id || profile.personnel_id || profile.id || '',
     person_id: Number(profile.person_id) || 0,
+    age: Number.isFinite(age) && age > 0 ? age : 0,
     user_role: Number(profile.user_role) || 0,
+    private_message_quota:
+      Number.isFinite(privateMessageQuota) && privateMessageQuota >= 0 ? privateMessageQuota : 0,
+    heart_message_quota:
+      Number.isFinite(heartMessageQuota) && heartMessageQuota >= 0 ? heartMessageQuota : 0,
+    remaining_heart_value:
+      Number.isFinite(remainingHeartValue) && remainingHeartValue >= 0 ? remainingHeartValue : 0,
+    is_deleted: Boolean(profile.is_deleted),
     cached_at: Date.now()
   }
 }
@@ -66,7 +85,11 @@ function buildStoredSession({ profile = {}, accessToken = '', tokenType = 'beare
     tokenExpired: resolveTokenExpiredAt(accessToken),
     userInfo: {
       _id: uid,
+      person_id: Number(profile.person_id) || 0,
+      name: profile.name || '',
       nickname: profile.nickname || profile.name || '',
+      gender: profile.gender || '',
+      mbti: profile.mbti || '',
       avatar,
       avatar_file: avatar
     }
@@ -104,6 +127,10 @@ export function hasLoginProfileCookie(profile) {
       profile.id ||
       profile.personnel_id)
   )
+}
+
+export function hasLoginProfileStorage(profile) {
+  return hasLoginProfileCookie(profile)
 }
 
 export function isAdminUserRole(roleValue) {

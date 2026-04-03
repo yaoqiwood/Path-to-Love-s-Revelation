@@ -21,7 +21,7 @@
 import { app } from '@/platform/app-bridge'
 import {
 	LOGIN_PROFILE_HOME_PATHS,
-	getLoginProfileFromCookie,
+	getLoginProfileFromStorage,
 	resolveHomePathByLoginProfile
 } from '@/utils/login-cookie'
 
@@ -45,7 +45,7 @@ export default {
 			}
 		},
 		async routeByLoginProfile() {
-			const targetUrl = resolveHomePathByLoginProfile(getLoginProfileFromCookie())
+			const targetUrl = resolveHomePathByLoginProfile(getLoginProfileFromStorage())
 			this.updateLoadingText(targetUrl)
 
 			setTimeout(() => {

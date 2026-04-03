@@ -74,13 +74,14 @@
 
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
 	import { app } from '@/platform/app-bridge'
+	import { markPostLoginHandoff, validateStoredToken } from '@/utils/auth-guard'
 	import {
 		applyPersonnelLoginSession,
 		getLoginProfileUserRole,
 		isAdminUserRole,
 		LOGIN_PROFILE_HOME_PATHS,
-		getLoginProfileFromCookie,
-		hasLoginProfileCookie
+		getLoginProfileFromStorage,
+		hasLoginProfileStorage
 	} from '@/utils/login-cookie'
 
 	const router = useRouter()
@@ -134,8 +135,20 @@
 	})
 
 	async function verifyStoredProfile(profile) {
-		// Reserved for future backend verification before redirecting by cached login state.
-		return profile && typeof profile === 'object' ? profile : null
+		if (!hasLoginProfileStorage(profile)) {
+			return null
+		}
+
+		try {
+			const validatedUser = await validateStoredToken()
+			if (!validatedUser) {
+				return null
+			}
+
+			return getLoginProfileFromStorage()
+		} catch (error) {
+			return null
+		}
 	}
 
 	async function showRoleMismatchModal() {
@@ -149,9 +162,9 @@
 	}
 
 	async function redirectByStoredProfile() {
-		const verifiedProfile = await verifyStoredProfile(getLoginProfileFromCookie())
+		const verifiedProfile = await verifyStoredProfile(getLoginProfileFromStorage())
 		const userRole = getLoginProfileUserRole(verifiedProfile)
-		if (!hasLoginProfileCookie(verifiedProfile) || userRole == null) {
+		if (!hasLoginProfileStorage(verifiedProfile) || userRole == null) {
 			return
 		}
 
@@ -290,6 +303,7 @@
 				accessToken: result?.access_token || '',
 				tokenType: result?.token_type || 'bearer'
 			})
+			markPostLoginHandoff(LOGIN_PROFILE_HOME_PATHS.user)
 
 			await router.replace(LOGIN_PROFILE_HOME_PATHS.user)
 		} catch (error) {

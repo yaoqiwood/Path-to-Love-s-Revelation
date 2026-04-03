@@ -1,9 +1,19 @@
+import {
+  readLocalStorage,
+  removeLocalStorage,
+  writeLocalStorage
+} from '@/utils/local-storage'
+
 export const AUTH_STORAGE_KEYS = {
   profile: 'mbtiPersonnelProfile',
   session: 'app-auth-session'
 }
 
 const COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
+const AUTH_STORAGE_STRATEGIES = {
+  [AUTH_STORAGE_KEYS.profile]: 'localStorage',
+  [AUTH_STORAGE_KEYS.session]: 'cookie'
+}
 
 function safeParse(rawValue) {
   if (rawValue == null || rawValue === '') {
@@ -65,19 +75,43 @@ export function isAuthStorageKey(key) {
   return normalizedKey === AUTH_STORAGE_KEYS.profile || normalizedKey === AUTH_STORAGE_KEYS.session
 }
 
+function getAuthStorageStrategy(key) {
+  return AUTH_STORAGE_STRATEGIES[String(key)] || 'cookie'
+}
+
+function readLocalAuthStorageRaw(key) {
+  try {
+    return localStorage.getItem(String(key))
+  } catch (error) {
+    return null
+  }
+}
+
 export function setAuthStorageValue(key, value) {
   if (!isAuthStorageKey(key)) {
     return false
   }
 
   const normalizedKey = String(key)
-  writeCookieRaw(normalizedKey, safeStringify(value))
+  const storageStrategy = getAuthStorageStrategy(normalizedKey)
+  const rawValue = safeStringify(value)
 
-  try {
-    localStorage.removeItem(normalizedKey)
-  } catch (error) {
-    // Keep silent to avoid blocking login flow when storage is unavailable.
+  if (storageStrategy === 'localStorage') {
+    writeLocalStorage(normalizedKey, value, {
+      onError() {
+        // Keep silent to avoid blocking login flow when storage is unavailable.
+      }
+    })
+    removeCookie(normalizedKey)
+    return true
   }
+
+  writeCookieRaw(normalizedKey, rawValue)
+  removeLocalStorage(normalizedKey, {
+    onError() {
+      // Keep silent to avoid blocking login flow when storage is unavailable.
+    }
+  })
 
   return true
 }
@@ -88,16 +122,34 @@ export function getAuthStorageValue(key) {
   }
 
   const normalizedKey = String(key)
+  const storageStrategy = getAuthStorageStrategy(normalizedKey)
+
+  if (storageStrategy === 'localStorage') {
+    const localValue = readLocalAuthStorageRaw(normalizedKey)
+    if (localValue != null) {
+      return safeParse(localValue)
+    }
+
+    const legacyCookieValue = readCookieRaw(normalizedKey)
+    if (legacyCookieValue != null) {
+      writeLocalStorage(normalizedKey, safeParse(legacyCookieValue), {
+        onError() {
+          // Ignore migration failures and keep returning the legacy value.
+        }
+      })
+      removeCookie(normalizedKey)
+      return safeParse(legacyCookieValue)
+    }
+
+    return ''
+  }
+
   const cookieValue = readCookieRaw(normalizedKey)
   if (cookieValue != null) {
     return safeParse(cookieValue)
   }
 
-  try {
-    return safeParse(localStorage.getItem(normalizedKey))
-  } catch (error) {
-    return ''
-  }
+  return readLocalStorage(normalizedKey)
 }
 
 export function removeAuthStorageValue(key) {
@@ -107,12 +159,7 @@ export function removeAuthStorageValue(key) {
 
   const normalizedKey = String(key)
   removeCookie(normalizedKey)
-
-  try {
-    localStorage.removeItem(normalizedKey)
-  } catch (error) {
-    // Ignore localStorage removal failures.
-  }
+  removeLocalStorage(normalizedKey)
 
   return true
 }

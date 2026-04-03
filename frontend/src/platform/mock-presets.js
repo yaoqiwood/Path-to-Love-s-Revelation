@@ -4,6 +4,11 @@ import {
   removeAuthStorageValue,
   setAuthStorageValue
 } from '@/platform/auth-storage'
+import {
+  hasLocalStorageKey,
+  removeLocalStorage,
+  writeLocalStorage
+} from '@/utils/local-storage'
 
 const PROFILE_KEY = AUTH_STORAGE_KEYS.profile
 const SESSION_KEY = AUTH_STORAGE_KEYS.session
@@ -47,7 +52,7 @@ function writeJson(key, value) {
     return
   }
 
-  localStorage.setItem(key, JSON.stringify(value))
+  writeLocalStorage(key, value)
 }
 
 function removeStoredValue(key) {
@@ -55,15 +60,11 @@ function removeStoredValue(key) {
     return
   }
 
-  localStorage.removeItem(key)
+  removeLocalStorage(key)
 }
 
 function clearLegacyUserStorage() {
-  try {
-    localStorage.removeItem(LEGACY_USER_KEY)
-  } catch (error) {
-    // Ignore localStorage cleanup failures for deprecated keys.
-  }
+  removeLocalStorage(LEGACY_USER_KEY)
 
   if (typeof document !== 'undefined') {
     document.cookie = `${encodeURIComponent(LEGACY_USER_KEY)}=; Path=/; Max-Age=0; SameSite=Lax`
@@ -71,7 +72,7 @@ function clearLegacyUserStorage() {
 }
 
 export function ensureMockBootstrap() {
-  if (!localStorage.getItem(SYSTEM_CONFIG_KEY)) {
+  if (!hasLocalStorageKey(SYSTEM_CONFIG_KEY)) {
     writeJson(SYSTEM_CONFIG_KEY, {
       helper_page_review_mode: true,
       enable_heart_chat_page: true
