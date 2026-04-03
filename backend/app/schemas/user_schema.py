@@ -1,6 +1,6 @@
-from typing import Optional, List
+from typing import Literal, Optional, List
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # ==================== Common Schemas ====================
@@ -175,6 +175,13 @@ class UserInfoResponse(BaseModel):
     user: UserResponse
     roles: List[str]
     perms: List[str]
+
+
+class TokenPermissionResponse(BaseModel):
+    user_type: Literal["personnel_user", "system_user"]
+    user_role: int = Field(
+        description="用户权限枚举: 0=普通用户, 1=同工, 2=管理员, 3=超级管理员"
+    )
 
 
 class RouterMeta(BaseModel):

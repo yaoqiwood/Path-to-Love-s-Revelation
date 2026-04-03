@@ -27,6 +27,20 @@ class TokenData(BaseModel):
 
     user_id: Optional[int] = None
     username: Optional[str] = None
+    subject: Optional[str] = None
+    personnel_id: Optional[str] = None
+
+
+def decode_token_payload(token: str) -> Optional[dict]:
+    """解码原始令牌载荷"""
+    try:
+        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError as e:
+        print(f"JWT decode error: {e}")
+        return None
+    except Exception as e:
+        print(f"Token decode error: {e}")
+        return None
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -65,26 +79,36 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def decode_token(token: str) -> Optional[TokenData]:
     """解码和验证令牌"""
+    payload = decode_token_payload(token)
+    if payload is None:
+        return None
+
+    sub = payload.get("sub")
+    username: str = payload.get("username")
+
+    if sub is None:
+        return None
+
+    subject = str(sub).strip()
+    if not subject:
+        return None
+
+    user_id: Optional[int] = None
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        sub = payload.get("sub")
-        username: str = payload.get("username")
+        user_id = int(subject)
+    except (TypeError, ValueError):
+        user_id = None
 
-        if sub is None:
-            return None
+    personnel_id = payload.get("personnel_id")
+    if personnel_id is not None:
+        personnel_id = str(personnel_id).strip() or None
 
-        # 确保 user_id 是整数
-        user_id = int(sub) if isinstance(sub, str) else sub
-
-        return TokenData(user_id=user_id, username=username)
-    except JWTError as e:
-        print(f"JWT decode error: {e}")
-        return None
-    except Exception as e:
-        print(f"Token decode error: {e}")
-        return None
+    return TokenData(
+        user_id=user_id,
+        username=username,
+        subject=subject,
+        personnel_id=personnel_id,
+    )
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):

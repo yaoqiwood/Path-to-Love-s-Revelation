@@ -196,11 +196,13 @@ async def root():
 if __name__ == "__main__":
 
     import uvicorn
+    reload_enabled = os.getenv("APP_ENV", "development") == "development"
+    uvicorn_kwargs = {
+        "host": settings.APP_HOST,
+        "port": settings.APP_PORT,
+        "reload": reload_enabled,
+    }
+    if not reload_enabled:
+        uvicorn_kwargs["workers"] = 1
 
-    uvicorn.run(
-        "main:app",
-        host=settings.APP_HOST,
-        port=settings.APP_PORT,
-        reload=False,
-        workers=1,
-    )
+    uvicorn.run("main:app", **uvicorn_kwargs)

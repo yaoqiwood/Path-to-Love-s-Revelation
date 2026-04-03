@@ -11,6 +11,7 @@ from app.repository import PersonnelUserRepository
 from app.schemas.personnel_schema import (
     PersonnelCreate,
     PersonnelLoginConfirm,
+    PersonnelLoginRecord,
     PersonnelLoginProfile,
     PersonnelLoginProfileResponse,
     PersonnelLoginTokenResponse,
@@ -100,7 +101,7 @@ class PersonnelUserService:
         return PersonnelLoginTokenResponse(
             access_token=access_token,
             token_type="bearer",
-            profile=self._build_login_profile(personnel),
+            profile=self._build_login_record(personnel),
         )
 
     async def create_personnel(self, data: PersonnelCreate) -> PersonnelResponse:
@@ -299,6 +300,9 @@ class PersonnelUserService:
 
     def _build_login_profile(self, personnel: PersonnelUser) -> PersonnelLoginProfile:
         return PersonnelLoginProfile.model_validate(personnel)
+
+    def _build_login_record(self, personnel: PersonnelUser) -> PersonnelLoginRecord:
+        return PersonnelLoginRecord.model_validate(personnel)
 
     def _validate_login_identity(
         self, personnel: PersonnelUser, data: PersonnelLoginConfirm

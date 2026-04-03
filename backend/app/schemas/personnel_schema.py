@@ -162,6 +162,35 @@ class PersonnelLoginProfile(PersonnelSchemaBase):
     updated_at: str
 
 
+class PersonnelLoginRecord(PersonnelSchemaBase):
+    id: str = Field(serialization_alias="_id")
+    person_id: int
+    name: str
+    nickname: str
+    gender: str
+    age: Optional[int] = None
+    mobile: str
+    mbti: str
+    native_place: str
+    profession: str
+    church: str
+    faith_duration: str
+    referrer: str
+    self_introduction: str
+    relationship_status: str
+    travel_mode: str
+    address: str
+    user_role: int
+    personal_photo: str
+    user_id: str
+    private_message_quota: int
+    heart_message_quota: int
+    remaining_heart_value: int
+    submitted_at: str
+    updated_at: str
+    remark: str = ""
+
+
 class PersonnelLoginProfileResponse(PersonnelSchemaBase):
     matched: bool
     record: Optional[PersonnelLoginProfile] = None
@@ -181,7 +210,7 @@ class PersonnelLoginConfirm(PersonnelSchemaBase):
 class PersonnelLoginTokenResponse(PersonnelSchemaBase):
     access_token: str
     token_type: str = "bearer"
-    profile: PersonnelLoginProfile
+    profile: PersonnelLoginRecord
 
 
 class PersonnelListStats(PersonnelSchemaBase):

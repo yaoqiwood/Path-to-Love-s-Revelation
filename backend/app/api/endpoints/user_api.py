@@ -1,7 +1,7 @@
 # 用户API端点
 
 from typing import List, Optional
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Header, HTTPException, Request, status
 from fastapi import Depends
 
 from ...core.log_decorator import log_operate
@@ -15,6 +15,7 @@ from ...schemas.user_schema import (
     UserPage,
     UserInfoResponse,
     RouterVO,
+    TokenPermissionResponse,
     UserPasswordReset,
     UserPasswordChange,
 )
@@ -57,6 +58,22 @@ async def login(
 async def logout(request: Request):
     """用户登出"""
     return {"message": "操作成功"}
+
+
+@router.get("/validate-token", response_model=TokenPermissionResponse)
+async def validate_token(
+    service: UserServiceDep,
+    authorization: str | None = Header(default=None),
+):
+    """免鉴权校验 token，并返回用户来源及权限枚举"""
+    if not authorization:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="缺少认证信息")
+
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="无效的认证信息")
+
+    return await service.validate_token_permission(token.strip())
 
 
 @router.get("/info", response_model=UserInfoResponse)

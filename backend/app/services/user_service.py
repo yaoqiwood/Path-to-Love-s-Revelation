@@ -14,13 +14,16 @@ from app.core.database import get_db
 from app.core.security import (
     get_password_hash,
     create_access_token,
+    decode_token,
     verify_password,
     Token,
 )
 from app.core.logging import get_logger
+from app.models.personnel_user import PersonnelUser
 from app.models.user import SystemUser, SystemMenu
-from app.repository import UserRepository
+from app.repository import PersonnelUserRepository, UserRepository
 from app.schemas.user_schema import (
+    TokenPermissionResponse,
     UserCreate,
     UserUpdate,
     UserLogin,
@@ -42,6 +45,7 @@ class UserService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repo = UserRepository(db)
+        self.personnel_repo = PersonnelUserRepository(db)
 
     # ==================== 认证 ====================
 
@@ -117,6 +121,63 @@ class UserService:
 
         return UserInfoResponse(user=current_user, roles=roles, perms=list(perms))
 
+    async def validate_token_permission(self, token: str) -> TokenPermissionResponse:
+        """校验 token 并返回当前用户来源及权限枚举"""
+        token_data = decode_token(token)
+        if token_data is None or not token_data.subject:
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="登录已过期，请重新登录",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        personnel = await self._get_personnel_from_token(token_data)
+        if personnel:
+            if personnel.review_status != "approved":
+                raise BizException(
+                    code=BizError.INVALID_CREDENTIALS,
+                    message="当前人员档案未通过审核",
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            return TokenPermissionResponse(
+                user_type="personnel_user",
+                user_role=personnel.user_role,
+            )
+        if token_data.personnel_id:
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="人员 token 无效",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        system_user = await self._get_system_user_from_token(token_data)
+        if system_user:
+            return TokenPermissionResponse(user_type="system_user", user_role=3)
+
+        personnel = await self._get_personnel_by_user_id(token_data.subject)
+        if personnel:
+            if personnel.review_status != "approved":
+                raise BizException(
+                    code=BizError.INVALID_CREDENTIALS,
+                    message="当前人员档案未通过审核",
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            return TokenPermissionResponse(
+                user_type="personnel_user",
+                user_role=personnel.user_role,
+            )
+
+        raise BizException(
+            code=BizError.USER_DOES_NOT_EXIST,
+            message="用户不存在",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     async def get_routers(self, current_user: SystemUser) -> List[RouterVO]:
         """获取动态路由（基于 RBAC）"""
         role_codes = [r.code for r in current_user.roles]
@@ -180,6 +241,42 @@ class UserService:
                     router_item.children = children
                 routers.append(router_item)
         return routers
+
+    async def _get_personnel_from_token(
+        self, token_data
+    ) -> Optional[PersonnelUser]:
+        if token_data.personnel_id:
+            personnel = await self.personnel_repo.get_by_id(token_data.personnel_id)
+            if personnel and self._personnel_matches_subject(
+                personnel, token_data.subject
+            ):
+                return personnel
+            return None
+
+        if token_data.subject and not token_data.user_id:
+            personnel = await self.personnel_repo.get_by_id(token_data.subject)
+            if personnel:
+                return personnel
+
+        return None
+
+    async def _get_personnel_by_user_id(self, subject: str) -> Optional[PersonnelUser]:
+        if not subject:
+            return None
+        return await self.personnel_repo.get_by_user_id(subject)
+
+    async def _get_system_user_from_token(self, token_data) -> Optional[SystemUser]:
+        if token_data.user_id is None:
+            return None
+
+        user = await self.repo.get_by_id_active(token_data.user_id)
+        if user is None or not user.is_active:
+            return None
+        return user
+
+    @staticmethod
+    def _personnel_matches_subject(personnel, subject: str) -> bool:
+        return subject in {personnel.id, (personnel.user_id or "").strip()}
 
     # ==================== 用户 CRUD 管理 ====================
 

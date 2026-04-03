@@ -103,6 +103,14 @@ class PersonnelUserRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_by_user_id(
+        self, user_id: str, include_deleted: bool = False
+    ) -> Optional[PersonnelUser]:
+        result = await self.db.execute(
+            self._base_stmt(include_deleted).where(PersonnelUser.user_id == user_id)
+        )
+        return result.scalar_one_or_none()
+
     async def get_max_person_id(self) -> Optional[int]:
         result = await self.db.execute(select(func.max(PersonnelUser.person_id)))
         return result.scalar_one_or_none()
