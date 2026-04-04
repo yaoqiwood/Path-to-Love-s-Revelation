@@ -448,6 +448,45 @@ class PersonnelUserService:
             contacts=contact_items,
         )
 
+    async def list_opposite_gender_users(
+        self,
+        authorization: str,
+        keyword: Optional[str] = None,
+    ) -> PersonnelHeartHomeResponse:
+        current_personnel = await self._get_current_personnel_from_authorization(
+            authorization
+        )
+        opposite_gender = self._resolve_opposite_gender(current_personnel.gender)
+        if not opposite_gender:
+            return PersonnelHeartHomeResponse(
+                self=self._build_heart_home_self(current_personnel),
+                contacts=[],
+            )
+
+        users = await self.repo.list_opposite_gender_users(
+            exclude_id=current_personnel.id,
+            opposite_gender=opposite_gender,
+            keyword=(keyword or "").strip() or None,
+        )
+        contact_items = [
+            PersonnelHeartHomeContact(
+                id=u.id,
+                name=u.name,
+                nickname=u.nickname,
+                gender=u.gender,
+                mbti=u.mbti,
+                personal_photo=u.personal_photo,
+                latest_message="",
+                latest_message_at="",
+                can_send=True,
+            )
+            for u in users
+        ]
+        return PersonnelHeartHomeResponse(
+            self=self._build_heart_home_self(current_personnel),
+            contacts=contact_items,
+        )
+
     async def _get_personnel_from_token(self, token_data) -> Optional[PersonnelUser]:
         if token_data.personnel_id:
             personnel = await self.repo.get_by_id(token_data.personnel_id)

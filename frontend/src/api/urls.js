@@ -31,6 +31,7 @@ export const apiUrls = {
     updateUserRole: (id) => withPrefix(`/personnel/${id}/user-role`),
     updatePrivateMessageQuota: (id) => withPrefix(`/personnel/${id}/private-message-quota`),
     heartHome: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-home`),
+    oppositeGenderUsers: () => withPrefix('/personnel/opposite-gender-users'),
     heartInbox: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-inbox`),
     heartState: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-state`),
     heartMessages: (personnelId) => withPrefix(`/personnel/${personnelId}/heart-messages`),

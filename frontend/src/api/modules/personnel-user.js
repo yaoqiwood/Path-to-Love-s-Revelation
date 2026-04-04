@@ -2309,6 +2309,54 @@ export const personnelUserService = {
 		)
 	},
 
+	async listOppositeGenderUsers({ keyword = '' } = {}) {
+		return withMockFallback(
+			async () =>
+				unwrapResponse(
+					await http.get(apiUrls.personnel.oppositeGenderUsers(), {
+						params: { keyword }
+					})
+				),
+			async () => {
+				const personnelId = resolveCurrentPersonnelId()
+				const selfRecord = getPersonnelById(personnelId)
+				if (!selfRecord) {
+					return { self: null, contacts: [], total: 0 }
+				}
+				const oppositeGender = getOppositeGender(selfRecord.gender)
+				const allPersonnel = getActivePersonnel()
+				let users = allPersonnel.filter(
+					(item) =>
+						item._id !== selfRecord._id &&
+						normalizeGender(item.gender) === oppositeGender &&
+						item.review_status === 'approved'
+				)
+				if (keyword) {
+					users = users.filter(
+						(item) =>
+							(item.name || '').includes(keyword) ||
+							(item.nickname || '').includes(keyword)
+					)
+				}
+				users.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN'))
+				return {
+					self: selfRecord,
+					contacts: users.map((item) => ({
+						_id: item._id,
+						name: item.name,
+						nickname: item.nickname,
+						gender: item.gender,
+						mbti: item.mbti,
+						personal_photo: item.personal_photo || '',
+						latest_message: '',
+						latest_message_at: '',
+						can_send: true
+					}))
+				}
+			}
+		)
+	},
+
 	async getUserHeartMessageHome({ personnelId, keyword = '' } = {}) {
 		return withMockFallback(
 			async () =>

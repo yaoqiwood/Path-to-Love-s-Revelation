@@ -525,13 +525,11 @@
 				}
 				this.loading = true
 				try {
-					const res = await personnelUser.getUserHeartMessageHome({
-						personnelId: this.personnelId,
+					const res = await personnelUser.listOppositeGenderUsers({
 						keyword: this.keyword
 					})
 					this.selfProfile = Object.assign({}, this.selfProfile, res && res.self ? res.self : {})
-					const sourceContacts = Array.isArray(res && res.contacts) ? res.contacts : []
-					this.contacts = sourceContacts.filter((item) => this.isOppositeGender(item && item.gender))
+					this.contacts = Array.isArray(res && res.contacts) ? res.contacts : []
 					if (!this.contacts.length) {
 						this.showChatPopup = false
 						this.activeContact = null

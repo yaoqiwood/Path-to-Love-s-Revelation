@@ -141,6 +141,23 @@ async def list_personnel(
     )
 
 
+@router.get("/opposite-gender-users", response_model=PersonnelHeartHomeResponse)
+async def list_opposite_gender_users(
+    service: PersonnelUserServiceDep,
+    authorization: str = Header(..., alias="Authorization"),
+    keyword: Optional[str] = Query(
+        None,
+        description="搜索昵称或姓名",
+        examples=["林"],
+    ),
+):
+    """获取当前用户的异性用户列表，按姓名排序"""
+    return await service.list_opposite_gender_users(
+        authorization=authorization,
+        keyword=keyword,
+    )
+
+
 @router.get("/heart-home", response_model=PersonnelHeartHomeResponse)
 async def get_current_personnel_heart_home(
     service: PersonnelUserServiceDep,
