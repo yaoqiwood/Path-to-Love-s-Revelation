@@ -300,6 +300,7 @@ class PersonnelHeartHomeContact(PersonnelSchemaBase):
     latest_message: str
     latest_message_at: str
     can_send: bool
+    chat_status: str = ""
 
 
 class PersonnelHeartHomeResponse(PersonnelSchemaBase):

@@ -2318,18 +2318,21 @@ export const personnelUserService = {
 					})
 				),
 			async () => {
-				const personnelId = resolveCurrentPersonnelId()
-				const selfRecord = getPersonnelById(personnelId)
+				const { self: selfRecord, contacts: baseContacts } = listContactsForUser('', keyword)
 				if (!selfRecord) {
-					return { self: null, contacts: [], total: 0 }
+					return { self: null, contacts: [] }
 				}
-				const oppositeGender = getOppositeGender(selfRecord.gender)
+				const selfGender = normalizeText(selfRecord.gender)
+				const oppositeGender = selfGender === '男' ? '女' : selfGender === '女' ? '男' : ''
+				if (!oppositeGender) {
+					return { self: selfRecord, contacts: [] }
+				}
 				const allPersonnel = getActivePersonnel()
 				let users = allPersonnel.filter(
 					(item) =>
 						item._id !== selfRecord._id &&
-						normalizeGender(item.gender) === oppositeGender &&
-						item.review_status === 'approved'
+						normalizeText(item.gender) === oppositeGender &&
+						normalizeText(item.review_status) === 'approved'
 				)
 				if (keyword) {
 					users = users.filter(
@@ -2339,19 +2342,47 @@ export const personnelUserService = {
 					)
 				}
 				users.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN'))
+
+				const allMessages = getHeartMessageList()
 				return {
 					self: selfRecord,
-					contacts: users.map((item) => ({
-						_id: item._id,
-						name: item.name,
-						nickname: item.nickname,
-						gender: item.gender,
-						mbti: item.mbti,
-						personal_photo: item.personal_photo || '',
-						latest_message: '',
-						latest_message_at: '',
-						can_send: true
-					}))
+					contacts: users.map((item) => {
+						const iSentContacts = allMessages.some(
+							(m) =>
+								m.sender_record_id === selfRecord._id &&
+								m.receiver_record_id === item._id &&
+								(m.message_scene || m.scene) === 'contacts'
+						)
+						const theySentContacts = allMessages.some(
+							(m) =>
+								m.sender_record_id === item._id &&
+								m.receiver_record_id === selfRecord._id &&
+								(m.message_scene || m.scene) === 'contacts'
+						)
+						let chatStatus = 'none'
+						if (iSentContacts && theySentContacts) {
+							chatStatus = 'unlocked'
+						} else if (iSentContacts) {
+							chatStatus = 'initiated'
+						}
+
+						const contactSummary = baseContacts.find((c) => c._id === item._id)
+						const canSend =
+							chatStatus === 'unlocked' ? true : contactSummary ? contactSummary.can_send : true
+
+						return {
+							_id: item._id,
+							name: item.name,
+							nickname: item.nickname,
+							gender: item.gender,
+							mbti: item.mbti,
+							personal_photo: item.personal_photo || '',
+							latest_message: contactSummary ? contactSummary.latest_message : '',
+							latest_message_at: contactSummary ? contactSummary.latest_message_at : '',
+							can_send: canSend,
+							chat_status: chatStatus
+						}
+					})
 				}
 			}
 		)

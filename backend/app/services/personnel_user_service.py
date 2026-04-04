@@ -468,20 +468,53 @@ class PersonnelUserService:
             opposite_gender=opposite_gender,
             keyword=(keyword or "").strip() or None,
         )
-        contact_items = [
-            PersonnelHeartHomeContact(
-                id=u.id,
-                name=u.name,
-                nickname=u.nickname,
-                gender=u.gender,
-                mbti=u.mbti,
-                personal_photo=u.personal_photo,
-                latest_message="",
-                latest_message_at="",
-                can_send=True,
+
+        my_id = current_personnel.id
+        i_sent_to = set(
+            await self.heart_message_repo.list_contacts_receivers(my_id)
+        )
+        they_sent_to_me = set(
+            await self.heart_message_repo.list_contacts_senders(my_id)
+        )
+
+        visible_messages = await self.heart_message_repo.list_visible_personnel_messages(
+            my_id
+        )
+        latest_by_contact = self._build_latest_message_map(my_id, visible_messages)
+
+        contact_items = []
+        for u in users:
+            if u.id in i_sent_to and u.id in they_sent_to_me:
+                chat_status = "unlocked"
+            elif u.id in i_sent_to:
+                chat_status = "initiated"
+            else:
+                chat_status = "none"
+
+            latest_msg = latest_by_contact.get(u.id)
+            latest_message_at = self._to_iso_text(
+                latest_msg.get("created_at") if latest_msg else None
             )
-            for u in users
-        ]
+
+            if chat_status == "unlocked":
+                can_send = True
+            else:
+                can_send = self._can_send_to_contact(my_id, latest_msg)
+
+            contact_items.append(
+                PersonnelHeartHomeContact(
+                    id=u.id,
+                    name=u.name,
+                    nickname=u.nickname,
+                    gender=u.gender,
+                    mbti=u.mbti,
+                    personal_photo=u.personal_photo,
+                    latest_message=(latest_msg or {}).get("content", ""),
+                    latest_message_at=latest_message_at,
+                    can_send=can_send,
+                    chat_status=chat_status,
+                )
+            )
         return PersonnelHeartHomeResponse(
             self=self._build_heart_home_self(current_personnel),
             contacts=contact_items,

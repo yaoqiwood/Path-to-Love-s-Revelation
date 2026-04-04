@@ -83,12 +83,18 @@
 									<text class="contact-time">{{ formatTime(item.latest_message_at) }}</text>
 								</div>
 								<text class="contact-meta">{{ item.name || '暂未填写姓名' }}</text>
-								<div class="contact-preview-row">
+								<div v-if="item.chat_status === 'unlocked'" class="contact-preview-row">
 									<text class="contact-preview">{{
-										item.latest_message || '还没有消息，快去打个招呼吧'
+										item.latest_message || '开始聊天吧'
 									}}</text>
 								</div>
-								<text v-if="item.can_send === false" class="turn-tip"
+								<div v-else-if="item.chat_status === 'initiated'" class="contact-preview-row">
+									<text class="chat-status-tag initiated-tag">已发出悄悄话，等待对方回应</text>
+								</div>
+								<div v-else class="contact-preview-row">
+									<text class="chat-status-tag none-tag">点击发起聊天 ♡</text>
+								</div>
+								<text v-if="item.chat_status !== 'unlocked' && item.can_send === false" class="turn-tip"
 									>等待对方回复后才能继续发送</text
 								>
 							</div>
@@ -155,7 +161,11 @@
 						<div class="chat-user-text">
 							<text class="chat-name">{{ activeContact.nickname || activeContact.name }}</text>
 							<text class="chat-meta">{{ activeContact.name || '未填写姓名' }}</text>
-							<text class="chat-mood">和 Ta 的聊天，也许会有一点点心动</text>
+							<text class="chat-mood">{{
+								activeContact.chat_status === 'unlocked'
+									? '已解锁双向聊天，畅所欲言吧'
+									: '和 Ta 的聊天，也许会有一点点心动'
+							}}</text>
 						</div>
 					</div>
 					<div class="chat-head-actions">
@@ -219,11 +229,61 @@
 						placeholder="输入你想说的话"
 					></textarea>
 					<div class="composer-foot">
-						<text class="composer-tip">发送后需等待对方回复，你才能继续发送下一条</text>
+						<text v-if="activeContact && activeContact.chat_status === 'unlocked'" class="composer-tip"
+							>双向聊天已解锁，可自由发送消息</text
+						>
+						<text v-else class="composer-tip">发送后需等待对方回复，你才能继续发送下一条</text>
 					</div>
 					<div class="composer-actions">
 						<button class="send-btn" :disabled="!canSubmitMessage" @click="sendMessage">
 							发送
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="showInitiatePopup && activeContact" class="chat-popup-mask" @click="closeInitiatePopup">
+			<div class="chat-popup initiate-popup" @click.stop>
+				<div class="chat-head">
+					<div class="chat-user">
+						<div class="avatar-shell small">
+							<image
+								v-if="activeContact.personal_photo"
+								class="avatar"
+								:src="activeContact.personal_photo"
+								mode="aspectFill"
+							></image>
+							<div v-else class="avatar avatar-fallback">
+								{{ getAvatarText(activeContact.nickname || activeContact.name) }}
+							</div>
+						</div>
+						<div class="chat-user-text">
+							<text class="chat-name">{{ activeContact.nickname || activeContact.name }}</text>
+							<text class="chat-meta">{{ activeContact.name || '未填写姓名' }}</text>
+							<text class="chat-mood">发出你的第一句悄悄话</text>
+						</div>
+					</div>
+					<div class="chat-head-actions">
+						<text class="chat-close" @click="closeInitiatePopup">×</text>
+					</div>
+				</div>
+				<div class="initiate-body">
+					<text class="initiate-hint">对方会在收信箱收到匿名消息，只显示你的 MBTI</text>
+				</div>
+				<div class="composer">
+					<textarea
+						v-model.trim="draftMessage"
+						class="composer-input"
+						maxlength="300"
+						placeholder="输入你想说的悄悄话"
+					></textarea>
+					<div class="composer-foot">
+						<text class="composer-tip">发送后对方不知道你是谁，直到 Ta 也给你发消息</text>
+					</div>
+					<div class="composer-actions">
+						<button class="send-btn" :disabled="!canSubmitMessage" @click="sendInitiateMessage">
+							发出悄悄话
 						</button>
 					</div>
 				</div>
@@ -328,6 +388,7 @@
 				draftMessage: '',
 				inboxReplyText: '',
 				canSendToActive: true,
+				showInitiatePopup: false,
 				cannotSendReason: '',
 				scrollIntoView: '',
 				realtimeTimer: null,
@@ -365,12 +426,16 @@
 			this.unbindPushRefresh()
 		},
 		computed: {
+			isUnlockedChat() {
+				return !!(this.activeContact && this.activeContact.chat_status === 'unlocked')
+			},
 			canSubmitMessage() {
+				const turnOk = this.isUnlockedChat || this.canSendToActive
 				return !!(
 					this.draftMessage &&
 					this.draftMessage.trim() &&
 					!this.sending &&
-					this.canSendToActive
+					turnOk
 				)
 			},
 			canSubmitInboxReply() {
@@ -856,6 +921,14 @@
 				if (!item || !item._id || !personnelUser) {
 					return
 				}
+				if (item.chat_status === 'none') {
+					this.activeContact = item
+					this.draftMessage = ''
+					this.showInitiatePopup = true
+					this.showChatPopup = false
+					return
+				}
+				this.showInitiatePopup = false
 				const silent = !!(options && options.silent)
 				const isSameContact =
 					this.showChatPopup && this.activeContact && this.activeContact._id === item._id
@@ -872,10 +945,15 @@
 						contactId: item._id
 					})
 					this.selfProfile = Object.assign({}, this.selfProfile, res && res.self ? res.self : {})
-					this.activeContact = Object.assign({}, item, res && res.contact ? res.contact : {})
+					this.activeContact = Object.assign({}, item, res && res.contact ? res.contact : {}, { chat_status: item.chat_status })
 					this.messages = Array.isArray(res && res.list) ? res.list : []
-					this.canSendToActive = !!(res && res.can_send !== false)
-					this.cannotSendReason = (res && res.can_send_reason) || '请等待对方回复后再发送下一条'
+					if (item.chat_status === 'unlocked') {
+						this.canSendToActive = true
+						this.cannotSendReason = ''
+					} else {
+						this.canSendToActive = !!(res && res.can_send !== false)
+						this.cannotSendReason = (res && res.can_send_reason) || '请等待对方回复后再发送下一条'
+					}
 					this.$nextTick(() => {
 						const lastMessage = this.messages[this.messages.length - 1]
 						this.scrollIntoView = lastMessage ? 'msg-' + lastMessage._id : ''
@@ -990,7 +1068,8 @@
 				if (!this.activeContact || !this.activeContact._id) {
 					return
 				}
-				if (!this.canSendToActive) {
+				const isUnlocked = this.activeContact.chat_status === 'unlocked'
+				if (!isUnlocked && !this.canSendToActive) {
 					app.showToast({
 						title: this.cannotSendReason || '请等待对方回复后再发送下一条',
 						icon: 'none'
@@ -1014,7 +1093,7 @@
 						contactId: this.activeContact._id,
 						content: this.draftMessage,
 						type: 0,
-						scene: 'contacts'
+						scene: isUnlocked ? 'chat' : 'contacts'
 					})
 					const currentContactId = this.activeContact._id
 					this.draftMessage = ''
@@ -1026,6 +1105,50 @@
 					await this.syncMessageState({ refreshOnChange: false, silent: true })
 					app.showToast({
 						title: '发送成功',
+						icon: 'success'
+					})
+				} catch (error) {
+					app.showToast({
+						title: (error && error.message) || '发送失败',
+						icon: 'none'
+					})
+				} finally {
+					this.sending = false
+				}
+			},
+			closeInitiatePopup() {
+				this.showInitiatePopup = false
+				this.draftMessage = ''
+			},
+			async sendInitiateMessage() {
+				if (!this.activeContact || !this.activeContact._id) {
+					return
+				}
+				if (!this.draftMessage) {
+					app.showToast({
+						title: '请输入悄悄话内容',
+						icon: 'none'
+					})
+					return
+				}
+				if (this.sending) {
+					return
+				}
+				this.sending = true
+				try {
+					await personnelUser.sendUserHeartMessage({
+						personnelId: this.personnelId,
+						contactId: this.activeContact._id,
+						content: this.draftMessage,
+						type: 0,
+						scene: 'contacts'
+					})
+					this.draftMessage = ''
+					this.closeInitiatePopup()
+					await Promise.all([this.loadHome(), this.loadInbox()])
+					await this.syncMessageState({ refreshOnChange: false, silent: true })
+					app.showToast({
+						title: '悄悄话已发出',
 						icon: 'success'
 					})
 				} catch (error) {
@@ -1642,6 +1765,40 @@
 		margin-top: 8rpx;
 		font-size: 22rpx;
 		color: #b1762d;
+	}
+
+	.chat-status-tag {
+		display: inline-flex;
+		align-items: center;
+		font-size: 22rpx;
+		padding: 4rpx 16rpx;
+		border-radius: 999rpx;
+		line-height: 1.6;
+	}
+
+	.initiated-tag {
+		color: #b1762d;
+		background: linear-gradient(135deg, #fef6e8 0%, #fdf0d5 100%);
+	}
+
+	.none-tag {
+		color: #7cab79;
+		background: linear-gradient(135deg, #eef5ec 0%, #e8f2e3 100%);
+	}
+
+	.initiate-popup {
+		max-height: 60vh;
+	}
+
+	.initiate-body {
+		padding: 32rpx 24rpx;
+		text-align: center;
+	}
+
+	.initiate-hint {
+		font-size: 24rpx;
+		color: #7c7f73;
+		line-height: 1.8;
 	}
 
 	.contact-preview-row {

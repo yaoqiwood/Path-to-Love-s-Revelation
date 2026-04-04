@@ -69,3 +69,31 @@ class PersonnelHeartMessageRepository:
             )
         )
         return [dict(row._mapping) for row in result]
+
+    async def list_contacts_senders(self, receiver_id: str) -> list[str]:
+        """获取所有从联系人列表向 receiver_id 发过 scene='contacts' 消息的 sender_id"""
+        result = await self.db.execute(
+            select(PersonnelHeartMessage.sender_record_id)
+            .where(
+                PersonnelHeartMessage.receiver_record_id == receiver_id,
+                PersonnelHeartMessage.message_scene == "contacts",
+                PersonnelHeartMessage.is_deleted.is_(False),
+                PersonnelHeartMessage.status != "revoked",
+            )
+            .distinct()
+        )
+        return [row[0] for row in result]
+
+    async def list_contacts_receivers(self, sender_id: str) -> list[str]:
+        """获取 sender_id 从联系人列表发过 scene='contacts' 消息的 receiver_id"""
+        result = await self.db.execute(
+            select(PersonnelHeartMessage.receiver_record_id)
+            .where(
+                PersonnelHeartMessage.sender_record_id == sender_id,
+                PersonnelHeartMessage.message_scene == "contacts",
+                PersonnelHeartMessage.is_deleted.is_(False),
+                PersonnelHeartMessage.status != "revoked",
+            )
+            .distinct()
+        )
+        return [row[0] for row in result]
