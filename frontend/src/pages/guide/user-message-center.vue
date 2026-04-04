@@ -509,10 +509,12 @@
 				})
 
 				wsChatClient.on('contacts_update', () => {
+					console.log('[ws] contacts_update received, reloading contacts')
 					this.loadHome()
 				})
 
 				wsChatClient.on('inbox_update', () => {
+					console.log('[ws] inbox_update received, reloading inbox')
 					this.loadInbox({ silent: this.activeTab !== 'inbox' })
 				})
 
@@ -1231,10 +1233,15 @@
 							})
 						}
 					const currentContactId = this.activeContact._id
+					const wasInboxContact = !!this.activeContact._isInboxContact
 					this.draftMessage = ''
 					await Promise.all([this.loadHome(), this.loadInbox()])
 					const nextActive = this.contacts.find((item) => item._id === currentContactId)
 					if (nextActive) {
+						// 保留收信箱标记，避免重新弹出"发起悄悄话"弹窗
+						if (wasInboxContact) {
+							nextActive._isInboxContact = true
+						}
 						await this.selectContact(nextActive, { silent: true })
 					} else if (this.activeContact && this.activeContact._isInboxContact) {
 						await this.selectContact(this.activeContact, { silent: true })
