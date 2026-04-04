@@ -557,6 +557,10 @@ class PersonnelUserService:
             })
             await ws_manager.send_to_user(contact_id, {"type": "inbox_update"})
             await ws_manager.send_to_user(personnel_id, {"type": "contacts_update"})
+            # 递增内存版本号
+            ws_manager.bump_version(contact_id, "inboxVersion")
+            ws_manager.bump_version(contact_id, "contactsVersion")
+            ws_manager.bump_version(personnel_id, "contactsVersion")
         except Exception as exc:
             logger.warning("WS push failed: %s", exc)
 
@@ -593,15 +597,25 @@ class PersonnelUserService:
         visible_messages = await self.heart_message_repo.list_visible_personnel_messages(
             current_personnel.id
         )
-        latest_by_contact = self._build_latest_message_map(
+        latest_by_contact, latest_sent_by_contact = self._build_latest_message_map(
             current_personnel.id, visible_messages
         )
+
+        # 查询双方从联系人列表发消息的记录，用于判断 chat_status
+        i_sent_to = set(await self.heart_message_repo.list_contacts_receivers(current_personnel.id))
+        sent_to_me = set(await self.heart_message_repo.list_contacts_senders(current_personnel.id))
 
         contact_items = [
             self._build_heart_home_contact(
                 current_personnel.id,
                 contact,
                 latest_by_contact.get(contact.id),
+                latest_sent_by_contact.get(contact.id),
+                chat_status=(
+                    "unlocked" if contact.id in i_sent_to and contact.id in sent_to_me
+                    else "pending" if contact.id in i_sent_to
+                    else "none"
+                ),
             )
             for contact in contacts
         ]
@@ -647,7 +661,7 @@ class PersonnelUserService:
         visible_messages = await self.heart_message_repo.list_visible_personnel_messages(
             my_id
         )
-        latest_by_contact = self._build_latest_message_map(my_id, visible_messages)
+        latest_by_contact, latest_sent_by_contact = self._build_latest_message_map(my_id, visible_messages)
 
         contact_items = []
         for u in users:
@@ -659,11 +673,15 @@ class PersonnelUserService:
                 chat_status = "none"
 
             latest_msg = latest_by_contact.get(u.id)
+            is_unlocked = chat_status == "unlocked"
+
+            # 未解锁：只显示自己发出的消息；已解锁：显示双方消息
+            display_msg = latest_msg if is_unlocked else latest_sent_by_contact.get(u.id)
             latest_message_at = self._to_iso_text(
-                latest_msg.get("created_at") if latest_msg else None
+                display_msg.get("created_at") if display_msg else None
             )
 
-            if chat_status == "unlocked":
+            if is_unlocked:
                 can_send = True
             else:
                 can_send = self._can_send_to_contact(my_id, latest_msg)
@@ -676,7 +694,7 @@ class PersonnelUserService:
                     gender=u.gender,
                     mbti=u.mbti,
                     personal_photo=u.personal_photo,
-                    latest_message=(latest_msg or {}).get("content", ""),
+                    latest_message=(display_msg or {}).get("content", ""),
                     latest_message_at=latest_message_at,
                     can_send=can_send,
                     chat_status=chat_status,
@@ -908,8 +926,10 @@ class PersonnelUserService:
 
     def _build_latest_message_map(
         self, personnel_id: str, rows: list[dict]
-    ) -> dict[str, dict]:
+    ) -> tuple[dict[str, dict], dict[str, dict]]:
+        """返回 (latest_by_contact, latest_sent_by_contact)"""
         latest_by_contact: dict[str, dict] = {}
+        latest_sent_by_contact: dict[str, dict] = {}
         for row in sorted(
             rows,
             key=lambda item: item.get("created_at") or datetime.min,
@@ -920,16 +940,26 @@ class PersonnelUserService:
             if not contact_id:
                 continue
             latest_by_contact[contact_id] = row
-        return latest_by_contact
+            if sender_id == personnel_id:
+                latest_sent_by_contact[contact_id] = row
+        return latest_by_contact, latest_sent_by_contact
 
     def _build_heart_home_contact(
         self,
         personnel_id: str,
         contact: PersonnelUser,
         latest_message: Optional[dict],
+        latest_sent_message: Optional[dict],
+        chat_status: str = "none",
     ) -> PersonnelHeartHomeContact:
+        is_unlocked = chat_status == "unlocked"
+
+        # 未解锁：只显示自己发出的最后一条消息
+        # 已解锁：显示双方的最后一条消息
+        display_message = latest_message if is_unlocked else latest_sent_message
+
         latest_message_at = self._to_iso_text(
-            latest_message.get("created_at") if latest_message else None
+            display_message.get("created_at") if display_message else None
         )
         return PersonnelHeartHomeContact(
             id=contact.id,
@@ -938,9 +968,10 @@ class PersonnelUserService:
             gender=contact.gender,
             mbti=contact.mbti,
             personal_photo=contact.personal_photo,
-            latest_message=(latest_message or {}).get("content", ""),
+            latest_message=(display_message or {}).get("content", ""),
             latest_message_at=latest_message_at,
-            can_send=self._can_send_to_contact(personnel_id, latest_message),
+            can_send=is_unlocked or self._can_send_to_contact(personnel_id, latest_message),
+            chat_status=chat_status,
         )
 
     async def _next_person_id(self) -> int:

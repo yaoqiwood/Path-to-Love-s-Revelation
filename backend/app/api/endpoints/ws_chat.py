@@ -39,7 +39,7 @@ async def ws_chat(
         {"type": "contacts_update"}
         {"type": "inbox_update"}
     客户端发送:
-        {"type": "ping"}  -> 服务端回 {"type": "pong"}
+        {"type": "ping"}  -> 服务端回 {"type": "pong", "contactsVersion": N, "inboxVersion": N}
     """
     personnel_id = await _resolve_personnel_id(token)
     if not personnel_id:
@@ -66,7 +66,9 @@ async def ws_chat(
 
             msg_type = (data or {}).get("type", "")
             if msg_type == "ping":
-                await ws.send_json({"type": "pong"})
+                # 从内存读版本号，不查 DB，不阻塞连接池
+                versions = ws_manager.get_versions(personnel_id)
+                await ws.send_json({"type": "pong", **versions})
             elif msg_type == "pong":
                 pass  # 客户端响应了我们的 ping
             else:

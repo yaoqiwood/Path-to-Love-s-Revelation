@@ -15,6 +15,8 @@ class ConnectionManager:
     def __init__(self):
         # personnel_id -> list[WebSocket]
         self._connections: dict[str, list[WebSocket]] = {}
+        # personnel_id -> {contactsVersion: int, inboxVersion: int}
+        self._versions: dict[str, dict[str, int]] = {}
 
     async def connect(self, personnel_id: str, ws: WebSocket):
         await ws.accept()
@@ -63,6 +65,16 @@ class ConnectionManager:
 
     def online_users(self) -> list[str]:
         return list(self._connections.keys())
+
+    def bump_version(self, personnel_id: str, key: str = "contactsVersion"):
+        """递增用户的版本号 (contacts / inbox)"""
+        if personnel_id not in self._versions:
+            self._versions[personnel_id] = {"contactsVersion": 0, "inboxVersion": 0}
+        self._versions[personnel_id][key] = self._versions[personnel_id].get(key, 0) + 1
+
+    def get_versions(self, personnel_id: str) -> dict:
+        """获取用户当前版本号（内存缓存，不查 DB）"""
+        return dict(self._versions.get(personnel_id, {"contactsVersion": 0, "inboxVersion": 0}))
 
 
 # 全局单例

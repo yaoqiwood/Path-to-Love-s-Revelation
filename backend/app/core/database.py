@@ -17,7 +17,7 @@ from .config import settings
 engine = create_async_engine(
     settings.MYSQL_DATABASE_URL,
     pool_pre_ping=True,  # 使用前检测连接是否存活
-    pool_size=10,  # 连接池基础大小
+    pool_size=20,  # 连接池基础大小
     max_overflow=20,  # 超出 pool_size 时允许的额外连接数
     pool_timeout=30,  # 等待连接的最长时间(秒)，超时抛出异常而非无限等待
     pool_recycle=1800,  # 30分钟回收连接，防止 MySQL 8h 自动断连

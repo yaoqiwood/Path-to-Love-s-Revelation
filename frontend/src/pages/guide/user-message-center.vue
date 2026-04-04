@@ -198,7 +198,7 @@
 							class="message-row"
 							:class="item.sender_record_id === selfProfile._id ? 'mine' : 'other'"
 						>
-							<text class="bubble-time">{{
+							<text v-if="activeContact.chat_status === 'unlocked' || item.sender_record_id === selfProfile._id" class="bubble-time">{{
 								formatDateTime(item.created_at_text || item.created_at)
 							}}</text>
 							<div class="bubble-wrap">
@@ -427,6 +427,10 @@
 			this._initWebSocket()
 		},
 		beforeUnmount() {
+			if (this._stateTimer) {
+				clearInterval(this._stateTimer)
+				this._stateTimer = null
+			}
 			this.stopRealtime()
 			this.stopMessageStatePolling()
 			this.unbindPushRefresh()
@@ -505,6 +509,11 @@
 				})
 
 				wsChatClient.connect(token)
+
+				// 定时轮询 heart-state，检测版本变化并刷新列表
+				this._stateTimer = setInterval(() => {
+					this.syncMessageState({ refreshOnChange: true, silent: true })
+				}, 30000)
 			},
 			getStoredProfile() {
 				try {
@@ -1164,7 +1173,7 @@
 						contactId: this.activeContact._id,
 						content: this.draftMessage,
 						type: 0,
-						scene: isUnlocked ? 'chat' : 'contacts'
+						scene: isUnlocked ? 'chat' : (this.activeContact._isInboxContact ? 'inbox' : 'contacts')
 					})
 					const currentContactId = this.activeContact._id
 					this.draftMessage = ''

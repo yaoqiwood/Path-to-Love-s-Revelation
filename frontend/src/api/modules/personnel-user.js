@@ -2465,13 +2465,14 @@ export const personnelUserService = {
 		)
 	},
 
-	async sendUserHeartMessage({ personnelId, contactId, content } = {}) {
+	async sendUserHeartMessage({ personnelId, contactId, content, scene } = {}) {
 		return withMockFallback(
 			async () =>
 				unwrapResponse(
 					await http.post(apiUrls.personnel.heartMessages(personnelId), {
 						contactId,
-						content
+						content,
+						scene: scene || 'contacts'
 					})
 				),
 			async () => {
