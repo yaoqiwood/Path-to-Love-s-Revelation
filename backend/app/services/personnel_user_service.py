@@ -9,9 +9,21 @@ from app.core.database import get_db
 from app.core.security import create_access_token, decode_token
 from app.models.personnel_user import PersonnelUser
 from app.models.user import SystemUser
-from app.repository import PersonnelUserRepository, UserRepository
+from app.repository import (
+    PersonnelHeartMessageRepository,
+    PersonnelUserRepository,
+    UserRepository,
+)
 from app.schemas.personnel_schema import (
     PersonnelCreate,
+    PersonnelDeleteResponse,
+    PersonnelHeartHomeContact,
+    PersonnelHeartHomeResponse,
+    PersonnelHeartHomeSelf,
+    PersonnelHeartMessageHistoryContact,
+    PersonnelHeartMessageHistoryItem,
+    PersonnelHeartMessageHistoryResponse,
+    PersonnelHeartMessageHistorySelf,
     PersonnelLoginConfirm,
     PersonnelLoginRecord,
     PersonnelLoginProfile,
@@ -37,6 +49,7 @@ class PersonnelUserService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repo = PersonnelUserRepository(db)
+        self.heart_message_repo = PersonnelHeartMessageRepository(db)
         self.user_repo = UserRepository(db)
 
     async def list_personnel(
@@ -337,7 +350,7 @@ class PersonnelUserService:
         personnel = await self.repo.update(personnel, update_fields)
         return PersonnelResponse.model_validate(personnel)
 
-    async def delete_personnel(self, personnel_id: str) -> dict:
+    async def delete_personnel(self, personnel_id: str) -> PersonnelDeleteResponse:
         personnel = await self.repo.get_by_id(personnel_id)
         if not personnel:
             raise HTTPException(status_code=404, detail="人员档案不存在")
@@ -346,7 +359,94 @@ class PersonnelUserService:
             personnel,
             {"is_deleted": True, "updated_at": now_iso_text()},
         )
-        return {"id": personnel_id}
+        return PersonnelDeleteResponse(id=personnel_id, deleted=True)
+
+    async def list_heart_messages(
+        self,
+        personnel_id: str,
+        contact_id: str,
+        since: Optional[str],
+        authorization: str,
+    ) -> PersonnelHeartMessageHistoryResponse:
+        personnel = await self.repo.get_by_id(personnel_id)
+        if not personnel:
+            raise HTTPException(status_code=404, detail="人员档案不存在")
+
+        contact = await self.repo.get_by_id(contact_id)
+        if not contact:
+            raise HTTPException(status_code=404, detail="聊天对象不存在")
+
+        await self._authorize_personnel_history_access(personnel, authorization)
+
+        conversation_key = self._build_conversation_key(personnel_id, contact_id)
+        since_dt = self._parse_since_datetime(since)
+        rows = await self.heart_message_repo.list_visible_conversation_messages(
+            conversation_key, since_dt
+        )
+        latest_message = await self.heart_message_repo.get_latest_visible_conversation_message(
+            conversation_key
+        )
+
+        return PersonnelHeartMessageHistoryResponse(
+            self=self._build_history_self(personnel),
+            contact=self._build_history_contact(contact),
+            list=[self._build_history_item(row) for row in rows],
+            can_send=self._can_send_to_contact(personnel_id, latest_message),
+            can_send_reason=self._build_can_send_reason(personnel_id, latest_message),
+        )
+
+    async def get_heart_home(
+        self,
+        authorization: str,
+        keyword: Optional[str] = None,
+        personnel_id: Optional[str] = None,
+    ) -> PersonnelHeartHomeResponse:
+        current_personnel = await self._get_current_personnel_from_authorization(
+            authorization
+        )
+        if personnel_id and personnel_id != current_personnel.id:
+            raise BizException(
+                code=BizError.PERMISSION_DENIED,
+                message="无权查看其他人员的联系人列表",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        opposite_gender = self._resolve_opposite_gender(current_personnel.gender)
+        if not opposite_gender:
+            return PersonnelHeartHomeResponse(
+                self=self._build_heart_home_self(current_personnel),
+                contacts=[],
+            )
+
+        contacts = await self.repo.list_heart_home_contacts(
+            exclude_id=current_personnel.id,
+            opposite_gender=opposite_gender,
+            keyword=(keyword or "").strip() or None,
+        )
+        visible_messages = await self.heart_message_repo.list_visible_personnel_messages(
+            current_personnel.id
+        )
+        latest_by_contact = self._build_latest_message_map(
+            current_personnel.id, visible_messages
+        )
+
+        contact_items = [
+            self._build_heart_home_contact(
+                current_personnel.id,
+                contact,
+                latest_by_contact.get(contact.id),
+            )
+            for contact in contacts
+        ]
+        contact_items.sort(
+            key=lambda item: item.latest_message_at or "",
+            reverse=True,
+        )
+
+        return PersonnelHeartHomeResponse(
+            self=self._build_heart_home_self(current_personnel),
+            contacts=contact_items,
+        )
 
     async def _get_personnel_from_token(self, token_data) -> Optional[PersonnelUser]:
         if token_data.personnel_id:
@@ -374,6 +474,235 @@ class PersonnelUserService:
     @staticmethod
     def _personnel_matches_subject(personnel: PersonnelUser, subject: str) -> bool:
         return subject in {personnel.id, (personnel.user_id or "").strip()}
+
+    async def _authorize_personnel_history_access(
+        self, personnel: PersonnelUser, authorization: str
+    ) -> None:
+        scheme, _, token = (authorization or "").partition(" ")
+        if scheme.lower() != "bearer" or not token.strip():
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="Authorization 请求头格式错误",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        token_data = decode_token(token.strip())
+        if token_data is None or not token_data.subject:
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="登录已过期，请重新登录",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if personnel.review_status != "approved":
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="当前人员档案未通过审核",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if token_data.personnel_id:
+            if token_data.personnel_id == personnel.id or self._personnel_matches_subject(
+                personnel, token_data.subject
+            ):
+                return
+            raise BizException(
+                code=BizError.PERMISSION_DENIED,
+                message="无权查看该聊天记录",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        system_user = await self._get_system_user_from_token(token_data)
+        if system_user:
+            return
+
+        if token_data.subject == (personnel.user_id or "").strip():
+            return
+
+        raise BizException(
+            code=BizError.PERMISSION_DENIED,
+            message="无权查看该聊天记录",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    async def _get_current_personnel_from_authorization(
+        self, authorization: str
+    ) -> PersonnelUser:
+        scheme, _, token = (authorization or "").partition(" ")
+        if scheme.lower() != "bearer" or not token.strip():
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="Authorization 请求头格式错误",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        token_data = decode_token(token.strip())
+        if token_data is None or not token_data.subject:
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="登录已过期，请重新登录",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        personnel = await self._get_personnel_from_token(token_data)
+        if personnel is None and token_data.subject:
+            personnel = await self.repo.get_by_user_id(token_data.subject)
+
+        if personnel is None:
+            raise BizException(
+                code=BizError.PERSONNEL_USER_NOT_FOUND,
+                message="查无此用户",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        if personnel.is_deleted or personnel.review_status != "approved":
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="当前人员档案未通过审核",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        return personnel
+
+    @staticmethod
+    def _build_conversation_key(left_id: str, right_id: str) -> str:
+        normalized = sorted([(left_id or "").strip(), (right_id or "").strip()])
+        return "::".join(normalized)
+
+    @staticmethod
+    def _parse_since_datetime(value: Optional[str]) -> Optional[datetime]:
+        text = (value or "").strip()
+        if not text:
+            return None
+
+        try:
+            return datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="since 参数格式错误") from exc
+
+    @staticmethod
+    def _to_iso_text(value: Optional[datetime]) -> str:
+        if value is None:
+            return ""
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace(
+            "+00:00", "Z"
+        )
+
+    def _build_history_self(
+        self, personnel: PersonnelUser
+    ) -> PersonnelHeartMessageHistorySelf:
+        return PersonnelHeartMessageHistorySelf(
+            id=personnel.id,
+            person_id=personnel.person_id,
+            name=personnel.name,
+            nickname=personnel.nickname,
+            mbti=personnel.mbti,
+            personal_photo=personnel.personal_photo,
+            remaining_heart_value=personnel.remaining_heart_value,
+            heart_message_quota=personnel.heart_message_quota,
+            remaining_mbti_test_count=personnel.remaining_mbti_test_count,
+        )
+
+    def _build_history_contact(
+        self, personnel: PersonnelUser
+    ) -> PersonnelHeartMessageHistoryContact:
+        return PersonnelHeartMessageHistoryContact(
+            id=personnel.id,
+            name=personnel.name,
+            nickname=personnel.nickname,
+            personal_photo=personnel.personal_photo,
+            mbti=personnel.mbti,
+        )
+
+    def _build_history_item(self, row: dict) -> PersonnelHeartMessageHistoryItem:
+        created_at_text = self._to_iso_text(row.get("created_at"))
+        return PersonnelHeartMessageHistoryItem(
+            id=row["id"],
+            sender_record_id=row["sender_record_id"],
+            receiver_record_id=row["receiver_record_id"],
+            content=row["content"] or "",
+            created_at=created_at_text,
+            created_at_text=created_at_text,
+        )
+
+    @staticmethod
+    def _can_send_to_contact(personnel_id: str, latest_message: Optional[dict]) -> bool:
+        if not latest_message:
+            return True
+        return latest_message.get("sender_record_id") != personnel_id
+
+    def _build_can_send_reason(
+        self, personnel_id: str, latest_message: Optional[dict]
+    ) -> str:
+        if self._can_send_to_contact(personnel_id, latest_message):
+            return ""
+        return "请等待对方回复后再发送下一条"
+
+    @staticmethod
+    def _resolve_opposite_gender(gender: str) -> str:
+        normalized = (gender or "").strip()
+        if normalized == "男":
+            return "女"
+        if normalized == "女":
+            return "男"
+        return ""
+
+    def _build_heart_home_self(self, personnel: PersonnelUser) -> PersonnelHeartHomeSelf:
+        return PersonnelHeartHomeSelf(
+            id=personnel.id,
+            person_id=personnel.person_id,
+            name=personnel.name,
+            nickname=personnel.nickname,
+            mbti=personnel.mbti,
+            personal_photo=personnel.personal_photo,
+            remaining_heart_value=personnel.remaining_heart_value,
+            heart_message_quota=personnel.heart_message_quota,
+        )
+
+    def _build_latest_message_map(
+        self, personnel_id: str, rows: list[dict]
+    ) -> dict[str, dict]:
+        latest_by_contact: dict[str, dict] = {}
+        for row in sorted(
+            rows,
+            key=lambda item: item.get("created_at") or datetime.min,
+        ):
+            sender_id = row.get("sender_record_id") or ""
+            receiver_id = row.get("receiver_record_id") or ""
+            contact_id = receiver_id if sender_id == personnel_id else sender_id
+            if not contact_id:
+                continue
+            latest_by_contact[contact_id] = row
+        return latest_by_contact
+
+    def _build_heart_home_contact(
+        self,
+        personnel_id: str,
+        contact: PersonnelUser,
+        latest_message: Optional[dict],
+    ) -> PersonnelHeartHomeContact:
+        latest_message_at = self._to_iso_text(
+            latest_message.get("created_at") if latest_message else None
+        )
+        return PersonnelHeartHomeContact(
+            id=contact.id,
+            name=contact.name,
+            nickname=contact.nickname,
+            gender=contact.gender,
+            mbti=contact.mbti,
+            personal_photo=contact.personal_photo,
+            latest_message=(latest_message or {}).get("content", ""),
+            latest_message_at=latest_message_at,
+            can_send=self._can_send_to_contact(personnel_id, latest_message),
+        )
 
     async def _next_person_id(self) -> int:
         max_person_id = await self.repo.get_max_person_id()

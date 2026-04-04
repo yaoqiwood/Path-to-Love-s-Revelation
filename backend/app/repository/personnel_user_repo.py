@@ -111,6 +111,30 @@ class PersonnelUserRepository:
         )
         return result.scalar_one_or_none()
 
+    async def list_heart_home_contacts(
+        self,
+        exclude_id: str,
+        opposite_gender: str,
+        keyword: Optional[str] = None,
+    ) -> list[PersonnelUser]:
+        stmt = self._base_stmt(False).where(
+            PersonnelUser.id != exclude_id,
+            PersonnelUser.review_status == "approved",
+            PersonnelUser.gender == opposite_gender,
+        )
+
+        if keyword:
+            like_value = f"%{keyword}%"
+            stmt = stmt.where(
+                or_(
+                    PersonnelUser.name.like(like_value),
+                    PersonnelUser.nickname.like(like_value),
+                )
+            )
+
+        result = await self.db.execute(stmt.order_by(PersonnelUser.person_id.asc()))
+        return list(result.scalars().all())
+
     async def get_max_person_id(self) -> Optional[int]:
         result = await self.db.execute(select(func.max(PersonnelUser.person_id)))
         return result.scalar_one_or_none()

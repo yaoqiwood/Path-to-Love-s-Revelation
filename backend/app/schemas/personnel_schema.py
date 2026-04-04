@@ -237,6 +237,76 @@ class PersonnelMbtiUpdateResult(PersonnelSchemaBase):
     result: bool
 
 
+class PersonnelDeleteResponse(PersonnelSchemaBase):
+    id: str = Field(serialization_alias="_id")
+    deleted: bool
+
+
+class PersonnelHeartMessageHistorySelf(PersonnelSchemaBase):
+    id: str = Field(serialization_alias="_id")
+    person_id: int
+    name: str
+    nickname: str
+    mbti: str
+    personal_photo: str
+    remaining_heart_value: int
+    heart_message_quota: int
+    remaining_mbti_test_count: int
+
+
+class PersonnelHeartMessageHistoryContact(PersonnelSchemaBase):
+    id: str = Field(serialization_alias="_id")
+    name: str
+    nickname: str
+    personal_photo: str
+    mbti: str
+
+
+class PersonnelHeartMessageHistoryItem(PersonnelSchemaBase):
+    id: str = Field(serialization_alias="_id")
+    sender_record_id: str
+    receiver_record_id: str
+    content: str
+    created_at: str
+    created_at_text: str
+
+
+class PersonnelHeartMessageHistoryResponse(PersonnelSchemaBase):
+    self: PersonnelHeartMessageHistorySelf
+    contact: PersonnelHeartMessageHistoryContact
+    list: List[PersonnelHeartMessageHistoryItem]
+    can_send: bool
+    can_send_reason: str
+
+
+class PersonnelHeartHomeSelf(PersonnelSchemaBase):
+    id: str = Field(serialization_alias="_id")
+    person_id: int
+    name: str
+    nickname: str
+    mbti: str
+    personal_photo: str
+    remaining_heart_value: int
+    heart_message_quota: int
+
+
+class PersonnelHeartHomeContact(PersonnelSchemaBase):
+    id: str = Field(serialization_alias="_id")
+    name: str
+    nickname: str
+    gender: str
+    mbti: str
+    personal_photo: str
+    latest_message: str
+    latest_message_at: str
+    can_send: bool
+
+
+class PersonnelHeartHomeResponse(PersonnelSchemaBase):
+    self: PersonnelHeartHomeSelf
+    contacts: List[PersonnelHeartHomeContact]
+
+
 class PersonnelListStats(PersonnelSchemaBase):
     total: int
     pending: int

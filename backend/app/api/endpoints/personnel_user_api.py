@@ -8,6 +8,9 @@ from app.core.exceptions import BizError, BizException
 from app.core.log_decorator import log_operate
 from app.schemas.personnel_schema import (
     PersonnelCreate,
+    PersonnelDeleteResponse,
+    PersonnelHeartHomeResponse,
+    PersonnelHeartMessageHistoryResponse,
     PersonnelLoginConfirm,
     PersonnelLoginProfileResponse,
     PersonnelLoginTokenResponse,
@@ -105,6 +108,7 @@ async def update_personnel_mbti_by_token(
         )
 
 
+@router.get("/", response_model=PersonnelListResponse)
 @router.get("/list", response_model=PersonnelListResponse)
 async def list_personnel(
     current_user: CurrentUser,
@@ -137,6 +141,42 @@ async def list_personnel(
     )
 
 
+@router.get("/heart-home", response_model=PersonnelHeartHomeResponse)
+async def get_current_personnel_heart_home(
+    service: PersonnelUserServiceDep,
+    authorization: str = Header(..., alias="Authorization"),
+    keyword: Optional[str] = Query(
+        None,
+        description="搜索昵称或姓名",
+        examples=["林"],
+    ),
+):
+    """根据 token 获取当前用户的异性联系人列表"""
+    return await service.get_heart_home(
+        authorization=authorization,
+        keyword=keyword,
+    )
+
+
+@router.get("/{personnel_id}/heart-home", response_model=PersonnelHeartHomeResponse)
+async def get_personnel_heart_home_legacy(
+    service: PersonnelUserServiceDep,
+    personnel_id: str = Path(..., description="当前人员记录ID", examples=["personnel-201"]),
+    authorization: str = Header(..., alias="Authorization"),
+    keyword: Optional[str] = Query(
+        None,
+        description="搜索昵称或姓名",
+        examples=["林"],
+    ),
+):
+    """兼容旧路径，根据 token 获取当前用户的异性联系人列表"""
+    return await service.get_heart_home(
+        authorization=authorization,
+        keyword=keyword,
+        personnel_id=personnel_id,
+    )
+
+
 @router.get("/{personnel_id}", response_model=PersonnelResponse)
 async def get_personnel(
     current_user: CurrentUser,
@@ -145,6 +185,35 @@ async def get_personnel(
 ):
     """获取人员档案详情"""
     return await service.get_personnel(personnel_id)
+
+
+@router.get(
+    "/{personnel_id}/heart-messages",
+    response_model=PersonnelHeartMessageHistoryResponse,
+)
+async def list_personnel_heart_messages(
+    service: PersonnelUserServiceDep,
+    personnel_id: str = Path(..., description="当前人员记录ID", examples=["personnel-201"]),
+    contact_id: str = Query(
+        ...,
+        alias="contactId",
+        description="聊天对象记录ID",
+        examples=["personnel-202"],
+    ),
+    since: Optional[str] = Query(
+        None,
+        description="增量拉取起始时间，ISO8601 格式",
+        examples=["2026-04-04T10:00:00.000Z"],
+    ),
+    authorization: str = Header(..., alias="Authorization"),
+):
+    """获取指定联系人历史聊天记录（按页面业务字段裁剪）"""
+    return await service.list_heart_messages(
+        personnel_id=personnel_id,
+        contact_id=contact_id,
+        since=since,
+        authorization=authorization,
+    )
 
 
 @router.post("/", response_model=PersonnelResponse)
@@ -243,7 +312,7 @@ async def update_personnel(
     return await service.update_personnel(personnel_id, data)
 
 
-@router.delete("/{personnel_id}")
+@router.delete("/{personnel_id}", response_model=PersonnelDeleteResponse)
 @log_operate(title="删除人员档案", business_type=3)
 async def delete_personnel(
     request: Request,
