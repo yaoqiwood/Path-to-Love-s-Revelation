@@ -34,7 +34,16 @@ from app.schemas.personnel_schema import (
     PersonnelMbtiUpdateResult,
     PersonnelResponse,
     PersonnelUpdate,
+    PersonnelHeartInboxItem,
+    PersonnelHeartInboxResponse,
+    PersonnelHeartState,
+    PersonnelHeartStateResponse,
+    PersonnelHeartMessageCreateResponse,
 )
+from app.models.personnel_heart_message import PersonnelHeartMessage as PersonnelHeartMessageModel
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def now_iso_text() -> str:
@@ -394,6 +403,164 @@ class PersonnelUserService:
             can_send=self._can_send_to_contact(personnel_id, latest_message),
             can_send_reason=self._build_can_send_reason(personnel_id, latest_message),
         )
+
+    async def list_inbox(
+        self,
+        personnel_id: str,
+        keyword: Optional[str],
+        authorization: str,
+    ) -> PersonnelHeartInboxResponse:
+        """收信箱列表"""
+        personnel = await self.repo.get_by_id(personnel_id)
+        if not personnel:
+            raise HTTPException(status_code=404, detail="人员档案不存在")
+
+        await self._authorize_personnel_history_access(personnel, authorization)
+
+        rows = await self.heart_message_repo.list_inbox_messages(personnel_id)
+
+        # 按 sender 分组，每个 sender 只取最新消息
+        seen_senders: dict[str, dict] = {}
+        for row in rows:
+            sender_id = row["sender_record_id"]
+            if sender_id == personnel_id:
+                continue  # 跳过自己发的
+            if sender_id not in seen_senders:
+                seen_senders[sender_id] = row
+
+        inbox_items: list[PersonnelHeartInboxItem] = []
+        for sender_id, row in seen_senders.items():
+            sender = await self.repo.get_by_id(sender_id)
+            sender_mbti = sender.mbti if sender else ""
+
+            # 过滤关键字
+            if keyword:
+                kw = keyword.strip().lower()
+                if kw and kw not in (sender_mbti or "").lower():
+                    if kw not in (row.get("content") or "").lower():
+                        continue
+
+            # 轮次制：最新消息是对方发的 → 可回复
+            conversation_key = self._build_conversation_key(personnel_id, sender_id)
+            latest = await self.heart_message_repo.get_latest_visible_conversation_message(
+                conversation_key
+            )
+            can_reply = True
+            can_reply_reason = ""
+            if latest and latest.get("sender_record_id") == personnel_id:
+                can_reply = False
+                can_reply_reason = "请等待对方再次来信"
+
+            inbox_items.append(
+                PersonnelHeartInboxItem(
+                    message_id=str(row["id"]),
+                    contact_id=sender_id,
+                    sender_mbti=sender_mbti,
+                    content=row.get("content") or "",
+                    created_at=self._to_iso_text(row.get("created_at")),
+                    can_reply=can_reply,
+                    can_reply_reason=can_reply_reason,
+                )
+            )
+
+        return PersonnelHeartInboxResponse(
+            self=self._build_heart_home_self(personnel),
+            list=inbox_items,
+        )
+
+    async def get_heart_state(
+        self,
+        personnel_id: str,
+        authorization: str,
+    ) -> PersonnelHeartStateResponse:
+        """消息状态版本号"""
+        personnel = await self.repo.get_by_id(personnel_id)
+        if not personnel:
+            raise HTTPException(status_code=404, detail="人员档案不存在")
+
+        await self._authorize_personnel_history_access(personnel, authorization)
+
+        contacts_version = await self.heart_message_repo.count_messages_for_user(personnel_id)
+        inbox_version = await self.heart_message_repo.count_inbox_messages(personnel_id)
+
+        now_text = now_iso_text()
+        return PersonnelHeartStateResponse(
+            self=self._build_heart_home_self(personnel),
+            state=PersonnelHeartState(
+                contactsVersion=contacts_version,
+                inboxVersion=inbox_version,
+                latestMessageAtText=now_text,
+                updatedAtText=now_text,
+            ),
+        )
+
+    async def send_heart_message(
+        self,
+        personnel_id: str,
+        contact_id: str,
+        content: str,
+        scene: str,
+        authorization: str,
+    ) -> PersonnelHeartMessageCreateResponse:
+        """发送心动消息"""
+        personnel = await self.repo.get_by_id(personnel_id)
+        if not personnel:
+            raise HTTPException(status_code=404, detail="人员档案不存在")
+
+        contact = await self.repo.get_by_id(contact_id)
+        if not contact:
+            raise HTTPException(status_code=404, detail="聊天对象不存在")
+
+        await self._authorize_personnel_history_access(personnel, authorization)
+
+        if not content or not content.strip():
+            raise HTTPException(status_code=400, detail="消息内容不能为空")
+
+        conversation_key = self._build_conversation_key(personnel_id, contact_id)
+        now = datetime.now(timezone.utc)
+        msg_id = f"heart-{now.strftime('%Y%m%d%H%M%S')}-{personnel_id[-3:]}"
+
+        message = PersonnelHeartMessageModel(
+            id=msg_id,
+            conversation_key=conversation_key,
+            sender_record_id=personnel_id,
+            receiver_record_id=contact_id,
+            content=content.strip()[:300],
+            status="delivered",
+            is_anonymous=(scene != "chat"),
+            quota_cost=1,
+            message_scene=scene or "contacts",
+            user_remark="",
+            created_at=now,
+            updated_at=now,
+            delivered_at=now,
+            is_deleted=False,
+        )
+
+        await self.heart_message_repo.create_message(message)
+        await self.db.commit()
+
+        # WebSocket 推送给接收方
+        try:
+            from app.core.ws_manager import ws_manager
+            await ws_manager.send_to_user(contact_id, {
+                "type": "new_message",
+                "conversation_key": conversation_key,
+                "message": {
+                    "_id": msg_id,
+                    "sender_record_id": personnel_id,
+                    "receiver_record_id": contact_id,
+                    "content": content.strip()[:300],
+                    "created_at": self._to_iso_text(now),
+                    "created_at_text": self._to_iso_text(now),
+                },
+            })
+            await ws_manager.send_to_user(contact_id, {"type": "inbox_update"})
+            await ws_manager.send_to_user(personnel_id, {"type": "contacts_update"})
+        except Exception as exc:
+            logger.warning("WS push failed: %s", exc)
+
+        return PersonnelHeartMessageCreateResponse(id=msg_id)
 
     async def get_heart_home(
         self,

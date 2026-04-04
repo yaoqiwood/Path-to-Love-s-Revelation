@@ -321,3 +321,41 @@ class PersonnelListResponse(PersonnelSchemaBase):
     page_size: int = Field(serialization_alias="pageSize")
     total: int
     stats: PersonnelListStats
+
+
+class PersonnelHeartInboxItem(PersonnelSchemaBase):
+    message_id: str
+    contact_id: str
+    sender_mbti: str
+    content: str
+    created_at: str
+    can_reply: bool
+    can_reply_reason: str
+
+
+class PersonnelHeartInboxResponse(PersonnelSchemaBase):
+    self: PersonnelHeartHomeSelf
+    list: List[PersonnelHeartInboxItem]
+
+
+class PersonnelHeartState(PersonnelSchemaBase):
+    contactsVersion: int = 0
+    inboxVersion: int = 0
+    latestMessageAtText: str = ""
+    updatedAtText: str = ""
+
+
+class PersonnelHeartStateResponse(PersonnelSchemaBase):
+    self: PersonnelHeartHomeSelf
+    state: PersonnelHeartState
+
+
+class PersonnelHeartMessageCreate(PersonnelSchemaBase):
+    contactId: str
+    content: str
+    scene: str = "contacts"
+
+
+class PersonnelHeartMessageCreateResponse(PersonnelSchemaBase):
+    id: str
+

@@ -159,12 +159,14 @@
 							</div>
 						</div>
 						<div class="chat-user-text">
-							<text class="chat-name">{{ activeContact.nickname || activeContact.name }}</text>
-							<text class="chat-meta">{{ activeContact.name || '未填写姓名' }}</text>
+							<text class="chat-name">{{ activeContact._isInboxContact ? '陌生人来信' : (activeContact.nickname || activeContact.name) }}</text>
+							<text class="chat-meta">{{ activeContact._isInboxContact ? ('MBTI: ' + (activeContact.mbti || '-')) : (activeContact.name || '未填写姓名') }}</text>
 							<text class="chat-mood">{{
-								activeContact.chat_status === 'unlocked'
-									? '已解锁双向聊天，畅所欲言吧'
-									: '和 Ta 的聊天，也许会有一点点心动'
+								activeContact._isInboxContact
+									? '回复后需等待对方再次发送'
+									: activeContact.chat_status === 'unlocked'
+										? '已解锁双向聊天，畅所欲言吧'
+										: '和 Ta 的聊天，也许会有一点点心动'
 							}}</text>
 						</div>
 					</div>
@@ -351,7 +353,9 @@
 	import { personnelUserService as personnelUser } from '@/api/modules/personnel-user'
 	import { shouldUseMock } from '@/api/mockService'
 	import { getCurrentUserInfo } from '@/platform/app-runtime'
+	import { getAuthStorageValue, AUTH_STORAGE_KEYS } from '@/platform/auth-storage'
 	import { app } from '@/platform/app-bridge'
+	import { wsChatClient } from '@/api/ws-client'
 	const PERSONNEL_PROFILE_STORAGE_KEY = 'mbtiPersonnelProfile'
 
 	export default {
@@ -409,7 +413,8 @@
 					latestMessageAtText: '',
 					updatedAtText: ''
 				},
-				pushRefreshHandler: null
+				pushRefreshHandler: null,
+				wsConnected: false
 			}
 		},
 		async mounted() {
@@ -419,11 +424,14 @@
 			if (ready && this.showChatPopup && this.activeContact && this.activeContact._id) {
 				this.startRealtime()
 			}
+			this._initWebSocket()
 		},
 		beforeUnmount() {
 			this.stopRealtime()
 			this.stopMessageStatePolling()
 			this.unbindPushRefresh()
+			wsChatClient.disconnect()
+			this.wsConnected = false
 		},
 		computed: {
 			isUnlockedChat() {
@@ -443,6 +451,61 @@
 			}
 		},
 		methods: {
+			_initWebSocket() {
+				const session = getAuthStorageValue(AUTH_STORAGE_KEYS.session)
+				const token = session && session.token
+				if (!token) {
+					return
+				}
+
+				wsChatClient.on('connected', () => {
+					console.log('[ws] connected, stopping polling')
+					this.wsConnected = true
+					this.stopRealtime()
+					this.stopMessageStatePolling()
+				})
+
+				wsChatClient.on('new_message', (data) => {
+					if (!data || !data.message) return
+					const msg = data.message
+					// 如果当前正在跟这个人聊天，直接合并消息
+					if (
+						this.showChatPopup &&
+						this.activeContact &&
+						this.activeContact._id &&
+						(msg.sender_record_id === this.activeContact._id ||
+							msg.receiver_record_id === this.activeContact._id)
+					) {
+						const nextMessages = this.mergeMessageList([msg])
+						this.messages = nextMessages
+						this.$nextTick(() => {
+							const last = this.messages[this.messages.length - 1]
+							if (last) this.scrollIntoView = 'msg-' + last._id
+						})
+						// 解锁状态下始终可发
+						if (this.activeContact.chat_status === 'unlocked') {
+							this.canSendToActive = true
+						} else if (msg.sender_record_id !== this.selfProfile._id) {
+							// 对方发了消息，轮到我发
+							this.canSendToActive = true
+						} else {
+							this.canSendToActive = false
+						}
+					}
+					// 刷新联系人列表
+					this.loadHome()
+				})
+
+				wsChatClient.on('contacts_update', () => {
+					this.loadHome()
+				})
+
+				wsChatClient.on('inbox_update', () => {
+					this.loadInbox({ silent: this.activeTab !== 'inbox' })
+				})
+
+				wsChatClient.connect(token)
+			},
 			getStoredProfile() {
 				try {
 					const profile = app.getStorageSync(PERSONNEL_PROFILE_STORAGE_KEY)
@@ -921,7 +984,7 @@
 				if (!item || !item._id || !personnelUser) {
 					return
 				}
-				if (item.chat_status === 'none') {
+				if (item.chat_status === 'none' && !item._isInboxContact) {
 					this.activeContact = item
 					this.draftMessage = ''
 					this.showInitiatePopup = true
@@ -1016,9 +1079,17 @@
 					})
 					return
 				}
-				this.activeInboxItem = item
-				this.inboxReplyText = ''
-				this.showInboxReplyPopup = true
+				// 构建虚拟联系人，复用聊天弹窗显示消息历史
+				const virtualContact = {
+					_id: item.contact_id,
+					name: '陌生人',
+					nickname: '陌生人来信',
+					mbti: item.sender_mbti || '',
+					personal_photo: '',
+					chat_status: 'none',
+					_isInboxContact: true
+				}
+				this.selectContact(virtualContact)
 			},
 			closeInboxReplyPopup() {
 				this.showInboxReplyPopup = false
@@ -1101,6 +1172,8 @@
 					const nextActive = this.contacts.find((item) => item._id === currentContactId)
 					if (nextActive) {
 						await this.selectContact(nextActive, { silent: true })
+					} else if (this.activeContact && this.activeContact._isInboxContact) {
+						await this.selectContact(this.activeContact, { silent: true })
 					}
 					await this.syncMessageState({ refreshOnChange: false, silent: true })
 					app.showToast({

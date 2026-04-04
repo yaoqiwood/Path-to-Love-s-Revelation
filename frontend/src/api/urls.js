@@ -4,6 +4,18 @@ function withPrefix(path) {
   return `${API_PREFIX}${path}`
 }
 
+function getWsBaseUrl() {
+  if (typeof window !== 'undefined' && window.location) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${protocol}//${window.location.host}`
+  }
+  return 'ws://localhost:8000'
+}
+
+export const wsUrls = {
+  chat: (token) => `${getWsBaseUrl()}/ws/chat?token=${encodeURIComponent(token || '')}`
+}
+
 export const apiUrls = {
   files: {
     upload: () => withPrefix('/files/upload')

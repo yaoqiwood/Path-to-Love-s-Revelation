@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import desc, or_, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.personnel_heart_message import PersonnelHeartMessage
@@ -23,7 +23,7 @@ class PersonnelHeartMessageRepository:
             .where(
                 PersonnelHeartMessage.conversation_key == conversation_key,
                 PersonnelHeartMessage.is_deleted.is_(False),
-                PersonnelHeartMessage.message_scene.in_(["chat", "inbox"]),
+                PersonnelHeartMessage.message_scene.in_(["chat", "inbox", "contacts"]),
                 PersonnelHeartMessage.status != "revoked",
             )
         )
@@ -64,7 +64,7 @@ class PersonnelHeartMessageRepository:
                     PersonnelHeartMessage.receiver_record_id == personnel_id,
                 ),
                 PersonnelHeartMessage.is_deleted.is_(False),
-                PersonnelHeartMessage.message_scene.in_(["chat", "inbox"]),
+                PersonnelHeartMessage.message_scene.in_(["chat", "inbox", "contacts"]),
                 PersonnelHeartMessage.status != "revoked",
             )
         )
@@ -97,3 +97,55 @@ class PersonnelHeartMessageRepository:
             .distinct()
         )
         return [row[0] for row in result]
+
+    async def list_inbox_messages(self, receiver_id: str) -> list[dict]:
+        """查询 receiver 为当前用户的所有可见消息（按时间倒序，收信箱用）"""
+        result = await self.db.execute(
+            select(
+                PersonnelHeartMessage.id.label("id"),
+                PersonnelHeartMessage.sender_record_id.label("sender_record_id"),
+                PersonnelHeartMessage.receiver_record_id.label("receiver_record_id"),
+                PersonnelHeartMessage.content.label("content"),
+                PersonnelHeartMessage.created_at.label("created_at"),
+                PersonnelHeartMessage.message_scene.label("message_scene"),
+            )
+            .where(
+                PersonnelHeartMessage.receiver_record_id == receiver_id,
+                PersonnelHeartMessage.is_deleted.is_(False),
+                PersonnelHeartMessage.status != "revoked",
+            )
+            .order_by(desc(PersonnelHeartMessage.created_at))
+        )
+        return [dict(row._mapping) for row in result]
+
+    async def create_message(self, message: PersonnelHeartMessage) -> PersonnelHeartMessage:
+        """插入新消息"""
+        self.db.add(message)
+        await self.db.flush()
+        return message
+
+    async def count_messages_for_user(self, personnel_id: str) -> int:
+        """统计用户相关的消息总数，用于版本号计算"""
+        result = await self.db.execute(
+            select(func.count(PersonnelHeartMessage.id)).where(
+                or_(
+                    PersonnelHeartMessage.sender_record_id == personnel_id,
+                    PersonnelHeartMessage.receiver_record_id == personnel_id,
+                ),
+                PersonnelHeartMessage.is_deleted.is_(False),
+                PersonnelHeartMessage.status != "revoked",
+            )
+        )
+        return result.scalar_one()
+
+    async def count_inbox_messages(self, receiver_id: str) -> int:
+        """统计收信箱消息总数"""
+        result = await self.db.execute(
+            select(func.count(PersonnelHeartMessage.id)).where(
+                PersonnelHeartMessage.receiver_record_id == receiver_id,
+                PersonnelHeartMessage.is_deleted.is_(False),
+                PersonnelHeartMessage.status != "revoked",
+            )
+        )
+        return result.scalar_one()
+

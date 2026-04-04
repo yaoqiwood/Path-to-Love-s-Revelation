@@ -10,7 +10,11 @@ from app.schemas.personnel_schema import (
     PersonnelCreate,
     PersonnelDeleteResponse,
     PersonnelHeartHomeResponse,
+    PersonnelHeartInboxResponse,
+    PersonnelHeartMessageCreate,
+    PersonnelHeartMessageCreateResponse,
     PersonnelHeartMessageHistoryResponse,
+    PersonnelHeartStateResponse,
     PersonnelLoginConfirm,
     PersonnelLoginProfileResponse,
     PersonnelLoginTokenResponse,
@@ -232,6 +236,63 @@ async def list_personnel_heart_messages(
         authorization=authorization,
     )
 
+
+@router.post(
+    "/{personnel_id}/heart-messages",
+    response_model=PersonnelHeartMessageCreateResponse,
+)
+async def create_personnel_heart_message(
+    service: PersonnelUserServiceDep,
+    personnel_id: str = Path(..., description="当前人员记录ID", examples=["personnel-201"]),
+    data: PersonnelHeartMessageCreate = Body(...),
+    authorization: str = Header(..., alias="Authorization"),
+):
+    """发送心动消息"""
+    return await service.send_heart_message(
+        personnel_id=personnel_id,
+        contact_id=data.contactId,
+        content=data.content,
+        scene=data.scene,
+        authorization=authorization,
+    )
+
+
+@router.get(
+    "/{personnel_id}/heart-inbox",
+    response_model=PersonnelHeartInboxResponse,
+)
+async def list_personnel_heart_inbox(
+    service: PersonnelUserServiceDep,
+    personnel_id: str = Path(..., description="当前人员记录ID", examples=["personnel-201"]),
+    keyword: Optional[str] = Query(
+        None,
+        description="搜索关键字",
+        examples=[""],
+    ),
+    authorization: str = Header(..., alias="Authorization"),
+):
+    """获取收信箱列表"""
+    return await service.list_inbox(
+        personnel_id=personnel_id,
+        keyword=keyword,
+        authorization=authorization,
+    )
+
+
+@router.get(
+    "/{personnel_id}/heart-state",
+    response_model=PersonnelHeartStateResponse,
+)
+async def get_personnel_heart_state(
+    service: PersonnelUserServiceDep,
+    personnel_id: str = Path(..., description="当前人员记录ID", examples=["personnel-201"]),
+    authorization: str = Header(..., alias="Authorization"),
+):
+    """获取消息状态版本号"""
+    return await service.get_heart_state(
+        personnel_id=personnel_id,
+        authorization=authorization,
+    )
 
 @router.post("/", response_model=PersonnelResponse)
 @log_operate(title="新增人员档案", business_type=1)
