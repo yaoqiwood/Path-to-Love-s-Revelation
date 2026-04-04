@@ -1,7 +1,7 @@
 import { http, unwrapResponse } from '@/api/http'
 import { withMockFallback } from '@/api/mockService'
 import { apiUrls } from '@/api/urls'
-import { getAuthStorageValue, AUTH_STORAGE_KEYS } from '@/platform/auth-storage'
+import { getAuthStorageValue, setAuthStorageValue, AUTH_STORAGE_KEYS } from '@/platform/auth-storage'
 import { readLocalStorage, writeLocalStorage } from '@/utils/local-storage'
 
 const STORAGE_KEYS = {
@@ -1302,6 +1302,33 @@ function resolveCurrentPersonnelRecord(fallbackPersonnelId = '') {
 	}
 }
 
+function syncStoredMbti(mbti) {
+	const normalizedMbti = normalizeUpper(mbti)
+	if (!normalizedMbti) {
+		return
+	}
+
+	const profile = getAuthStorageValue(AUTH_STORAGE_KEYS.profile)
+	if (profile && typeof profile === 'object') {
+		setAuthStorageValue(AUTH_STORAGE_KEYS.profile, {
+			...profile,
+			mbti: normalizedMbti,
+			cached_at: Date.now()
+		})
+	}
+
+	const session = getAuthStorageValue(AUTH_STORAGE_KEYS.session)
+	if (session && typeof session === 'object') {
+		setAuthStorageValue(AUTH_STORAGE_KEYS.session, {
+			...session,
+			userInfo: {
+				...(session.userInfo || {}),
+				mbti: normalizedMbti
+			}
+		})
+	}
+}
+
 function updatePersonnelRecord(id, patch) {
 	const nextList = getPersonnelList().map((item) => {
 		if (item._id !== id) {
@@ -2022,6 +2049,56 @@ export const personnelUserService = {
 				return {
 					id: normalizeText(id),
 					mbti: normalizeUpper(mbti)
+				}
+			}
+		)
+	},
+
+	async updateMbti({ mbti } = {}, config = {}) {
+		const normalizedMbti = normalizeUpper(mbti)
+
+		return withMockFallback(
+			async () => {
+				const response = unwrapResponse(
+					await http.post(
+						apiUrls.personnel.updateMbti(),
+						{
+							mbti: normalizedMbti
+						},
+						config
+					)
+				)
+
+				if (response && response.result === false) {
+					throw new Error(response.message || '提交失败')
+				}
+
+				syncStoredMbti(normalizedMbti)
+				return response
+			},
+			async () => {
+				if (!normalizedMbti) {
+					throw new Error('mbti不能为空')
+				}
+				if (normalizedMbti.length > 8) {
+					throw new Error('mbti长度不能超过8位')
+				}
+
+				const currentPersonnel = resolveCurrentPersonnelRecord()
+				const targetRecord = currentPersonnel && currentPersonnel.selfRecord
+				if (!targetRecord || !targetRecord._id) {
+					throw new Error('查无此用户')
+				}
+
+				updatePersonnelRecord(targetRecord._id, {
+					mbti: normalizedMbti
+				})
+				syncStoredMbti(normalizedMbti)
+
+				return {
+					_id: targetRecord._id,
+					name: targetRecord.name,
+					result: true
 				}
 			}
 		)

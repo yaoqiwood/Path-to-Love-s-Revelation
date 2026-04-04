@@ -17,6 +17,7 @@ export const apiUrls = {
     loginProfiles: () => withPrefix('/personnel/login-profiles'),
     loginProfile: () => withPrefix('/personnel/login-profile'),
     login: () => withPrefix('/personnel/login'),
+    updateMbti: () => withPrefix('/personnel/updateMbti'),
     searchNames: () => withPrefix('/personnel/search-names'),
     list: () => withPrefix('/personnel/list'),
     create: () => withPrefix('/personnel'),

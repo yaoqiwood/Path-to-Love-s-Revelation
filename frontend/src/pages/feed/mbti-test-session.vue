@@ -764,6 +764,7 @@
 				}
 				pendingStageNumber.value = nextAnsweredCount / stageSize
 				showStageSummary.value = true
+				void scrollPageToTop()
 			} else if (nextAnsweredCount < totalQuestions) {
 				currentIndex.value = nextIndex
 			}
@@ -774,14 +775,19 @@
 	}
 
 	async function continueToNextStage() {
-		showStageSummary.value = false
 		if (pendingStageNumber.value === stageList.length && answeredCount.value === totalQuestions) {
-			await persistMbtiResult()
+			const saved = await persistMbtiResult()
+			if (!saved) {
+				return
+			}
+			showStageSummary.value = false
 			showResult.value = true
 			await scrollPageToTop()
 			return
 		}
+		showStageSummary.value = false
 		latestFeedback.value = ''
+		await scrollPageToTop()
 	}
 
 	async function scrollPageToTop() {
@@ -841,10 +847,10 @@
 
 	async function persistMbtiResult() {
 		if (helperPageReviewMode.value) {
-			return
+			return true
 		}
-		if ((!personnelId.value && !wxOpenid.value) || isSavingResult.value) {
-			return
+		if (isSavingResult.value) {
+			return false
 		}
 		isSavingResult.value = true
 		app.showLoading({
@@ -852,31 +858,24 @@
 			mask: true
 		})
 		try {
-			let targetId = personnelId.value
-			if (
-				!targetId &&
-				wxOpenid.value &&
-				personnelUser &&
-				typeof personnelUser.getByWxOpenid === 'function'
-			) {
-				const profileRes = await personnelUser.getByWxOpenid({
-					wxOpenid: wxOpenid.value
-				})
-				targetId = (profileRes && profileRes.record && profileRes.record._id) || ''
-			}
-			if (!targetId) {
-				throw new Error('未找到当前用户档案')
-			}
-			await personnelUser.saveMbtiResult({
-				id: targetId,
-				mbti: resultType.value
-			})
+			await personnelUser.updateMbti(
+				{
+					mbti: resultType.value
+				},
+				{
+					skipAuthRedirect: true
+				}
+			)
+			return true
 		} catch (error) {
-			app.showToast({
-				title: (error && error.message) || '结果保存失败',
-				icon: 'none',
-				duration: 3000
+			console.error('persistMbtiResult failed', error)
+			await app.showModal({
+				title: '提示',
+				content: '提交失败，请联系相关同工',
+				showCancel: false,
+				confirmText: '确认'
 			})
+			return false
 		} finally {
 			isSavingResult.value = false
 			app.hideLoading()
