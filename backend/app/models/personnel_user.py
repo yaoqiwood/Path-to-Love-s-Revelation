@@ -86,6 +86,12 @@ class PersonnelUser(Base):
         default=0,
         comment="剩余心动值",
     )
+    remaining_mbti_test_count = Column(
+        Integer,
+        nullable=False,
+        default=0,
+        comment="剩余MBTI测试次数",
+    )
     submitted_at = Column(
         String(40),
         nullable=False,

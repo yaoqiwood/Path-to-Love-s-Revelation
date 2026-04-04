@@ -1,13 +1,15 @@
 from datetime import datetime, timezone
 from typing import Annotated, Optional
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import BizError, BizException
 from app.core.database import get_db
-from app.core.security import create_access_token
+from app.core.security import create_access_token, decode_token
 from app.models.personnel_user import PersonnelUser
-from app.repository import PersonnelUserRepository
+from app.models.user import SystemUser
+from app.repository import PersonnelUserRepository, UserRepository
 from app.schemas.personnel_schema import (
     PersonnelCreate,
     PersonnelLoginConfirm,
@@ -17,6 +19,7 @@ from app.schemas.personnel_schema import (
     PersonnelLoginTokenResponse,
     PersonnelListResponse,
     PersonnelListStats,
+    PersonnelMbtiUpdateResult,
     PersonnelResponse,
     PersonnelUpdate,
 )
@@ -34,6 +37,7 @@ class PersonnelUserService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repo = PersonnelUserRepository(db)
+        self.user_repo = UserRepository(db)
 
     async def list_personnel(
         self,
@@ -104,6 +108,83 @@ class PersonnelUserService:
             profile=self._build_login_record(personnel),
         )
 
+    async def update_mbti_by_token(self, token: str, mbti: str) -> PersonnelMbtiUpdateResult:
+        normalized_token = (token or "").strip()
+        if not normalized_token:
+            raise BizException(
+                code=BizError.BAD_REQUEST,
+                message="token不能为空",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        normalized_mbti = (mbti or "").strip().upper()
+        if not normalized_mbti:
+            raise BizException(
+                code=BizError.BAD_REQUEST,
+                message="mbti不能为空",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(normalized_mbti) > 8:
+            raise BizException(
+                code=BizError.BAD_REQUEST,
+                message="mbti长度不能超过8位",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token_data = decode_token(normalized_token)
+        if token_data is None or not token_data.subject:
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="登录已过期，请重新登录",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        personnel = await self._get_personnel_from_token(token_data)
+        if personnel:
+            updated = await self.repo.update(
+                personnel,
+                {"mbti": normalized_mbti, "updated_at": now_iso_text()},
+            )
+            return PersonnelMbtiUpdateResult(
+                id=updated.id,
+                name=updated.name,
+                result=True,
+            )
+
+        if token_data.personnel_id:
+            raise BizException(
+                code=BizError.PERSONNEL_USER_NOT_FOUND,
+                message="查无此用户",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        system_user = await self._get_system_user_from_token(token_data)
+        if system_user:
+            raise BizException(
+                code=BizError.PERSONNEL_USER_NOT_FOUND,
+                message="查无此用户",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        personnel = await self.repo.get_by_user_id(token_data.subject)
+        if not personnel:
+            raise BizException(
+                code=BizError.PERSONNEL_USER_NOT_FOUND,
+                message="查无此用户",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        updated = await self.repo.update(
+            personnel,
+            {"mbti": normalized_mbti, "updated_at": now_iso_text()},
+        )
+        return PersonnelMbtiUpdateResult(
+            id=updated.id,
+            name=updated.name,
+            result=True,
+        )
+
     async def create_personnel(self, data: PersonnelCreate) -> PersonnelResponse:
         payload = data.model_dump(exclude_unset=True)
         person_id = payload.get("person_id") or await self._next_person_id()
@@ -169,6 +250,11 @@ class PersonnelUserService:
                 if payload.get("remaining_heart_value") is not None
                 else 3
             ),
+            remaining_mbti_test_count=(
+                payload["remaining_mbti_test_count"]
+                if payload.get("remaining_mbti_test_count") is not None
+                else 0
+            ),
             submitted_at=created_at,
             updated_at=updated_at,
             is_deleted=bool(payload.get("is_deleted", False)),
@@ -232,6 +318,7 @@ class PersonnelUserService:
             "private_message_quota": "private_message_quota",
             "heart_message_quota": "heart_message_quota",
             "remaining_heart_value": "remaining_heart_value",
+            "remaining_mbti_test_count": "remaining_mbti_test_count",
             "submitted_at": "submitted_at",
             "is_deleted": "is_deleted",
         }
@@ -260,6 +347,33 @@ class PersonnelUserService:
             {"is_deleted": True, "updated_at": now_iso_text()},
         )
         return {"id": personnel_id}
+
+    async def _get_personnel_from_token(self, token_data) -> Optional[PersonnelUser]:
+        if token_data.personnel_id:
+            personnel = await self.repo.get_by_id(token_data.personnel_id)
+            if personnel and self._personnel_matches_subject(
+                personnel, token_data.subject
+            ):
+                return personnel
+            return None
+
+        if token_data.subject and not token_data.user_id:
+            return await self.repo.get_by_id(token_data.subject)
+
+        return None
+
+    async def _get_system_user_from_token(self, token_data) -> Optional[SystemUser]:
+        if token_data.user_id is None:
+            return None
+
+        user = await self.user_repo.get_by_id_active(token_data.user_id)
+        if user is None or not user.is_active:
+            return None
+        return user
+
+    @staticmethod
+    def _personnel_matches_subject(personnel: PersonnelUser, subject: str) -> bool:
+        return subject in {personnel.id, (personnel.user_id or "").strip()}
 
     async def _next_person_id(self) -> int:
         max_person_id = await self.repo.get_max_person_id()

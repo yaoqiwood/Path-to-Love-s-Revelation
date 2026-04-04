@@ -37,6 +37,7 @@ class PersonnelPayloadBase(PersonnelSchemaBase):
     private_message_quota: Optional[int] = None
     heart_message_quota: Optional[int] = None
     remaining_heart_value: Optional[int] = None
+    remaining_mbti_test_count: Optional[int] = None
     submitted_at: Optional[str] = None
     updated_at: Optional[str] = None
     is_deleted: Optional[bool] = None
@@ -83,6 +84,7 @@ class PersonnelCreate(PersonnelPayloadBase):
                 "private_message_quota": 0,
                 "heart_message_quota": 3,
                 "remaining_heart_value": 3,
+                "remaining_mbti_test_count": 0,
             }
         },
     )
@@ -108,6 +110,7 @@ class PersonnelUpdate(PersonnelPayloadBase):
                 "private_message_quota": 2,
                 "heart_message_quota": 5,
                 "remaining_heart_value": 4,
+                "remaining_mbti_test_count": 0,
             }
         },
     )
@@ -142,6 +145,7 @@ class PersonnelResponse(PersonnelSchemaBase):
     private_message_quota: int
     heart_message_quota: int
     remaining_heart_value: int
+    remaining_mbti_test_count: int
     submitted_at: str
     updated_at: str
     is_deleted: bool
@@ -186,6 +190,7 @@ class PersonnelLoginRecord(PersonnelSchemaBase):
     private_message_quota: int
     heart_message_quota: int
     remaining_heart_value: int
+    remaining_mbti_test_count: int
     submitted_at: str
     updated_at: str
     remark: str = ""
@@ -211,6 +216,25 @@ class PersonnelLoginTokenResponse(PersonnelSchemaBase):
     access_token: str
     token_type: str = "bearer"
     profile: PersonnelLoginRecord
+
+
+class PersonnelMbtiUpdateByToken(PersonnelSchemaBase):
+    mbti: str
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "mbti": "INFJ",
+            }
+        },
+    )
+
+
+class PersonnelMbtiUpdateResult(PersonnelSchemaBase):
+    id: str = Field(serialization_alias="_id")
+    name: str
+    result: bool
 
 
 class PersonnelListStats(PersonnelSchemaBase):

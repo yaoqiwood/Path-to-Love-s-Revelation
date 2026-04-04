@@ -1,8 +1,10 @@
 from typing import Optional
 
-from fastapi import APIRouter, Body, Path, Query, Request
+from fastapi import APIRouter, Body, Header, HTTPException, Path, Query, Request, status
+from fastapi.responses import JSONResponse
 
 from app.api.deps import CurrentSuperUser, CurrentUser
+from app.core.exceptions import BizError, BizException
 from app.core.log_decorator import log_operate
 from app.schemas.personnel_schema import (
     PersonnelCreate,
@@ -10,6 +12,8 @@ from app.schemas.personnel_schema import (
     PersonnelLoginProfileResponse,
     PersonnelLoginTokenResponse,
     PersonnelListResponse,
+    PersonnelMbtiUpdateByToken,
+    PersonnelMbtiUpdateResult,
     PersonnelResponse,
     PersonnelUpdate,
 )
@@ -50,6 +54,55 @@ async def login_by_passcode(
     """根据口令和前端确认的基础信息签发登录 token"""
     client_ip = request.client.host if request.client else ""
     return await service.login_by_passcode(data, client_ip=client_ip)
+
+
+@router.post("/updateMbti", response_model=PersonnelMbtiUpdateResult)
+async def update_personnel_mbti_by_token(
+    service: PersonnelUserServiceDep,
+    authorization: str = Header(..., alias="Authorization"),
+    data: PersonnelMbtiUpdateByToken = Body(
+        ...,
+        openapi_examples={
+            "update_mbti": {
+                "summary": "通过请求头 token 更新 MBTI",
+                "value": {
+                    "mbti": "INFJ",
+                },
+            }
+        },
+    ),
+):
+    """从 Authorization 请求头获取 token，更新对应 personnel_user 的 MBTI"""
+    try:
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not token.strip():
+            raise BizException(
+                code=BizError.INVALID_CREDENTIALS,
+                message="Authorization 请求头格式错误",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return await service.update_mbti_by_token(token.strip(), data.mbti)
+    except BizException as exc:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "code": exc.code,
+                "message": exc.message,
+                "result": False,
+            },
+            headers=exc.headers,
+        )
+    except HTTPException as exc:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "code": BizError.BAD_REQUEST,
+                "message": exc.detail,
+                "result": False,
+            },
+            headers=exc.headers,
+        )
 
 
 @router.get("/list", response_model=PersonnelListResponse)
@@ -145,6 +198,7 @@ async def create_personnel(
                     "private_message_quota": 5,
                     "heart_message_quota": 5,
                     "remaining_heart_value": 5,
+                    "remaining_mbti_test_count": 0,
                 },
             },
         },
