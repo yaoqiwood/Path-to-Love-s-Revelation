@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from sqlalchemy import String, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +37,7 @@ class PersonnelUserRepository:
         page: int,
         page_size: int,
         include_deleted: bool = False,
-    ) -> tuple[list[PersonnelUser], int]:
+    ) -> Tuple[List[PersonnelUser], int]:
         stmt = self._base_stmt(include_deleted)
 
         if review_status and review_status != "all":
@@ -116,7 +116,7 @@ class PersonnelUserRepository:
         exclude_id: str,
         opposite_gender: str,
         keyword: Optional[str] = None,
-    ) -> list[PersonnelUser]:
+    ) -> List[PersonnelUser]:
         stmt = self._base_stmt(False).where(
             PersonnelUser.id != exclude_id,
             PersonnelUser.review_status == "approved",

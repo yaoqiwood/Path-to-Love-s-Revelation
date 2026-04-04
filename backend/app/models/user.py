@@ -100,7 +100,7 @@ class SystemRole(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, comment="主键")
     name = Column(String(20), nullable=False, default="", comment="角色名称")
     code = Column(
-        String(20), nullable=False, primary_key=True, comment="角色编码"
+        String(20), nullable=False, unique=True, comment="角色编码"
     )  # Composite PK in SQL provided, using Flask-SQLAlchemy style might need adjustment but here we follow request
     remark = Column(String(200), default="", comment="备注信息")
     sort = Column(SmallInteger, nullable=False, default=0, comment="角色排序")
