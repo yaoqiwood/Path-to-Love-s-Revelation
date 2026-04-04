@@ -420,11 +420,15 @@
 		async mounted() {
 			this.activeTab = 'contacts'
 			this.bindPushRefresh()
-			const ready = await this.ensureInitialData({ force: true })
-			if (ready && this.showChatPopup && this.activeContact && this.activeContact._id) {
-				this.startRealtime()
-			}
+			// 优先通过 WS 连接加载数据，WS init 成功后会调用 _applyInitData
 			this._initWebSocket()
+			// 如果 3 秒后数据还没通过 WS 加载，降级到 HTTP
+			setTimeout(async () => {
+				if (!this.contactsLoaded || !this.inboxLoaded) {
+					console.log('[mounted] WS init not ready, falling back to HTTP')
+					await this.ensureInitialData({ force: true })
+				}
+			}, 3000)
 		},
 		beforeUnmount() {
 			if (this._stateTimer) {
@@ -462,17 +466,24 @@
 					return
 				}
 
-				wsChatClient.on('connected', () => {
-					console.log('[ws] connected, stopping polling')
+				wsChatClient.on('connected', async () => {
+					console.log('[ws] connected, loading init data via WS')
 					this.wsConnected = true
 					this.stopRealtime()
 					this.stopMessageStatePolling()
+					// 连接后立即通过 WS 拉取初始数据
+					try {
+						const res = await wsChatClient.request('init')
+						this._applyInitData(res)
+					} catch (err) {
+						console.warn('[ws] init failed, falling back to HTTP', err)
+						await this.ensureInitialData({ force: true })
+					}
 				})
 
 				wsChatClient.on('new_message', (data) => {
 					if (!data || !data.message) return
 					const msg = data.message
-					// 如果当前正在跟这个人聊天，直接合并消息
 					if (
 						this.showChatPopup &&
 						this.activeContact &&
@@ -486,17 +497,14 @@
 							const last = this.messages[this.messages.length - 1]
 							if (last) this.scrollIntoView = 'msg-' + last._id
 						})
-						// 解锁状态下始终可发
 						if (this.activeContact.chat_status === 'unlocked') {
 							this.canSendToActive = true
 						} else if (msg.sender_record_id !== this.selfProfile._id) {
-							// 对方发了消息，轮到我发
 							this.canSendToActive = true
 						} else {
 							this.canSendToActive = false
 						}
 					}
-					// 刷新联系人列表
 					this.loadHome()
 				})
 
@@ -509,11 +517,32 @@
 				})
 
 				wsChatClient.connect(token)
+			},
 
-				// 定时轮询 heart-state，检测版本变化并刷新列表
-				this._stateTimer = setInterval(() => {
-					this.syncMessageState({ refreshOnChange: true, silent: true })
-				}, 30000)
+			/** 应用 WS init_data 响应 */
+			_applyInitData(res) {
+				if (!res) return
+				// 联系人列表
+				const contactsData = res.contacts || {}
+				this.selfProfile = Object.assign({}, this.selfProfile, contactsData.self || {})
+				this.contacts = Array.isArray(contactsData.contacts) ? contactsData.contacts : []
+				this.contactsLoaded = true
+				// 收信箱
+				const inboxData = res.inbox || {}
+				this.selfProfile = Object.assign({}, this.selfProfile, inboxData.self || {})
+				this.inboxList = Array.isArray(inboxData.list) ? inboxData.list : []
+				this.inboxLoaded = true
+				// 状态
+				const stateData = res.state || {}
+				if (stateData.self) {
+					this.selfProfile = Object.assign({}, this.selfProfile, stateData.self)
+				}
+				if (stateData.state) {
+					this.messageState = this.normalizeMessageState(stateData.state)
+					this.messageStateReady = true
+				}
+				this.loading = false
+				this.bootstrapping = false
 			},
 			getStoredProfile() {
 				try {
@@ -624,7 +653,9 @@
 				const shouldLoadInbox = force || !this.inboxLoaded
 				const shouldSyncMessageState = force || !this.messageStateReady
 				if (!shouldLoadContacts && !shouldLoadInbox && !shouldSyncMessageState) {
-					this.startMessageStatePolling()
+					if (!wsChatClient.isConnected()) {
+						this.startMessageStatePolling()
+					}
 					return true
 				}
 				this.bootstrapping = true
@@ -639,10 +670,12 @@
 					if (tasks.length) {
 						await Promise.all(tasks)
 					}
-					if (shouldSyncMessageState) {
+					if (shouldSyncMessageState && !wsChatClient.isConnected()) {
 						await this.syncMessageState({ refreshOnChange: false, silent: true })
 					}
-					this.startMessageStatePolling()
+					if (!wsChatClient.isConnected()) {
+						this.startMessageStatePolling()
+					}
 					return true
 				} finally {
 					this.bootstrapping = false
@@ -657,14 +690,17 @@
 				}
 			},
 			async loadHome() {
-				if (!personnelUser || !this.personnelId) {
+				if (!this.personnelId) {
 					return
 				}
 				this.loading = true
 				try {
-					const res = await personnelUser.listOppositeGenderUsers({
-						keyword: this.keyword
-					})
+					let res
+					if (wsChatClient.isConnected()) {
+						res = await wsChatClient.request('load_contacts', { keyword: this.keyword || '' })
+					} else if (personnelUser) {
+						res = await personnelUser.listOppositeGenderUsers({ keyword: this.keyword })
+					}
 					this.selfProfile = Object.assign({}, this.selfProfile, res && res.self ? res.self : {})
 					this.contacts = Array.isArray(res && res.contacts) ? res.contacts : []
 					if (!this.contacts.length) {
@@ -705,10 +741,15 @@
 					this.inboxLoading = true
 				}
 				try {
-					const res = await personnelUser.listUserInboxLetters({
-						personnelId: this.personnelId,
-						keyword: this.keyword
-					})
+						let res
+						if (wsChatClient.isConnected()) {
+							res = await wsChatClient.request('load_inbox', { keyword: this.keyword || '' })
+						} else if (personnelUser) {
+							res = await personnelUser.listUserInboxLetters({
+								personnelId: this.personnelId,
+								keyword: this.keyword
+							})
+						}
 					this.selfProfile = Object.assign({}, this.selfProfile, res && res.self ? res.self : {})
 					this.inboxList = Array.isArray(res && res.list) ? res.list : []
 					if (silent) {
@@ -1012,10 +1053,15 @@
 				}
 				this.chatLoading = !silent && (!isSameContact || !this.messages.length)
 				try {
-					const res = await personnelUser.listUserHeartMessages({
-						personnelId: this.personnelId,
-						contactId: item._id
-					})
+						let res
+						if (wsChatClient.isConnected()) {
+							res = await wsChatClient.request('load_history', { contactId: item._id })
+						} else if (personnelUser) {
+							res = await personnelUser.listUserHeartMessages({
+								personnelId: this.personnelId,
+								contactId: item._id
+							})
+						}
 					this.selfProfile = Object.assign({}, this.selfProfile, res && res.self ? res.self : {})
 					this.activeContact = Object.assign({}, item, res && res.contact ? res.contact : {}, { chat_status: item.chat_status })
 					this.messages = Array.isArray(res && res.list) ? res.list : []
@@ -1168,13 +1214,22 @@
 				}
 				this.sending = true
 				try {
-					await personnelUser.sendUserHeartMessage({
-						personnelId: this.personnelId,
-						contactId: this.activeContact._id,
-						content: this.draftMessage,
-						type: 0,
-						scene: isUnlocked ? 'chat' : (this.activeContact._isInboxContact ? 'inbox' : 'contacts')
-					})
+					const sendScene = isUnlocked ? 'chat' : (this.activeContact._isInboxContact ? 'inbox' : 'contacts')
+						if (wsChatClient.isConnected()) {
+							await wsChatClient.request('send_message', {
+								contactId: this.activeContact._id,
+								content: this.draftMessage,
+								scene: sendScene
+							})
+						} else {
+							await personnelUser.sendUserHeartMessage({
+								personnelId: this.personnelId,
+								contactId: this.activeContact._id,
+								content: this.draftMessage,
+								type: 0,
+								scene: sendScene
+							})
+						}
 					const currentContactId = this.activeContact._id
 					this.draftMessage = ''
 					await Promise.all([this.loadHome(), this.loadInbox()])
@@ -1184,7 +1239,9 @@
 					} else if (this.activeContact && this.activeContact._isInboxContact) {
 						await this.selectContact(this.activeContact, { silent: true })
 					}
+					if (!wsChatClient.isConnected()) {
 					await this.syncMessageState({ refreshOnChange: false, silent: true })
+				}
 					app.showToast({
 						title: '发送成功',
 						icon: 'success'
@@ -1218,17 +1275,27 @@
 				}
 				this.sending = true
 				try {
-					await personnelUser.sendUserHeartMessage({
-						personnelId: this.personnelId,
-						contactId: this.activeContact._id,
-						content: this.draftMessage,
-						type: 0,
-						scene: 'contacts'
-					})
+					if (wsChatClient.isConnected()) {
+							await wsChatClient.request('send_message', {
+								contactId: this.activeContact._id,
+								content: this.draftMessage,
+								scene: 'contacts'
+							})
+						} else {
+							await personnelUser.sendUserHeartMessage({
+								personnelId: this.personnelId,
+								contactId: this.activeContact._id,
+								content: this.draftMessage,
+								type: 0,
+								scene: 'contacts'
+							})
+						}
 					this.draftMessage = ''
 					this.closeInitiatePopup()
 					await Promise.all([this.loadHome(), this.loadInbox()])
+					if (!wsChatClient.isConnected()) {
 					await this.syncMessageState({ refreshOnChange: false, silent: true })
+				}
 					app.showToast({
 						title: '悄悄话已发出',
 						icon: 'success'

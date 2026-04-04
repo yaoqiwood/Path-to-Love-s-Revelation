@@ -20,6 +20,9 @@ class WsChatClient {
 		this._reconnectAttempt = 0
 		this._intentionalClose = false
 		this._personnelId = ''
+		this._requestId = 0
+		/** @type {Map<string, {resolve: Function, reject: Function, timer: number}>} */
+		this._pendingRequests = new Map()
 	}
 
 	/**
@@ -78,6 +81,38 @@ class WsChatClient {
 		if (idx !== -1) list.splice(idx, 1)
 	}
 
+	/**
+	 * 发送消息（fire-and-forget）
+	 * @param {string} type
+	 * @param {object} data
+	 */
+	send(type, data = {}) {
+		this._sendJson({ type, ...data })
+	}
+
+	/**
+	 * 发送请求并等待响应（Promise）
+	 * @param {string} type - 请求类型
+	 * @param {object} data - 请求数据
+	 * @param {number} timeout - 超时时间(ms)，默认 15s
+	 * @returns {Promise<object>}
+	 */
+	request(type, data = {}, timeout = 15000) {
+		return new Promise((resolve, reject) => {
+			if (!this.isConnected()) {
+				reject(new Error('WebSocket 未连接'))
+				return
+			}
+			const requestId = `req_${++this._requestId}_${Date.now()}`
+			const timer = setTimeout(() => {
+				this._pendingRequests.delete(requestId)
+				reject(new Error(`WS 请求超时: ${type}`))
+			}, timeout)
+			this._pendingRequests.set(requestId, { resolve, reject, timer })
+			this._sendJson({ type, requestId, ...data })
+		})
+	}
+
 	// --- 内部方法 ---
 
 	_doConnect() {
@@ -121,6 +156,19 @@ class WsChatClient {
 			// ping from server → reply pong
 			if (type === 'ping') {
 				this._sendJson({ type: 'pong' })
+				return
+			}
+
+			// 匹配 requestId → resolve pending request
+			if (data && data.requestId && this._pendingRequests.has(data.requestId)) {
+				const pending = this._pendingRequests.get(data.requestId)
+				this._pendingRequests.delete(data.requestId)
+				clearTimeout(pending.timer)
+				if (type === 'message_error') {
+					pending.reject(new Error(data.error || '操作失败'))
+				} else {
+					pending.resolve(data)
+				}
 				return
 			}
 
