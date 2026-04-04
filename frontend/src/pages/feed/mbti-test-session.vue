@@ -361,8 +361,8 @@
 		if (query && query.personnelId) {
 			personnelId.value = decodeURIComponent(String(query.personnelId))
 		}
-		if (query && query.wxOpenid) {
-			wxOpenid.value = decodeURIComponent(String(query.wxOpenid))
+		if (query && (query.wxOpenid || query.userId)) {
+			wxOpenid.value = decodeURIComponent(String(query.wxOpenid || query.userId))
 		}
 		await loadSystemConfig()
 		if (!wxOpenid.value) {
@@ -372,9 +372,14 @@
 
 	async function loadSystemConfig() {
 		try {
-			const result = await personnelUser.getSystemConfig({
-				configCode: 'default'
-			})
+			const result = await personnelUser.getSystemConfig(
+				{
+					configCode: 'default'
+				},
+				{
+					skipAuthRedirect: true
+				}
+			)
 			const config = (result && result.config) || {}
 			helperPageReviewMode.value = !!config.helper_page_review_mode
 		} catch (error) {
@@ -415,11 +420,16 @@
 				wxOpenid.value = localOpenid
 				return
 			}
-			if (!currentUserInfo.uid) {
+			if (
+				!currentUserInfo.uid ||
+				!personnelUser ||
+				typeof personnelUser.getCurrentLoginWxOpenid !== 'function'
+			) {
 				return
 			}
 			const result = await personnelUser.getCurrentLoginWxOpenid({
-				uid: currentUserInfo.uid
+				uid: currentUserInfo.uid,
+				skipAuthRedirect: true
 			})
 			wxOpenid.value = (result && result.openIds && result.openIds[0]) || ''
 		} catch (error) {
@@ -843,7 +853,12 @@
 		})
 		try {
 			let targetId = personnelId.value
-			if (!targetId && wxOpenid.value) {
+			if (
+				!targetId &&
+				wxOpenid.value &&
+				personnelUser &&
+				typeof personnelUser.getByWxOpenid === 'function'
+			) {
 				const profileRes = await personnelUser.getByWxOpenid({
 					wxOpenid: wxOpenid.value
 				})

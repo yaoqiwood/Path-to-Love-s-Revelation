@@ -92,6 +92,7 @@ const routes = [
 const PUBLIC_ROUTE_PATHS = new Set([
   '/',
   '/welcome',
+  '/pages/feed/entry',
   USER_LOGIN_PATH,
   ADMIN_LOGIN_PATH
 ])

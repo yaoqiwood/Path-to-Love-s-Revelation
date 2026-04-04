@@ -1679,11 +1679,12 @@ export {
 	submitLocalUserHeartPriorityBoard
 }
 export const personnelUserService = {
-	async getSystemConfig(params = {}) {
+	async getSystemConfig(params = {}, requestConfig = {}) {
 		return withMockFallback(
 			async () =>
 				unwrapResponse(
 					await http.get(apiUrls.personnel.systemConfig(), {
+						...requestConfig,
 						params
 					})
 				),
